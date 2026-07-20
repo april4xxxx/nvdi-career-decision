@@ -25,7 +25,7 @@
     var epct = Math.round(st.energy / st.energyCap * 100);
 
     bar.innerHTML =
-      '<div class="brand"><span class="seal">帝</span><span>女帝决策</span></div>' +
+      '<div class="brand"><span class="seal">皇</span><span>女皇入朝</span></div>' +
       '<div class="mode-tabs">' + tabs + '</div>' +
       '<div class="spacer"></div>' +
       '<div class="res-group">' +

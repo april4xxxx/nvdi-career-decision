@@ -56,7 +56,7 @@
   function renderWelcome() {
     wrap.innerHTML =
       '<div class="onb-head"><div class="kicker">御 前 推 演</div>' +
-      '<h1>女帝职场决策系统</h1>' +
+      '<h1>女皇入朝｜AI 职场心流决策地图</h1>' +
       '<p>入朝之前，先由卦师为你推演帝王之相</p></div>' +
       '<div class="onb-hero">' +
       '<img src="' + data.ASSET_BASE + '人物/卦师onboarding.png" alt="卦师" onerror="this.style.display=\'none\'" />' +
