@@ -652,8 +652,6 @@
     els.ctPetitionN = ui.$("#ctPetitionN");
     els.ctClose = ui.$("#ctClose");
     els.ctNew = ui.$("#ctNew");
-    els.continueBtn = ui.$("#convoContinue");
-    els.newBtn = ui.$("#convoNew");
 
     els.send.addEventListener("click", onSend);
     els.text.addEventListener("keydown", function (e) {
@@ -663,8 +661,6 @@
     els.ctMinister.addEventListener("click", switchMinister);
     els.ctClose.addEventListener("click", collapse);
     els.ctNew.addEventListener("click", requestNewConversation);
-    els.continueBtn.addEventListener("click", function () { expand(); });
-    els.newBtn.addEventListener("click", requestNewConversation);
     els.ctPetition.addEventListener("click", function () {
       if (App.drawer) App.drawer.open("petition");
     });

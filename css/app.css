@@ -311,7 +311,7 @@
 .gal-box {
   position: relative; border: 1px solid var(--gold);
   background: linear-gradient(180deg, rgba(255,253,247,.92), rgba(247,242,230,.9));
-  border-radius: var(--r-md); padding: 9px 220px 9px 18px; box-shadow: var(--shadow-md);
+  border-radius: var(--r-md); padding: 9px 18px; box-shadow: var(--shadow-md);
   backdrop-filter: blur(6px); min-height: 54px;
 }
 .gal-box .gal-name {
@@ -323,27 +323,13 @@
 .gal-box .gal-text { font-size: 15.5px; line-height: 1.5; color: var(--ink); }
 .gal-box.attention { border-color: var(--verm); box-shadow: 0 0 0 2px rgba(167,71,60,.12), var(--shadow-md); }
 .gal-box.attention .gal-name { background: linear-gradient(135deg, var(--verm-light), var(--verm)); }
-.gal-actions {
-  display: flex; align-items: center; gap: 8px; position: absolute;
-  right: 14px; top: 50%; transform: translateY(-50%);
-}
-.gal-actions button {
-  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
-  height: 34px; min-height: 34px; padding: 0 16px; border-radius: 999px;
-  font-size: 13px; font-weight: 700; line-height: 1;
-  white-space: nowrap; transition: all .16s;
-}
 .convo:not(.expanded) .gal-box { display: flex; align-items: center; }
 .convo:not(.expanded) .gal-text {
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.gal-continue { color: #fff; background: linear-gradient(135deg, var(--jade-light), var(--jade)); border: 1px solid #35625a; }
-.gal-continue:hover { filter: brightness(1.06); transform: translateY(-1px); }
-.gal-new { color: var(--ink-soft); background: rgba(255,255,255,.72); border: 1px solid var(--line-strong); }
-.gal-new:hover { color: var(--verm); border-color: var(--verm); background: #fff; }
 /* 完整态：GAL 框只承载回复/决策区，隐藏折叠态那句话 */
 .convo.expanded .gal-box { background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0; min-height: 0; }
-.convo.expanded .gal-box .gal-name, .convo.expanded .gal-box .gal-text, .convo.expanded .gal-actions { display: none; }
+.convo.expanded .gal-box .gal-name, .convo.expanded .gal-box .gal-text { display: none; }
 .reply-zone:empty { margin: 0; }
 .reply-zone { margin-top: 4px; }
 
@@ -518,7 +504,6 @@
   .ct-new { padding: 6px 9px; }
   .ct-close { min-width: 38px; width: 38px; padding: 0; }
   .ct-close span { display: none; }
-  .gal-box { padding-right: 210px; }
 }
 
 /* ================= 模式：心流 / 预言 ================= */
