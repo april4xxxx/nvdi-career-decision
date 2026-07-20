@@ -24,16 +24,18 @@ python3 -m http.server 4173
 
 然后访问 `http://localhost:4173`。静态服务器不提供 `/api`，因此对话会自动使用本地演示大脑。
 
-测试真实 API 时：
+测试真实 API 时，项目需先与 Vercel 项目绑定并拉取本地环境变量：
 
 ```bash
 npm install
-cp .env.example .env.local
-# 在 .env.local 中填写 DeepSeek Key
-vercel dev
+vercel link
+vercel env pull .env.local --environment production
+npm run local -- --listen 127.0.0.1:3000
 ```
 
-不要把 `.env.local` 提交到 GitHub。
+然后访问 `http://127.0.0.1:3000`。修改前端文件后刷新浏览器即可；修改 `/api` 后 Vercel 开发服务器会重新加载函数。不要把 `.env.local` 提交到 GitHub。
+
+不要把 `vercel dev` 配成 `package.json` 的 `dev` 脚本：Vercel 会把它识别为 Development Command 并再次调用，形成递归。本项目使用名称不同的 `local` 脚本规避该问题。
 
 ## 环境变量
 
