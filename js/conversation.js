@@ -105,7 +105,7 @@
     }
     else if (hasDraft) els.send.textContent = "发送";
     else if (pendingDecision) els.send.textContent = "继续批阅";
-    else els.send.textContent = transcript.length ? "继续对话" : "开始对话";
+    else els.send.textContent = "探讨国事";
   }
 
   // 折叠态：只有一句大臣招呼 + 输入框
