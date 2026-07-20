@@ -27,6 +27,8 @@
   var restoring = false;
   var busy = false;
   var fallbackAnnounced = false;
+  var thinkingBubble = null;
+  var MIN_THINKING_MS = 420;
 
   /* ---------- 小工具 ---------- */
   function minister() { return data.MINISTERS[ministerKey] || data.MINISTERS["顺臣"]; }
@@ -164,66 +166,103 @@
     aiHistory.push({ role: "user", content: text });
     // 若正处于决策待批，补充文本 = 再议（保留奏折，补充信息后重生成）
     if (pendingDecision) {
-      think(function () { regenerate(text); });
+      think(function () { return regenerate(text); });
       return;
     }
-    think(function () { respond(text); });
+    think(function () { return respond(text); });
   }
 
-  // 大臣「思考中…」气泡
-  function think(done) {
-    busy = true;
-    els.send.disabled = true;
+  function wait(ms) {
+    return new Promise(function (resolve) { window.setTimeout(resolve, ms); });
+  }
+
+  function showThinkingBubble() {
+    if (thinkingBubble && thinkingBubble.isConnected) return thinkingBubble;
     var t = document.createElement("div");
     t.className = "msg npc typing";
+    t.setAttribute("role", "status");
+    t.setAttribute("aria-live", "polite");
+    t.setAttribute("aria-label", minister().role + "正在思考");
     t.innerHTML = '<div class="mwrap"><div class="who">' + ui.esc(minister().role) +
-      '</div><div class="bubble"><span class="dots"><i></i><i></i><i></i></span></div></div>';
-    els.scroll.appendChild(t); scrollDown();
-    Promise.resolve()
-      .then(done)
-      .catch(function (error) {
-        console.error("[conversation] response failed", error);
-        pushMsg("sys", "", (error && error.message) || "大臣暂时无法应答，请稍后再试。");
-      })
-      .finally(function () {
-        t.remove();
-        busy = false;
-        els.send.disabled = false;
-        scrollDown();
-      });
+      '</div><div class="bubble" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span></div></div>';
+    thinkingBubble = t;
+    els.scroll.setAttribute("aria-busy", "true");
+    els.scroll.appendChild(t);
+    scrollDown();
+    return t;
+  }
+
+  function hideThinkingBubble() {
+    if (thinkingBubble) thinkingBubble.remove();
+    thinkingBubble = null;
+    els.scroll.removeAttribute("aria-busy");
+  }
+
+  // 所有 AI 生成都经过这一个回合容器：请求立即开始，气泡至少展示一个可感知的短周期。
+  function think(generate) {
+    busy = true;
+    els.send.disabled = true;
+    showThinkingBubble();
+    var startedAt = Date.now();
+    var outcome = Promise.resolve()
+      .then(generate)
+      .then(function (present) { return { present: present, error: null }; })
+      .catch(function (error) { return { present: null, error: error }; });
+
+    return outcome.then(async function (result) {
+      var remaining = MIN_THINKING_MS - (Date.now() - startedAt);
+      if (remaining > 0) await wait(remaining);
+      hideThinkingBubble();
+      busy = false;
+      els.send.disabled = false;
+      if (result.error) {
+        console.error("[conversation] response failed", result.error);
+        pushMsg("sys", "", (result.error && result.error.message) || "大臣暂时无法应答，请稍后再试。");
+      } else if (typeof result.present === "function") {
+        try {
+          result.present();
+        } catch (error) {
+          console.error("[conversation] render failed", error);
+          pushMsg("sys", "", "大臣的回复暂时无法展示，请稍后再试。");
+        }
+      }
+      scrollDown();
+    });
   }
 
   /* ---------- 核心：把一句输入交给「大脑」 ---------- */
   async function respond(text) {
     var r = await analyzeWithApi(text);
-    topic = r.topic || topic;
-    els.ctTopic.textContent = topic;
+    return function presentResponse() {
+      topic = r.topic || topic;
+      els.ctTopic.textContent = topic;
 
-    if (r.type === "dialogue") {
-      ctx.probed = rules.nextProbed(ctx.probed, r.type);
-      var dialogueText = r.message || chatReply(text);
-      pushMsg("npc", minister().role, dialogueText);
-      aiHistory.push({ role: "assistant", content: dialogueText });
-      return;
-    }
-    if (r.type === "question") {
-      ctx.probed = rules.nextProbed(ctx.probed, r.type);
-      ctx.scenarioId = r.scenarioId;
-      askQuestion(r.question);
-      return;
-    }
-    if (r.type === "decision") {
-      presentDecision(r.decision);
-    }
+      if (r.type === "dialogue") {
+        ctx.probed = rules.nextProbed(ctx.probed, r.type);
+        var dialogueText = r.message || chatReply(text);
+        pushMsg("npc", minister().role, dialogueText);
+        aiHistory.push({ role: "assistant", content: dialogueText });
+        return;
+      }
+      if (r.type === "question") {
+        ctx.probed = rules.nextProbed(ctx.probed, r.type);
+        ctx.scenarioId = r.scenarioId;
+        askQuestion(r.question);
+        return;
+      }
+      if (r.type === "decision") presentDecision(r.decision);
+    };
   }
 
   // 补充信息后重新生成（再议 / 大胆 之后走这里）
   async function regenerate(text) {
     ctx.probed = true;
     var r = await analyzeWithApi(text);
-    if (r.type === "decision") { presentDecision(r.decision); }
-    else if (r.type === "question") { askQuestion(r.question); }
-    else { pushMsg("npc", minister().role, "臣记下了。陛下可再多说一句，臣好为您拟策。"); }
+    return function presentRegeneratedResponse() {
+      if (r.type === "decision") presentDecision(r.decision);
+      else if (r.type === "question") askQuestion(r.question);
+      else pushMsg("npc", minister().role, "臣记下了。陛下可再多说一句，臣好为您拟策。");
+    };
   }
 
   function stateForApi() {
@@ -274,7 +313,7 @@
         });
         return payload.result;
       } catch (error) {
-        console.warn("[DEBUG-local-api]", error && error.status, error && error.code, error && error.message);
+        console.warn("[conversation] AI API unavailable", error && error.status, error && error.code, error && error.message);
         if (!fallbackAnnounced) {
           fallbackAnnounced = true;
           pushMsg("sys", "", "AI 驿站未连通，已自动切换为本地演示大脑。部署并配置 API Key 后会自动启用真实 AI。");
@@ -314,8 +353,10 @@
         // 追问后直接给决策；真实 AI 不可用时仍使用本地同一情景。
         think(async function () {
           var r = await analyzeWithApi(o.tag + " " + o.text);
-          if (r.type === "decision") presentDecision(r.decision);
-          else presentDecision(data.brain.genericDecision(o.text));
+          return function presentAnswerDecision() {
+            if (r.type === "decision") presentDecision(r.decision);
+            else presentDecision(data.brain.genericDecision(o.text));
+          };
         });
       });
     });
@@ -472,8 +513,10 @@
       ctx.probed = false;
       saveSession();
       think(function () {
-        pushMsg("npc", minister().role, data.brain.ministerLine(ministerKey, "bold-apology", decision));
-        pushMsg("npc", minister().role, "臣方才漏问了一处：这件事对陛下而言，是「必须做成」，还是「做了更好」？请陛下明示，臣再拟。");
+        return function presentBoldReply() {
+          pushMsg("npc", minister().role, data.brain.ministerLine(ministerKey, "bold-apology", decision));
+          pushMsg("npc", minister().role, "臣方才漏问了一处：这件事对陛下而言，是「必须做成」，还是「做了更好」？请陛下明示，臣再拟。");
+        };
       });
       return;
     }

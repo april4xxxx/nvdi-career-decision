@@ -302,6 +302,7 @@
 .msg.sys .bubble { background: rgba(230,218,191,.9); color: var(--ink-soft); font-size: 13px; border-radius: 999px; box-shadow: none; }
 /* 思考中省略号 */
 .msg.typing .dots { display: inline-flex; gap: 4px; }
+.msg.typing .bubble { min-width: 52px; display: flex; align-items: center; justify-content: center; }
 .msg.typing .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-deep); animation: dotPulse 1s infinite; }
 .msg.typing .dots i:nth-child(2) { animation-delay: .15s; }
 .msg.typing .dots i:nth-child(3) { animation-delay: .3s; }
