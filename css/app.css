@@ -175,6 +175,19 @@
 .convo.expanded { max-height: 78%; }
 .convo.expanded .convo-top { display: flex; }
 .convo.expanded .convo-scroll { display: flex; }
+/* 待批奏折态：底部对话输入栏保持可见，历史与长奏折分别在上方滚动。 */
+.convo.expanded.decision-pending {
+  height: 78%; max-height: 78%; min-height: 0;
+}
+.convo.expanded.decision-pending .convo-top,
+.convo.expanded.decision-pending .convo-input { flex: 0 0 auto; }
+.convo.expanded.decision-pending .convo-scroll {
+  flex: 0 1 25%; min-height: 64px; max-height: 22vh;
+}
+.convo.expanded.decision-pending .gal-box {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-gutter: stable;
+}
 
 /* 顶部条：当前大臣 + 主题 + 查看奏折 + 关闭（金色封皮书页样式） */
 .convo-top {
@@ -347,6 +360,11 @@
 .drawer.open { transform: none; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); }
 .drawer-head h3 { font-size: 17px; letter-spacing: .1em; }
+.drawer-close {
+  padding: 6px 11px; border-radius: 8px; background: var(--paper-2);
+  border: 1px solid var(--line-strong); color: var(--ink-soft); font-size: 13px;
+}
+.drawer-close:hover { background: #fff; border-color: var(--verm); color: var(--verm); }
 .drawer-tabs { display: flex; gap: 6px; padding: 10px 14px 0; }
 .drawer-tabs .dt { flex: 1; padding: 8px; text-align: center; font-size: 13px; border-radius: var(--r-sm) var(--r-sm) 0 0; background: var(--paper-2); border: 1px solid var(--line); border-bottom: none; }
 .drawer-tabs .dt.active { background: #fff; font-weight: 700; color: var(--verm); }

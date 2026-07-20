@@ -9,12 +9,18 @@
 
   var drawer, body, tab = "petition";
 
+  function syncTabs(which) {
+    Array.prototype.forEach.call(ui.$("#drawerTabs").querySelectorAll(".dt"), function (x) {
+      var selected = x.getAttribute("data-dt") === which;
+      x.classList.toggle("active", selected);
+      x.setAttribute("aria-selected", selected ? "true" : "false");
+    });
+  }
+
   function open(which) {
     if (which) {
       tab = which;
-      Array.prototype.forEach.call(ui.$("#drawerTabs").querySelectorAll(".dt"), function (x) {
-        x.classList.toggle("active", x.getAttribute("data-dt") === which);
-      });
+      syncTabs(which);
     }
     drawer.classList.add("open");
     render();
@@ -84,9 +90,7 @@
     Array.prototype.forEach.call(ui.$("#drawerTabs").querySelectorAll(".dt"), function (d) {
       d.addEventListener("click", function () {
         tab = d.getAttribute("data-dt");
-        Array.prototype.forEach.call(ui.$("#drawerTabs").querySelectorAll(".dt"), function (x) {
-          x.classList.toggle("active", x === d);
-        });
+        syncTabs(tab);
         render();
       });
     });

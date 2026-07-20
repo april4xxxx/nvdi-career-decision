@@ -81,11 +81,11 @@
         <aside class="drawer" id="drawer">
           <div class="drawer-head">
             <h3>奏折匣</h3>
-            <button class="panel-close" id="drawerClose">×</button>
+            <button class="drawer-close" id="drawerClose" aria-label="收起奏折匣">收起 ×</button>
           </div>
-          <div class="drawer-tabs" id="drawerTabs">
-            <div class="dt active" data-dt="petition">待办奏折</div>
-            <div class="dt" data-dt="journal">起居注</div>
+          <div class="drawer-tabs" id="drawerTabs" role="tablist" aria-label="奏折匣内容">
+            <button type="button" class="dt active" data-dt="petition" role="tab" aria-selected="true">待办奏折</button>
+            <button type="button" class="dt" data-dt="journal" role="tab" aria-selected="false">起居注</button>
           </div>
           <div class="drawer-body" id="drawerBody"></div>
         </aside>

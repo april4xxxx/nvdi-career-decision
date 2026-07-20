@@ -52,6 +52,7 @@
   function collapse() {
     expanded = false;
     els.convo.classList.remove("expanded");
+    els.convo.classList.remove("decision-pending");
     els.scroll.innerHTML = "";
     els.reply.innerHTML = "";
     pendingDecision = null;
@@ -273,6 +274,7 @@
   /* ---------- 决策奏折（黄色祥云卡，内含 再议 / 大胆） ---------- */
   function presentDecision(decision) {
     pendingDecision = { decision: decision, pathKey: "recommend" };
+    els.convo.classList.add("decision-pending");
     els.reply.innerHTML = "";
     // 大臣按风格说一句引出奏折
     pushMsg("npc", minister().role, data.brain.ministerLine(ministerKey, "decision", decision));
@@ -309,6 +311,7 @@
         '<button class="pizhu-btn bold" data-k="bold">大胆</button>' +
       '</div>';
     els.reply.appendChild(card);
+    els.galBox.scrollTop = 0;
     scrollDown();
 
     // 选择推荐/备选路径
@@ -365,6 +368,8 @@
       pushMsg("me", store.get().profile.nickname || "陛下", "朱批 · 同意：" + chosenPath.label);
       var created = store.applyPizhu("agree", decision, templates);
       pendingDecision = null;
+      els.convo.classList.remove("decision-pending");
+      els.reply.innerHTML = "";
       setSendMode("normal");
       ctx = { probed: false };
       announceDeploy(created);
@@ -385,6 +390,8 @@
       store.applyPizhu("bold", decision);
       // 大臣道歉并重新追问
       pendingDecision = null;
+      els.convo.classList.remove("decision-pending");
+      els.reply.innerHTML = "";
       setSendMode("normal");
       ctx.probed = false;
       think(function () {
