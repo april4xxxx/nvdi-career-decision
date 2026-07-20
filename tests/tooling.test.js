@@ -16,6 +16,17 @@ test("conversation thinking round awaits the async AI result", async () => {
   assert.match(source, /think\(function \(\) \{ return regenerate\(text\); \}\);/);
 });
 
+test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
+  const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
+
+  assert.match(source, /typeChar:\s*54/);
+  assert.match(source, /scene:\s*1800/);
+  assert.match(source, /window:\s*1200/);
+  assert.match(source, /readMedium:\s*2400/);
+  assert.match(source, /readLong:\s*3200/);
+  assert.match(source, /chapter:\s*1200/);
+});
+
 test("public product surfaces use the unified brand name", async () => {
   const [html, onboarding, topbar, readme, chat] = await Promise.all([
     readFile(new URL("../index.html", import.meta.url), "utf8"),

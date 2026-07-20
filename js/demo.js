@@ -10,6 +10,18 @@
   var data = App.data, store = App.store, ui = App.ui;
 
   var running = false, badge, badgeText, cancelFlag = false;
+  // 宁静观看档：先等窗口稳定，再给用户留出读完关键内容的时间。
+  var DEMO_PACE = Object.freeze({
+    typeChar: 54,
+    typeSettle: 700,
+    scene: 1800,
+    window: 1200,
+    focus: 1000,
+    readShort: 1600,
+    readMedium: 2400,
+    readLong: 3200,
+    chapter: 1200
+  });
 
   function setBadge(on, text) {
     if (!badge) { badge = ui.$("#demoBadge"); badgeText = ui.$("#demoBadgeText"); }
@@ -23,7 +35,7 @@
     var el = typeof sel === "string" ? ui.$(sel) : sel;
     if (!el) return;
     el.classList.add("demo-focus");
-    setTimeout(function () { el.classList.remove("demo-focus"); }, 900);
+    setTimeout(function () { el.classList.remove("demo-focus"); }, DEMO_PACE.focus + 400);
   }
 
   /* ---------- 演示条目 ---------- */
@@ -87,94 +99,94 @@
     input.value = "";
     for (var i = 0; i < text.length; i++) {
       input.value += text[i];
-      await sleep(speed || 34);
+      await sleep(speed || DEMO_PACE.typeChar);
       if (cancelFlag) return;
     }
-    await sleep(360);
+    await sleep(DEMO_PACE.typeSettle);
     var send = ui.$("#convoSend"); if (send) send.click();
   }
 
   async function demoDecision() {
-    App.nav.goScene("court"); await sleep(700); guard();
-    if (App.conversation) App.conversation.expand(); await sleep(500); guard();
+    App.nav.goScene("court"); await sleep(DEMO_PACE.scene); guard();
+    if (App.conversation) App.conversation.expand(); await sleep(DEMO_PACE.window); guard();
     // 输入一个真实职场情景 → 触发追问 → 给决策 → 同意生成任务
-    await typeAndSend("下周部门周会邀请我做一次行业分享，我有点犹豫"); await sleep(1200); guard();
+    await typeAndSend("下周部门周会邀请我做一次行业分享，我有点犹豫"); await sleep(DEMO_PACE.readMedium); guard();
     // 命中追问：点第一个选项
     var opt = document.querySelector("#replyZone .opt-btn");
-    if (opt) { flash(opt); await sleep(500); opt.click(); }
-    await sleep(1400); guard();
+    if (opt) { flash(opt); await sleep(DEMO_PACE.focus); opt.click(); }
+    await sleep(DEMO_PACE.readMedium); guard();
     // 决策奏折出现 → 底部主按钮变「同意」印章
-    flash(".decision-sheet"); await sleep(900); guard();
+    flash(".decision-sheet"); await sleep(DEMO_PACE.readLong); guard();
     var send = ui.$("#convoSend");
-    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(600); send.click(); }
-    await sleep(1600); guard();
+    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
+    await sleep(DEMO_PACE.readMedium); guard();
     // 前往朝堂看看生成的任务卡
-    App.nav.goScene("court"); await sleep(1200);
+    App.nav.goScene("court"); await sleep(DEMO_PACE.scene);
   }
 
   async function demoEnergy() {
     // 校准精力
-    App.topbar.openCalibrate(); await sleep(900); guard();
+    App.topbar.openCalibrate(); await sleep(DEMO_PACE.window); guard();
     var range = ui.$("#calibRange");
     if (range) { range.value = 40; range.dispatchEvent(new Event("input")); }
-    await sleep(900); guard();
+    await sleep(DEMO_PACE.readShort); guard();
     var ok = ui.$("#calibOk"); if (ok) ok.click();
-    await sleep(800); guard();
+    await sleep(DEMO_PACE.window); guard();
     // 通过对话生成一个「恢复精力」任务，投放钦天监
-    if (App.conversation) App.conversation.expand(); await sleep(500); guard();
-    await typeAndSend("最近连着加班，实在有点累，快撑不住了"); await sleep(1300); guard();
-    flash(".decision-sheet"); await sleep(800); guard();
+    if (App.conversation) App.conversation.expand(); await sleep(DEMO_PACE.window); guard();
+    await typeAndSend("最近连着加班，实在有点累，快撑不住了"); await sleep(DEMO_PACE.readMedium); guard();
+    flash(".decision-sheet"); await sleep(DEMO_PACE.readLong); guard();
     var send = ui.$("#convoSend");
-    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(500); send.click(); }
-    await sleep(1400); guard();
+    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
+    await sleep(DEMO_PACE.readMedium); guard();
     // 去钦天监完成它
-    App.nav.goScene("observatory"); await sleep(1000); guard();
+    App.nav.goScene("observatory"); await sleep(DEMO_PACE.scene); guard();
     var card = document.querySelector("#taskField .task-card:not(.done)");
-    if (card) { flash(card); await sleep(600); card.click(); }
-    await sleep(800); guard();
+    if (card) { flash(card); await sleep(DEMO_PACE.focus); card.click(); }
+    await sleep(DEMO_PACE.window); guard();
     var tcfOk = ui.$("#tcfOk"); if (tcfOk) tcfOk.click();
-    await sleep(1400);
+    await sleep(DEMO_PACE.readMedium);
   }
 
   async function demoFlow() {
     App.modes.setDemoSpeed(true);
     App.modes.switchTo("flow"); App.topbar.render();
-    await sleep(900); guard();
+    await sleep(DEMO_PACE.scene); guard();
     flash("#flowStart");
     var start = ui.$("#flowStart"); if (start) start.click();
     // 加速跑完（demoSpeed 下约数秒）
     await sleep(6500); guard();
     App.modes.setDemoSpeed(false);
     var done = ui.$("#flowDone"); if (done) done.click();
-    await sleep(600);
+    await sleep(DEMO_PACE.window);
   }
 
   async function demoProphecy() {
     // 确保有一份决策奏折
     App.modes.switchTo("prophecy"); App.topbar.render();
-    await sleep(2400); guard();
+    await sleep(DEMO_PACE.readLong); guard();
     var exit = ui.$("#prophExit"); if (exit) exit.click();
-    await sleep(600);
+    await sleep(DEMO_PACE.window);
   }
 
   async function demoLibrary() {
-    App.nav.goScene("library"); await sleep(1000); guard();
+    App.nav.goScene("library"); await sleep(DEMO_PACE.scene); guard();
     // 切到起居注
     var tabs = document.querySelectorAll("#libTabs .lib-tab");
     if (tabs[1]) { flash(tabs[1]); tabs[1].click(); }
-    await sleep(1100); guard();
+    await sleep(DEMO_PACE.readMedium); guard();
     // 切到治国之策并上传
     tabs = document.querySelectorAll("#libTabs .lib-tab");
     if (tabs[2]) { flash(tabs[2]); tabs[2].click(); }
-    await sleep(1000); guard();
+    await sleep(DEMO_PACE.readMedium); guard();
     var up = ui.$("#bookUpload"); if (up) { flash(up); up.click(); }
-    await sleep(900); guard();
+    await sleep(DEMO_PACE.window); guard();
     if (ui.$("#upTitle")) ui.$("#upTitle").value = "御批复盘·首季";
     if (ui.$("#upAuthor")) ui.$("#upAuthor").value = "陛下亲撰";
     if (ui.$("#upNote")) ui.$("#upNote").value = "总结登基以来三月之政，得失皆记，以为后鉴。";
-    await sleep(1000); guard();
+    await sleep(DEMO_PACE.readMedium); guard();
     var ok = ui.$("#upOk"); if (ok) ok.click();
-    await sleep(1200);
+    await sleep(DEMO_PACE.readShort);
   }
 
   async function demoTreasury() {
@@ -182,33 +194,33 @@
     ["first-vermilion-brush", "first-task-kiln-fire", "jade-first-restore-hundred", "first-gold", "garden-stroll", "prophecy-first"].forEach(function (id) {
       store.unlock(id);
     });
-    await sleep(600); guard();
-    App.nav.goScene("treasury"); await sleep(1100); guard();
+    await sleep(DEMO_PACE.window); guard();
+    App.nav.goScene("treasury"); await sleep(DEMO_PACE.scene); guard();
     // 切换筛选
     var chips = document.querySelectorAll(".tr-chip");
     if (chips[1]) { flash(chips[1]); chips[1].click(); }
-    await sleep(1100); guard();
+    await sleep(DEMO_PACE.readMedium); guard();
     if (chips[0]) chips[0].click();
-    await sleep(600); guard();
+    await sleep(DEMO_PACE.window); guard();
     // 打开一个成就详情
     App.treasury.showDetail("jade-full-cap-150");
-    await sleep(1800); guard();
+    await sleep(DEMO_PACE.readLong); guard();
     ui.closeModal();
-    await sleep(400);
+    await sleep(DEMO_PACE.window);
   }
 
   async function demoTour() {
-    await demoDecision(); guard(); await sleep(400);
+    await demoDecision(); guard(); await sleep(DEMO_PACE.chapter);
     // 再演示一个「探索」情景：3999 课程 → 试听备选
-    if (App.conversation) App.conversation.expand(); await sleep(500); guard();
-    await typeAndSend("看到一门 3999 的职业课程，想买又怕浪费钱"); await sleep(1200); guard();
-    var opt = document.querySelector("#replyZone .opt-btn"); if (opt) { flash(opt); await sleep(500); opt.click(); }
-    await sleep(1400); guard();
+    if (App.conversation) App.conversation.expand(); await sleep(DEMO_PACE.window); guard();
+    await typeAndSend("看到一门 3999 的职业课程，想买又怕浪费钱"); await sleep(DEMO_PACE.readMedium); guard();
+    var opt = document.querySelector("#replyZone .opt-btn"); if (opt) { flash(opt); await sleep(DEMO_PACE.focus); opt.click(); }
+    await sleep(DEMO_PACE.readMedium); guard();
     var send = ui.$("#convoSend");
-    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(500); send.click(); }
-    await sleep(1500); guard();
-    await demoFlow(); guard(); await sleep(400);
-    await demoLibrary(); guard(); await sleep(400);
+    if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
+    await sleep(DEMO_PACE.readMedium); guard();
+    await demoFlow(); guard(); await sleep(DEMO_PACE.chapter);
+    await demoLibrary(); guard(); await sleep(DEMO_PACE.chapter);
     await demoTreasury();
   }
 
