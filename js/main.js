@@ -43,6 +43,7 @@
     if (ov.classList.contains("active")) { ui.closeModal(); return; }
     var dr = ui.$("#drawer");
     if (dr && dr.classList.contains("open")) { App.drawer.close(); return; }
+    if (App.conversation && App.conversation.getState().expanded) App.conversation.collapse();
   });
 
   // 关闭弹层：点击遮罩空白处

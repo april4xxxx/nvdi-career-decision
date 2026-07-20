@@ -1,0 +1,81 @@
+{
+  "release_id": "newcomer-pilot-2026-07-20",
+  "library_id": "workplace_newcomer_year_one",
+  "source_version": "2.3.0-reviewed",
+  "target_version": "2.4.0-active-pilot",
+  "decision": "BLOCKED_TENANT_DATA_TRANSFER_POLICY",
+  "selected_module_ids": [
+    "SOP_KEY_PEOPLE_01",
+    "SOP_QUESTION_LOOP_01",
+    "SOP_SKILL_GAP_03",
+    "SOP_NEXT_90D_04"
+  ],
+  "selection_summary": [
+    {
+      "sop_id": "SOP_KEY_PEOPLE_01",
+      "title": "建立关键协作者地图",
+      "risk_tier": "GREEN",
+      "quality_score": 20,
+      "confidence": "HIGH",
+      "duplicate_decision": "KEEP_DISTINCT",
+      "overlapping_sop_ids": ["SOP_STAKEHOLDER_MAP_04"],
+      "reason": "高频入职早期问题；负责建立初始协作者地图，和61-90天的反馈来源校准边界不同。"
+    },
+    {
+      "sop_id": "SOP_QUESTION_LOOP_01",
+      "title": "建立主动提问闭环",
+      "risk_tier": "GREEN",
+      "quality_score": 20,
+      "confidence": "HIGH",
+      "duplicate_decision": "KEEP_DISTINCT",
+      "overlapping_sop_ids": [],
+      "reason": "高频、用户可控且完成标准明确；保密和指定流程已有整模块排除条件。"
+    },
+    {
+      "sop_id": "SOP_SKILL_GAP_03",
+      "title": "修补一个影响交付的能力缺口",
+      "risk_tier": "GREEN",
+      "quality_score": 20,
+      "confidence": "HIGH",
+      "duplicate_decision": "KEEP_DISTINCT",
+      "overlapping_sop_ids": [],
+      "reason": "仅处理已影响当前交付的具体能力缺口，明确排除无关学习和泛化焦虑。"
+    },
+    {
+      "sop_id": "SOP_NEXT_90D_04",
+      "title": "对齐下一阶段目标",
+      "risk_tier": "GREEN",
+      "quality_score": 20,
+      "confidence": "HIGH",
+      "duplicate_decision": "KEEP_DISTINCT",
+      "overlapping_sop_ids": ["SOP_90D_REVIEW_04"],
+      "reason": "阶段复盘后的下一周期规划；与90天复盘前后衔接但用户结果和任务不同。"
+    }
+  ],
+  "gates": {
+    "source_imported_to_project": "PASS",
+    "schema_and_taxonomy": "PASS",
+    "duplicate_and_field_validation": "PASS",
+    "historical_deepseek_dev_selected_16": "PASS",
+    "local_holdout_structure": "PASS",
+    "local_holdout_retrieval": "PASS",
+    "local_safety_structure": "PASS",
+    "local_safety_retrieval": "PASS",
+    "full_program_regression": "PASS",
+    "user_external_transfer_approval": "GRANTED_2026-07-20",
+    "fresh_external_deepseek_dev": "NOT_RUN_TENANT_POLICY",
+    "holdout_dry_run_16": "PASS",
+    "safety_dry_run_16": "PASS",
+    "external_holdout": "NOT_RUN_TENANT_POLICY",
+    "external_safety": "NOT_RUN_TENANT_POLICY"
+  },
+  "evidence": {
+    "dev_cases": ["DEV_SOP_002", "DEV_SOP_004", "DEV_SOP_014", "DEV_SOP_020"],
+    "historical_dev_scenarios_passed": 16,
+    "holdout_file": "08-首批ACTIVE模块HOLDOUT测试案例.json",
+    "safety_file": "09-首批ACTIVE模块SAFETY测试案例.json",
+    "local_test_file": "../tests/sop-pilot.test.js"
+  },
+  "activation_rule": "只有 fresh external DEV、HOLDOUT、SAFETY 全部 PASS 后，才将这四个模块和库级状态改为 ACTIVE；其余18个模块继续 REVIEWED。用户已明确授权最小范围外部评测，但系统级租户策略仍禁止向 DeepSeek 传输项目 SOP 与合成评测数据，因此外部门禁未执行。",
+  "current_action": "KEEP_ALL_MODULES_REVIEWED"
+}

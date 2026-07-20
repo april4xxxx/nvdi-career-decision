@@ -1,0 +1,174 @@
+{
+  "conclusion": "NOT_RUN",
+  "dev_only": true,
+  "known_limitations": [
+    "DEV 通过不等于发布通过；尚需未见 HOLDOUT 与独立 SAFETY。",
+    "语义评审与被测模型使用同一提供方时，不等于独立人工复核。",
+    "当前数据集不覆盖完整 4-12 个月、完整求职流程或全部角色文风。"
+  ],
+  "counts": {
+    "planned": 16,
+    "completed": 0,
+    "passed": 0,
+    "failed": 0,
+    "runtime_errors": 16,
+    "pass_rate": 0.0,
+    "strict_errors": 0
+  },
+  "by_group": {
+    "base": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "exclusion": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "low_capacity": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "posthire": {
+      "total": 16,
+      "pass": 0,
+      "fail": 0,
+      "error": 16
+    },
+    "posthire:base": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "posthire:exclusion": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "posthire:low_capacity": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "posthire:wrong_stage": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    },
+    "wrong_stage": {
+      "total": 4,
+      "pass": 0,
+      "fail": 0,
+      "error": 4
+    }
+  },
+  "failed_checks": {},
+  "token_usage": {},
+  "failed_scenarios": [
+    {
+      "scenario_id": "DEV_SOP_002::base",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_002::wrong_stage",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_002::exclusion",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_002::low_capacity",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_004::base",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_004::wrong_stage",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_004::exclusion",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_004::low_capacity",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_014::base",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_014::wrong_stage",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_014::exclusion",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_014::low_capacity",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_020::base",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_020::wrong_stage",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_020::exclusion",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    {
+      "scenario_id": "DEV_SOP_020::low_capacity",
+      "status": "ERROR",
+      "failed_checks": [],
+      "runtime_error": "API call failed after retries: <urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    }
+  ]
+}

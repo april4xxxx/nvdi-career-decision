@@ -81,11 +81,11 @@
   function completeFlow() {
     stopTimer();
     store.addFlowMinutes(25);
-    store.addEnergy(-10);
-    store.addGold(30, "flow");
-    store.addJournal("心流专注", "一次 25 分钟的深度专注，心如止水，意随笔行。");
+    var st = store.get();
+    store.addEnergy(-10, { id: "flow:" + st.dayKey + ":" + st.counters.flowMinutes, type: "flow", source: "flow" });
+    store.addJournal("心流专注", "一次 25 分钟的深度专注，心如止水，意随笔行。结算：精力 -10，心流不发金币。");
     var ss = flowVeil.querySelector(".flow-task");
-    if (ss) ss.innerHTML = '<b style="color:#e7c985">✓ 专注圆满达成</b> · 获 +30 金，功力精进';
+    if (ss) ss.innerHTML = '<b style="color:#e7c985">✓ 专注圆满达成</b> · 已记入起居注';
     var ctrl = flowVeil.querySelector(".flow-ctrl");
     if (ctrl) ctrl.innerHTML = '<button class="btn btn-gold" id="flowDone">功成身退 ▸</button>';
     var d = ui.$("#flowDone"); if (d) d.onclick = function () { switchTo("normal"); App.topbar.render(); };
@@ -105,9 +105,13 @@
       ui.$("#prophExit").onclick = function () { switchTo("normal"); App.topbar.render(); };
       return;
     }
-    store.useProphecy();
-    var recGold = (d.recommend.tasks || []).reduce(function (s, t) { return s + (t.gold || 0); }, 0);
-    var altGold = ((d.alt && d.alt.tasks) || []).reduce(function (s, t) { return s + (t.gold || 0); }, 0);
+    store.useProphecy(d.id || d.title || "default");
+    var recGold = (d.recommend.tasks || []).reduce(function (sum, task) {
+      return sum + App.economy.calculate(task, task.cat || d.category).gold;
+    }, 0);
+    var altGold = ((d.alt && d.alt.tasks) || []).reduce(function (sum, task) {
+      return sum + App.economy.calculate(task, task.cat || d.category).gold;
+    }, 0);
     var cards = [
       forecastCard("agree", "同意", "采纳推荐：" + d.recommend.label, d.recommend.text, recGold, (d.recommend.tasks || []).length),
       forecastCard("again", "再议", "留中不发，补充信息后重拟", "暂不落定，记入起居注，待信息更全再作决断。", 0, 0),

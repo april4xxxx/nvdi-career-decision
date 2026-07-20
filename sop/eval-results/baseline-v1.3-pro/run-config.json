@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-07-19T22:16:44.010086+08:00",
+  "prompt_version": "deepseek-sop-eval.v1.3",
+  "prompt_sha256": "8ff2e33b14f2ea7f51007be244a4364aad0d95be28e1488458918d332d479694",
+  "model": "deepseek-v4-pro",
+  "judge_model": "deepseek-v4-pro",
+  "judge": "semantic",
+  "base_url": "https://api.deepseek.com",
+  "temperature": 0.0,
+  "max_tokens": 2200,
+  "judge_max_tokens": 1200,
+  "max_workers": 3,
+  "suite": "both",
+  "variants": "all",
+  "scenario_count": 108,
+  "deterministic_stage_prefilter": true,
+  "structural_preflight": {
+    "posthire": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "library_modules": 22,
+        "unique_library_ids": 22,
+        "candidate_sop_id": null,
+        "test_cases": 22,
+        "missing_test_targets": []
+      }
+    },
+    "job": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "library_modules": 5,
+        "unique_library_ids": 5,
+        "candidate_sop_id": null,
+        "test_cases": 5,
+        "missing_test_targets": []
+      }
+    }
+  },
+  "source_files": {
+    "data/career-taxonomy.v2.2.json": "746fac1402612d568e0f37d5b75dbe3b3c6c764b233828bfb38c84b43aaca73b",
+    "04-职场新人SOP库.json": "59278093b0db32c48cd1d4840551e0d15438549a7b0fd6f9132c8879bc25adae",
+    "07-入职SOP测试案例.json": "41b24ff6190f57b94d065b63e448dfc8e0542d59c1d0aa436cf0c0d89779d878",
+    "05-职场求职SOP库.json": "e82fe79860fa40a16bd7c97ef34779e63ccaa0299da7f2033c73091ca70618f9",
+    "14-求职SOP测试案例.json": "775b79b02a20ddf4c6ce80e40431d89e26163cb4059a9d1860e909ffb52ccb91"
+  },
+  "api_key_source": ".env.deepseek or explicit key file"
+}

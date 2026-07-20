@@ -98,15 +98,17 @@
   function cardHtml(a, i) {
     var s = store.achState(a.id);
     var locked = !s.unlocked;
+    var dormant = a.availability === "dormant";
     var hasProg = a.target > 1 && s.cur > 0 && s.cur < a.target;
     var dots = "";
     for (var k = 1; k <= 5; k++) dots += '<i class="' + (k <= a.tier ? "on" : "") + '"></i>';
-    return '<div class="ach-card ' + (locked ? "locked" : "unlocked") + '" data-id="' + a.id + '" style="animation-delay:' + ((i % 12) * 30) + 'ms">' +
+    return '<div class="ach-card ' + (locked ? "locked" : "unlocked") + (dormant ? " dormant" : "") + '" data-id="' + a.id + '" style="animation-delay:' + ((i % 12) * 30) + 'ms">' +
       '<div class="imgwrap">' +
         '<img src="' + ui.esc(data.achImg(a)) + '" alt="" onerror="this.style.visibility=\'hidden\'" />' +
         (locked ? '<div class="lock-badge">' + lockSvg() + '</div>' : '') +
       '</div>' +
       '<div class="nm">' + ui.esc(a.name) + '</div>' +
+      (dormant ? '<div class="muted" style="font-size:10px">暂未开放</div>' : '') +
       '<div class="tierdots">' + dots + '</div>' +
       (hasProg ? '<div class="mini-prog"><div class="f" style="width:' + Math.round(s.cur / a.target * 100) + '%"></div></div>' : '') +
       '</div>';
@@ -118,6 +120,7 @@
     var s = store.achState(id);
     var m = data.CAT_META[a.cat];
     var locked = !s.unlocked;
+    var dormant = a.availability === "dormant";
     var pct = Math.min(100, Math.round(s.cur / a.target * 100));
     var refs = (a.journalRefs || []).map(function (r) { return '<span class="tag">' + ui.esc(r) + '</span>'; }).join("") || '<span class="muted">暂无关联起居注</span>';
 
@@ -131,7 +134,9 @@
       '</div>' +
       '<div class="dbody">' +
         '<div class="drow"><span class="k">达成条件</span><span class="v">' + ui.esc(a.goal) + '</span></div>' +
-        (locked
+        (dormant
+          ? '<div class="drow"><span class="k">状态</span><span class="v locked-note">暂未开放</span></div>'
+          : locked
           ? '<div class="drow"><span class="k">线索</span><span class="v">' + ui.esc(a.hint) + '</span></div>' +
             '<div class="drow"><span class="k">进度</span><span class="v" style="flex:1">' +
               '<div class="prog-big"><div class="f" style="width:' + pct + '%"></div></div>' +
@@ -139,6 +144,7 @@
             '<div class="drow"><span class="k">状态</span><span class="v locked-note">🔒 尚未解锁</span></div>'
           : '<div class="drow"><span class="k">解锁于</span><span class="v">' + ui.esc(s.date || "—") + '</span></div>') +
         '<div class="drow"><span class="k">奖赏</span><span class="v"><span class="reward-chip">' + ui.esc(a.reward) + '</span></span></div>' +
+        (s.unlocked ? '<div class="drow"><span class="k">到账状态</span><span class="v">' + (s.rewardGranted ? '已自动到账' : '正在补发') + '</span></div>' : '') +
         '<div class="drow"><span class="k">关联</span><span class="v refs">' + refs + '</span></div>' +
         '<div style="text-align:right;margin-top:16px"><button class="btn btn-gold" id="adClose">收 起</button></div>' +
       '</div></div>'

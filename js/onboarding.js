@@ -21,8 +21,9 @@
       if (el) el.classList.toggle("active", s === id);
     });
   }
-  function openModal(html) {
+  function openModal(html, className) {
     var ov = $("#overlay"), m = $("#modal");
+    m.className = "modal" + (className ? " " + className : "");
     m.innerHTML = html; ov.classList.add("active");
   }
   function closeModal() { $("#overlay").classList.remove("active"); }
@@ -33,7 +34,8 @@
     el.innerHTML =
       '<img src="' + esc(data.achImg(def)) + '" alt="" onerror="this.style.opacity=.2" />' +
       '<div><div class="tt">成就解锁 · ' + esc(data.CAT_META[def.cat].label) + '</div>' +
-      '<div class="nm">' + esc(def.name) + '</div></div>';
+      '<div class="nm">' + esc(def.name) + '</div>' +
+      '<div class="muted" style="font-size:11px">' + esc(def.reward) + ' · 已自动到账</div></div>';
     layer.appendChild(el);
     setTimeout(function () { el.remove(); }, 3000);
   }
@@ -137,7 +139,7 @@
       '<button class="btn btn-verm" id="onbEnthrone" style="padding:13px 46px;font-size:17px;">登 基 即 位 ▸</button>' +
       '</div>';
     $("#onbEnthrone").addEventListener("click", function () {
-      store.finishOnboarding({ nickname: nickname, answers: answers.slice() }, typeKey, new Date().toLocaleString("zh-CN"));
+      store.finishOnboarding({ nickname: nickname, answers: answers.slice() }, typeKey, new Date().toISOString());
       playTransition(t);
     });
   }

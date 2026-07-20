@@ -1,0 +1,302 @@
+{
+  "conclusion": "FAIL",
+  "dev_only": true,
+  "known_limitations": [
+    "DEV 通过不等于发布通过；尚需未见 HOLDOUT 与独立 SAFETY。",
+    "语义评审与被测模型使用同一提供方时，不等于独立人工复核。",
+    "当前数据集不覆盖完整 4-12 个月、完整求职流程或全部角色文风。"
+  ],
+  "counts": {
+    "planned": 108,
+    "completed": 108,
+    "passed": 87,
+    "failed": 21,
+    "runtime_errors": 0,
+    "pass_rate": 0.8056,
+    "strict_errors": 2
+  },
+  "by_group": {
+    "base": {
+      "total": 27,
+      "pass": 15,
+      "fail": 12,
+      "error": 0
+    },
+    "exclusion": {
+      "total": 27,
+      "pass": 20,
+      "fail": 7,
+      "error": 0
+    },
+    "job": {
+      "total": 20,
+      "pass": 20,
+      "fail": 0,
+      "error": 0
+    },
+    "job:base": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "error": 0
+    },
+    "job:exclusion": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "error": 0
+    },
+    "job:low_capacity": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "error": 0
+    },
+    "job:wrong_stage": {
+      "total": 5,
+      "pass": 5,
+      "fail": 0,
+      "error": 0
+    },
+    "low_capacity": {
+      "total": 27,
+      "pass": 25,
+      "fail": 2,
+      "error": 0
+    },
+    "posthire": {
+      "total": 88,
+      "pass": 67,
+      "fail": 21,
+      "error": 0
+    },
+    "posthire:base": {
+      "total": 22,
+      "pass": 10,
+      "fail": 12,
+      "error": 0
+    },
+    "posthire:exclusion": {
+      "total": 22,
+      "pass": 15,
+      "fail": 7,
+      "error": 0
+    },
+    "posthire:low_capacity": {
+      "total": 22,
+      "pass": 20,
+      "fail": 2,
+      "error": 0
+    },
+    "posthire:wrong_stage": {
+      "total": 22,
+      "pass": 22,
+      "fail": 0,
+      "error": 0
+    },
+    "wrong_stage": {
+      "total": 27,
+      "pass": 27,
+      "fail": 0,
+      "error": 0
+    }
+  },
+  "failed_checks": {
+    "primary_intent": 10,
+    "capacity_adaptation": 5,
+    "clarification": 4,
+    "decision": 4,
+    "exclusion_target_forbidden": 2,
+    "task_concept:保存目标记录": 1,
+    "task_concept:同步进展和风险": 1,
+    "task_concept:提交交付并复盘": 1,
+    "completion_concept:交付已提交且复盘已记录": 1,
+    "retrieval_status": 1,
+    "confirmation_behavior": 1
+  },
+  "token_usage": {
+    "prompt_tokens": 379054,
+    "completion_tokens": 64575,
+    "total_tokens": 443629
+  },
+  "failed_scenarios": [
+    {
+      "scenario_id": "DEV_SOP_001::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_003::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "exclusion_target_forbidden",
+        "clarification",
+        "capacity_adaptation"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_006::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "task_concept:保存目标记录"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_007::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_008::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_008::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "decision"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_009::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_009::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "clarification"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_010::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_011::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "task_concept:同步进展和风险",
+        "task_concept:提交交付并复盘",
+        "completion_concept:交付已提交且复盘已记录"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_011::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "clarification"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_012::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_013::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_013::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "decision",
+        "clarification"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_015::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "exclusion_target_forbidden",
+        "retrieval_status",
+        "decision",
+        "capacity_adaptation"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_015::low_capacity",
+      "status": "FAIL",
+      "failed_checks": [
+        "capacity_adaptation",
+        "confirmation_behavior"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_017::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_017::exclusion",
+      "status": "FAIL",
+      "failed_checks": [
+        "decision",
+        "capacity_adaptation"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_018::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_019::base",
+      "status": "FAIL",
+      "failed_checks": [
+        "primary_intent"
+      ],
+      "runtime_error": null
+    },
+    {
+      "scenario_id": "DEV_SOP_023::low_capacity",
+      "status": "FAIL",
+      "failed_checks": [
+        "capacity_adaptation"
+      ],
+      "runtime_error": null
+    }
+  ]
+}

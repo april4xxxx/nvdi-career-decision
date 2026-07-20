@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "configure:deepseek": "node scripts/configure-deepseek.mjs .env.local",
+    "check:deepseek": "node scripts/check-deepseek.mjs .env.local",
+    "validate:sop": "python3 skills/build-newcomer-sop/scripts/validate_sop.py --library sop/04-职场新人SOP库.json --taxonomy sop/data/career-taxonomy.v2.2.json --tests sop/07-入职SOP测试案例.json",
+    "build:sop": "node scripts/build-sop-runtime.mjs --library sop/04-职场新人SOP库.json --taxonomy sop/data/career-taxonomy.v2.2.json --output api/_generated/sop-runtime.js",
+    "eval:sop:pilot:dry": "python3 scripts/run-sop-evals.py --docs-dir sop --suite posthire --case-id DEV_SOP_002 --case-id DEV_SOP_004 --case-id DEV_SOP_014 --case-id DEV_SOP_020 --dry-run --output-dir sop/eval-results/pilot/dev-dry-run",
     "local": "vercel dev",
     "test": "node --test tests/*.test.js"
   },

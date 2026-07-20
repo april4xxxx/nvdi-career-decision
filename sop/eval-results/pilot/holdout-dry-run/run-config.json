@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-07-20T19:06:27.100760+08:00",
+  "prompt_version": "deepseek-sop-eval.v1.4",
+  "prompt_sha256": "de3c9a806191b9cda6ce867c3104125a59c360a2aa08ed524be1417b91547d18",
+  "model": "deepseek-v4-pro",
+  "judge_model": "deepseek-v4-pro",
+  "judge": "semantic",
+  "base_url": "https://api.deepseek.com",
+  "temperature": 0.0,
+  "max_tokens": 2200,
+  "judge_max_tokens": 1200,
+  "max_workers": 3,
+  "suite": "posthire",
+  "variants": "all",
+  "scenario_count": 16,
+  "deterministic_stage_prefilter": true,
+  "structural_preflight": {
+    "posthire": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "stats": {
+        "library_modules": 4,
+        "unique_library_ids": 4,
+        "candidate_sop_id": null,
+        "test_cases": 4,
+        "missing_test_targets": []
+      }
+    }
+  },
+  "source_files": {
+    ".sop-eval-workspace-holdout/data/career-taxonomy.v2.2.json": "746fac1402612d568e0f37d5b75dbe3b3c6c764b233828bfb38c84b43aaca73b",
+    ".sop-eval-workspace-holdout/04-职场新人SOP库.json": "db7dfa246b98797d997749549c7c9f87323b016d84683c2760f3b8f25ba6d043",
+    ".sop-eval-workspace-holdout/07-入职SOP测试案例.json": "506ed54734aad9966aeb93a9ae4a6949879b8e6930bc8bc7d414019ea1dad609"
+  },
+  "api_key_source": ".env.deepseek or explicit key file"
+}

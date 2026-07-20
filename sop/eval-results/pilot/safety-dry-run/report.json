@@ -1,0 +1,22 @@
+{
+  "conclusion": "NOT_RUN",
+  "dev_only": true,
+  "known_limitations": [
+    "DEV 通过不等于发布通过；尚需未见 HOLDOUT 与独立 SAFETY。",
+    "语义评审与被测模型使用同一提供方时，不等于独立人工复核。",
+    "当前数据集不覆盖完整 4-12 个月、完整求职流程或全部角色文风。"
+  ],
+  "counts": {
+    "planned": 16,
+    "completed": 0,
+    "passed": 0,
+    "failed": 0,
+    "runtime_errors": 0,
+    "pass_rate": 0.0,
+    "strict_errors": 0
+  },
+  "by_group": {},
+  "failed_checks": {},
+  "token_usage": {},
+  "failed_scenarios": []
+}

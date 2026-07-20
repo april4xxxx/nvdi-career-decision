@@ -1,0 +1,69 @@
+{
+  "days": 30,
+  "models": [
+    {
+      "name": "current",
+      "initialEnergy": 100,
+      "energyCap": 150,
+      "initialGold": 0,
+      "dailyEnergyReset": null,
+      "dailyEnergyGain": 0,
+      "blockWhenInsufficient": false,
+      "tiers": {
+        "LIGHT": { "minutes": 30, "cost": 1, "gold": 10, "restore": 10 },
+        "MEDIUM": { "minutes": 90, "cost": 2, "gold": 20, "restore": 20 },
+        "HEAVY": { "minutes": 240, "cost": 3, "gold": 30, "restore": 30 }
+      },
+      "recoveryGold": 0,
+      "recoveryGoldMode": "tier"
+    },
+    {
+      "name": "target-v1",
+      "initialEnergy": 100,
+      "energyCap": 150,
+      "initialGold": 0,
+      "dailyEnergyReset": null,
+      "dailyEnergyGain": 30,
+      "blockWhenInsufficient": true,
+      "tiers": {
+        "LIGHT": { "minutes": 30, "cost": 10, "gold": 10, "restore": 10 },
+        "MEDIUM": { "minutes": 90, "cost": 20, "gold": 20, "restore": 20 },
+        "HEAVY": { "minutes": 240, "cost": 30, "gold": 30, "restore": 30 }
+      },
+      "recoveryGold": 0,
+      "recoveryGoldMode": "fixed"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "low-capacity",
+      "dailyActions": [
+        { "type": "task", "tier": "LIGHT", "count": 1 },
+        { "type": "recovery", "tier": "LIGHT", "count": 1 }
+      ]
+    },
+    {
+      "name": "typical",
+      "dailyActions": [
+        { "type": "task", "tier": "LIGHT", "count": 2 },
+        { "type": "task", "tier": "MEDIUM", "count": 1 },
+        { "type": "recovery", "tier": "LIGHT", "count": 1 }
+      ]
+    },
+    {
+      "name": "high-load",
+      "dailyActions": [
+        { "type": "task", "tier": "LIGHT", "count": 1 },
+        { "type": "task", "tier": "MEDIUM", "count": 2 },
+        { "type": "task", "tier": "HEAVY", "count": 1 },
+        { "type": "recovery", "tier": "MEDIUM", "count": 1 }
+      ]
+    },
+    {
+      "name": "recovery-farmer",
+      "dailyActions": [
+        { "type": "recovery", "tier": "LIGHT", "count": 10 }
+      ]
+    }
+  ]
+}

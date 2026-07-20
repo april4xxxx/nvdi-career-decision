@@ -48,15 +48,16 @@
 
         <!-- 对话区（模块 03：GAL 折叠态 ↔ 完整对话态） -->
         <div class="convo" id="convo">
-          <!-- 顶部条：仅完整态显示（当前大臣 + 主题 + 查看奏折 + 关闭） -->
+          <!-- 顶部条：仅完整态显示（当前大臣 + 主题 + 新对话 + 查看奏折 + 收起） -->
           <div class="convo-top" id="convoTop">
             <button class="ct-minister" id="ctMinister">
               和【<span id="ctMinisterName">直臣</span>】<span class="caret">▾</span>
             </button>
             <span class="ct-topic">商讨【<span id="ctTopic">如何治国</span>】</span>
             <div class="spacer"></div>
+            <button class="ct-new" id="ctNew" aria-label="开启新对话">＋ 新对话</button>
             <button class="ct-petition" id="ctPetition">查看奏折 <b id="ctPetitionN">0</b></button>
-            <button class="ct-close" id="ctClose">×</button>
+            <button class="ct-close" id="ctClose" aria-label="收起对话" title="收起对话"><span>收起</span><b>⌄</b></button>
           </div>
 
           <!-- 完整对话滚动区：仅完整态显示 -->
@@ -66,6 +67,10 @@
           <div class="gal-box" id="galBox">
             <div class="gal-name" id="galName">近臣</div>
             <div class="gal-text" id="galText"></div>
+            <div class="gal-actions" id="galActions">
+              <button class="gal-continue" id="convoContinue">继续对话</button>
+              <button class="gal-new" id="convoNew">＋ 新对话</button>
+            </div>
             <div class="reply-zone" id="replyZone"></div>
           </div>
 
@@ -81,7 +86,7 @@
         <aside class="drawer" id="drawer">
           <div class="drawer-head">
             <h3>奏折匣</h3>
-            <button class="drawer-close" id="drawerClose" aria-label="收起奏折匣">收起 ×</button>
+            <button class="drawer-close" id="drawerClose" aria-label="关闭奏折匣" title="关闭奏折匣">×</button>
           </div>
           <div class="drawer-tabs" id="drawerTabs" role="tablist" aria-label="奏折匣内容">
             <button type="button" class="dt active" data-dt="petition" role="tab" aria-selected="true">待办奏折</button>
@@ -108,7 +113,8 @@
   <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
   <div class="demo-badge" id="demoBadge"><span class="dot"></span><span id="demoBadgeText">演示模式进行中</span></div>
 
-  <!-- ============ 脚本：data → store → 模块 → demo → main ============ -->
+  <!-- ============ 脚本：economy → data → store → 模块 → demo → main ============ -->
+  <script src="js/economy.js"></script>
   <script src="js/data.js"></script>
   <script src="js/store.js"></script>
   <script src="js/api.js"></script>
@@ -116,6 +122,7 @@
   <script src="js/panel.js"></script>
   <script src="js/topbar.js"></script>
   <script src="js/scene.js"></script>
+  <script src="js/conversation-rules.js"></script>
   <script src="js/conversation.js"></script>
   <script src="js/drawer.js"></script>
   <script src="js/modes.js"></script>

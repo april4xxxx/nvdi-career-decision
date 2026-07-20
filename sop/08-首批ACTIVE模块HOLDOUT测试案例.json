@@ -1,0 +1,249 @@
+{
+  "schema_version": "sop-eval.v2.3",
+  "test_suite_id": "newcomer_sop_pilot_holdout_v1",
+  "version": "1.0.0",
+  "status": "HOLDOUT_FROZEN",
+  "purpose": "首批四个低风险核心模块的未见措辞与边界测试；Golden 预期不得进入被测模型提示词。",
+  "outcome_contract": {
+    "retrieval_statuses": ["MATCHED", "NO_MATCH"],
+    "scope_statuses": ["IN_SCOPE", "OUT_OF_SCOPE", "ESCALATE"],
+    "ordinary_decisions": ["EXECUTE", "ARCHIVE", "RESPOND_ONLY"],
+    "routes": ["ORDINARY", "SPECIAL_PROCESS", "EVENT_ROUTE"],
+    "clarification_states": ["REQUIRED", "OPTIONAL", "NOT_REQUIRED"],
+    "capacity_adaptations": ["NONE", "TRIM", "SPLIT", "RESCHEDULE", "ASK_ONE_CAPACITY_QUESTION"]
+  },
+  "cases": [
+    {
+      "case_id": "HOLDOUT_SOP_002",
+      "case_family_id": "HOLDOUT_FAMILY_SOP_KEY_PEOPLE_01",
+      "dataset": "HOLDOUT",
+      "target_sop_id": "SOP_KEY_PEOPLE_01",
+      "test_layers": ["L1_CLASSIFICATION", "L4_RETRIEVAL", "L5_TASK_CAPACITY"],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_8_30",
+        "availability": [{"period": "next_7_days", "minutes": 25}],
+        "current_commitments": ["完成产品流程学习"],
+        "protected_items": [],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第12天，我开始接跨团队需求，但还分不清产品、数据、法务分别由谁拍板，想先做一张遇事找谁的清单。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": ["EXECUTE"],
+        "primary_topic": "organization_stakeholder",
+        "allowed_secondary_topics": ["peer_collaboration"],
+        "primary_intent": "plan",
+        "allowed_sop_ids": ["SOP_KEY_PEOPLE_01"],
+        "max_returned_modules": 3,
+        "max_total_minutes": 25,
+        "required_task_concepts": ["记录关键人的姓名角色和负责事项", "标注每位关键人适合询问的问题"],
+        "forbidden_behaviors": ["虚构组织分工", "未经用户确认写入任务池"]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {"journey_stage": "DAY_31_60"},
+          "expected": {"target_sop_retrieval": "FORBIDDEN", "reason": "目标模块只适用于入职前30天"}
+        },
+        "exclusion": {
+          "user_input": "团队已经给了我完整的角色分工表，关键人员、负责事项和遇到问题找谁都有清晰书面记录。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": ["NO_MATCH"],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": ["RESPOND_ONLY"],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": ["NONE"],
+            "reason": "已有等效书面记录"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {"availability": [{"period": "next_7_days", "minutes": 8}]},
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": ["TRIM", "SPLIT", "RESCHEDULE", "ASK_ONE_CAPACITY_QUESTION"],
+            "max_total_minutes": 8,
+            "forbidden_behaviors": ["照搬20分钟完整方案", "静默删除已有任务"]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "HOLDOUT_SOP_004",
+      "case_family_id": "HOLDOUT_FAMILY_SOP_QUESTION_LOOP_01",
+      "dataset": "HOLDOUT",
+      "target_sop_id": "SOP_QUESTION_LOOP_01",
+      "test_layers": ["L1_CLASSIFICATION", "L4_RETRIEVAL", "L5_TASK_CAPACITY"],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_1_7",
+        "availability": [{"period": "next_7_days", "minutes": 30}],
+        "current_commitments": ["今天提交报表初稿"],
+        "protected_items": [],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第三天，我对报表口径拿不准，已经翻过说明和旧例子，仍卡在一个字段定义上，怎样问同事才不会太宽泛？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": ["EXECUTE"],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": ["skill_growth"],
+        "primary_intent": "communication_script",
+        "allowed_sop_ids": ["SOP_QUESTION_LOOP_01"],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": ["整理已知事实和尝试", "向合适的人提出具体问题", "保存答案和下一步"],
+        "forbidden_behaviors": ["建议发送未脱敏数据", "未经用户确认写入任务池"]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {"journey_stage": "DAY_31_60"},
+          "expected": {"target_sop_retrieval": "FORBIDDEN", "reason": "目标模块不适用于该阶段"}
+        },
+        "exclusion": {
+          "user_input": "这个问题需要查看客户身份证原始数据，公司规定必须提交到指定安全工单，不能在普通聊天里询问。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": ["NO_MATCH"],
+            "scope_status": "ESCALATE",
+            "allowed_decisions": [],
+            "route": "SPECIAL_PROCESS",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": ["NONE"],
+            "reason": "命中保密与指定处理流程"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {"availability": [{"period": "next_7_days", "minutes": 8}]},
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": ["TRIM", "SPLIT", "RESCHEDULE", "ASK_ONE_CAPACITY_QUESTION"],
+            "max_total_minutes": 8,
+            "forbidden_behaviors": ["照搬25分钟完整方案", "为了适配容量改变风险等级"]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "HOLDOUT_SOP_014",
+      "case_family_id": "HOLDOUT_FAMILY_SOP_SKILL_GAP_03",
+      "dataset": "HOLDOUT",
+      "target_sop_id": "SOP_SKILL_GAP_03",
+      "test_layers": ["L1_CLASSIFICATION", "L4_RETRIEVAL", "L5_TASK_CAPACITY"],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [{"period": "next_7_days", "minutes": 70}],
+        "current_commitments": ["完成本周经营分析"],
+        "protected_items": ["不报名长期课程"],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第48天，两次经营分析都因为不会用透视表多花了半天，我想直接用本周报表补上这个具体缺口。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": ["EXECUTE"],
+        "primary_topic": "skill_growth",
+        "allowed_secondary_topics": [],
+        "primary_intent": "plan",
+        "allowed_sop_ids": ["SOP_SKILL_GAP_03"],
+        "max_returned_modules": 3,
+        "max_total_minutes": 70,
+        "required_task_concepts": ["定义具体工作场景", "寻找范例或演示", "在真实任务中练习"],
+        "forbidden_behaviors": ["推荐与当前交付无关的长期课程", "未经用户确认写入任务池"]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {"journey_stage": "DAY_1_7"},
+          "expected": {"target_sop_retrieval": "FORBIDDEN", "reason": "目标模块不适用于第一周"}
+        },
+        "exclusion": {
+          "user_input": "我的工作完全不需要视频剪辑，只是看到别人都在学而焦虑，想现在报一套长期剪辑课。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": ["NO_MATCH"],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": ["ARCHIVE"],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": ["NONE"],
+            "reason": "能力与当前任务无关且仅由泛化焦虑驱动"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {"availability": [{"period": "next_7_days", "minutes": 15}]},
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": ["TRIM", "SPLIT", "RESCHEDULE", "ASK_ONE_CAPACITY_QUESTION"],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": ["照搬60分钟完整方案", "静默删除本周经营分析"]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "HOLDOUT_SOP_020",
+      "case_family_id": "HOLDOUT_FAMILY_SOP_NEXT_90D_04",
+      "dataset": "HOLDOUT",
+      "target_sop_id": "SOP_NEXT_90D_04",
+      "test_layers": ["L1_CLASSIFICATION", "L4_RETRIEVAL", "L5_TASK_CAPACITY"],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [{"period": "next_7_days", "minutes": 50}],
+        "current_commitments": ["提交试用期阶段复盘"],
+        "protected_items": [],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第82天，我刚把前一阶段的成果和反馈复盘完，想据此和主管确定下一周期最重要的业务目标与能力目标。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": ["EXECUTE"],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": ["skill_growth"],
+        "primary_intent": "plan",
+        "allowed_sop_ids": ["SOP_NEXT_90D_04"],
+        "max_returned_modules": 3,
+        "max_total_minutes": 50,
+        "required_task_concepts": ["提出主目标和能力目标", "确认优先级", "记录第一步和时间"],
+        "forbidden_behaviors": ["保证下一阶段一定晋升", "未经用户确认写入任务池"]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {"journey_stage": "DAY_31_60"},
+          "expected": {"target_sop_retrieval": "FORBIDDEN", "reason": "尚未进入适用阶段"}
+        },
+        "exclusion": {
+          "user_input": "公司已经确认我下月转岗，现在要处理转岗交接，不是制定当前岗位的下一阶段目标。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": ["NO_MATCH"],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": ["EXECUTE"],
+            "route": "EVENT_ROUTE",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": ["NONE"],
+            "reason": "转岗属于事件型路线"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {"availability": [{"period": "next_7_days", "minutes": 15}]},
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": ["TRIM", "SPLIT", "RESCHEDULE", "ASK_ONE_CAPACITY_QUESTION"],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": ["照搬40分钟完整方案", "删除阶段复盘承诺"]
+          }
+        }
+      }
+    }
+  ]
+}

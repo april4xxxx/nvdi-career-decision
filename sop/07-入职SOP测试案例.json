@@ -1,0 +1,2806 @@
+{
+  "test_suite_id": "newcomer_sop_22_modules_v2.3",
+  "schema_version": "sop-eval.v2.3",
+  "version": "0.3.0",
+  "status": "DEV_BASELINE",
+  "updated_at": "2026-07-19",
+  "purpose": "验证入职0-12个月22个REVIEWED SOP模块的分类、检索、排除条件、阶段边界和容量适配；其中4-12个月为首批部分覆盖。",
+  "coverage": {
+    "base_cases": 22,
+    "variants_per_case": [
+      "wrong_stage",
+      "exclusion",
+      "low_capacity"
+    ],
+    "generated_cases_before_role_and_profile": 88
+  },
+  "execution_order": [
+    "先运行base case，验证目标模块可召回",
+    "再运行wrong_stage，验证阶段不兼容时禁止召回",
+    "再运行exclusion，验证排除条件优先",
+    "再运行low_capacity，验证模块资格与任务裁剪分离",
+    "最后对代表案例运行画像不变量和角色文风不变量测试"
+  ],
+  "outcome_contract": {
+    "retrieval_statuses": [
+      "MATCHED",
+      "NO_MATCH"
+    ],
+    "scope_statuses": [
+      "IN_SCOPE",
+      "OUT_OF_SCOPE",
+      "ESCALATE"
+    ],
+    "ordinary_decisions": [
+      "EXECUTE",
+      "ARCHIVE",
+      "RESPOND_ONLY"
+    ],
+    "routes": [
+      "ORDINARY",
+      "SPECIAL_PROCESS",
+      "EVENT_ROUTE"
+    ],
+    "clarification_states": [
+      "REQUIRED",
+      "OPTIONAL",
+      "NOT_REQUIRED"
+    ],
+    "capacity_adaptations": [
+      "NONE",
+      "TRIM",
+      "SPLIT",
+      "RESCHEDULE",
+      "ASK_ONE_CAPACITY_QUESTION"
+    ],
+    "rule": "检索、范围、普通决策、路由、追问和容量适配分别断言，不再使用allowed_outcomes混装不同层级。"
+  },
+  "dimension_contract": {
+    "journey_stage": {
+      "may_change": [
+        "eligible_sop_ids",
+        "retrieval_ranking"
+      ],
+      "must_not_change": [
+        "risk_level_without_new_risk_facts",
+        "career_phase"
+      ]
+    },
+    "user_state_and_conditions": {
+      "may_change": [
+        "applicability",
+        "clarification",
+        "decision",
+        "eligible_sop_ids"
+      ],
+      "rule": "用户状态是业务事实，命中排除条件时必须改变召回结果。"
+    },
+    "time_and_capacity": {
+      "may_change": [
+        "task_count",
+        "task_duration",
+        "schedule",
+        "capacity_question"
+      ],
+      "must_not_change": [
+        "risk_level",
+        "source_module_eligibility_without_other_fact_changes"
+      ],
+      "rule": "容量决定如何做，不单独决定SOP内容是否适用。"
+    },
+    "decision_profile": {
+      "may_change": [
+        "explanation_order",
+        "evidence_emphasis",
+        "reminder_type",
+        "task_granularity"
+      ],
+      "must_not_change": [
+        "scope_status",
+        "risk_level",
+        "decision_without_new_facts",
+        "sop_applicability"
+      ],
+      "rule": "画像用于适配表达和行动颗粒度，不作为人格判决。"
+    },
+    "role_style_id": {
+      "may_change": [
+        "rendered_text",
+        "tone",
+        "address",
+        "sentence_rhythm",
+        "humor_level"
+      ],
+      "must_not_change": [
+        "classification",
+        "risk_level",
+        "decision",
+        "sop_ids",
+        "task_actions",
+        "task_durations",
+        "done_criteria",
+        "energy_tier",
+        "confirmation_requirement"
+      ],
+      "rule": "角色渲染必须发生在结构化结果生成之后。"
+    }
+  },
+  "generated_invariance_suites": {
+    "style_invariance": {
+      "status": "WAITING_FOR_ROLE_LIST",
+      "representative_case_ids": [
+        "DEV_SOP_001",
+        "DEV_SOP_004",
+        "DEV_SOP_010",
+        "DEV_SOP_013",
+        "DEV_SOP_017",
+        "DEV_SOP_020"
+      ],
+      "role_variants": "ALL_CONFIGURED_ROLES",
+      "comparison": "结构化字段完全一致，只比较展示文案的角色命中度。"
+    },
+    "decision_profile_invariance": {
+      "representative_case_ids": [
+        "DEV_SOP_001",
+        "DEV_SOP_004",
+        "DEV_SOP_010",
+        "DEV_SOP_013",
+        "DEV_SOP_017",
+        "DEV_SOP_020"
+      ],
+      "profile_variants": [
+        {
+          "variant_id": "EVIDENCE_AUTHORITY_COMPLIANT",
+          "overrides": {
+            "decision_approach": "evidence_based",
+            "authority_response": "authority_compliant"
+          }
+        },
+        {
+          "variant_id": "ACTION_LED_AVOIDING",
+          "overrides": {
+            "decision_approach": "action_led",
+            "conflict_style": "avoiding"
+          }
+        },
+        {
+          "variant_id": "INTUITIVE_PROVING",
+          "overrides": {
+            "decision_approach": "intuitive",
+            "feedback_orientation": "proving_oriented"
+          }
+        },
+        {
+          "variant_id": "CONSULTATIVE_FAILURE_AVOIDANT",
+          "overrides": {
+            "decision_approach": "consultative",
+            "feedback_orientation": "failure_avoidant"
+          }
+        },
+        {
+          "variant_id": "TOTAL_WAR_CANDIDATE",
+          "overrides": {
+            "decision_reef_candidate": "total_war",
+            "confidence": "initial"
+          }
+        }
+      ],
+      "invariant_fields": [
+        "scope_status",
+        "risk_level",
+        "target_sop_applicability"
+      ],
+      "allowed_variations": [
+        "追问措辞",
+        "依据顺序",
+        "提醒重点",
+        "任务颗粒度"
+      ],
+      "forbidden_behavior": "把初始画像当成稳定人格，或据此改变风险、事实和SOP排除条件。"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "DEV_SOP_001",
+      "case_family_id": "FAMILY_SOP_ROLE_PRIORITY_01",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_ROLE_PRIORITY_01",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_1_7",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "完成新人培训"
+        ],
+        "protected_items": [
+          "下班后的个人休息时间"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第三天，老板只说先熟悉业务，但我不知道这周最重要的事情和完成标准，应该怎么确认？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [
+          "manager_communication"
+        ],
+        "primary_intent": "communication_script",
+        "allowed_sop_ids": [
+          "SOP_ROLE_PRIORITY_01"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "整理需要确认的问题",
+          "向直属负责人确认重点和完成标准",
+          "保存书面结论"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我入职第三天，直属负责人已经给了清晰的第一周书面计划、优先级和完成标准。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_002",
+      "case_family_id": "FAMILY_SOP_KEY_PEOPLE_01",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_KEY_PEOPLE_01",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_1_7",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 30
+          }
+        ],
+        "current_commitments": [
+          "完成本周业务学习"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第五天，我知道直属老板是谁，但产品、数据和审批问题分别该找谁还不清楚，想先理清关键协作者。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "organization_stakeholder",
+        "allowed_secondary_topics": [
+          "peer_collaboration"
+        ],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_KEY_PEOPLE_01"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": [
+          "建立关键人的书面清单",
+          "为关键人标注适合询问的问题"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我们团队只有三个人，我已经有角色分工和遇到问题找谁的清晰书面记录。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_003",
+      "case_family_id": "FAMILY_SOP_TOOL_FLOW_01",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_TOOL_FLOW_01",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_1_7",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "参加部门培训"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第二天，系统权限已经开通，但还没独立跑过一次报销审批流程，我现在先做什么？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [],
+        "primary_intent": "next_action",
+        "allowed_sop_ids": [
+          "SOP_TOOL_FLOW_01"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "列出必用工具或流程",
+          "独立跑通一个高频流程"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_31_60"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我要学习公司的核心系统，但账号权限还没有开通。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH",
+              "MATCHED"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY",
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_004",
+      "case_family_id": "FAMILY_SOP_QUESTION_LOOP_01",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_QUESTION_LOOP_01",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_8_30",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 30
+          }
+        ],
+        "current_commitments": [
+          "今天完成数据初稿"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第十天，我卡在数据口径上，自己查过文档还是不确定，又怕问题太基础，怎么向同事问比较好？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [
+          "skill_growth"
+        ],
+        "primary_intent": "communication_script",
+        "allowed_sop_ids": [
+          "SOP_QUESTION_LOOP_01"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": [
+          "说明已知事实和尝试",
+          "提出具体问题",
+          "记录答案"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我卡住的问题涉及客户敏感数据，公司规定必须走指定安全流程。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "ESCALATE",
+            "allowed_decisions": [],
+            "route": "SPECIAL_PROCESS",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_006",
+      "case_family_id": "FAMILY_SOP_EXPECTATION_30D_02",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_EXPECTATION_30D_02",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_8_30",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "准备本周1:1"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第十五天，还没有书面的30天目标，也不知道老板会怎么看我的进展，第一次1:1该怎么准备？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "onboarding_landing"
+        ],
+        "primary_intent": "prepare",
+        "allowed_sop_ids": [
+          "SOP_EXPECTATION_30D_02"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "整理对目标的当前理解",
+          "确认成功标准",
+          "保存目标记录"
+        ],
+        "required_completion_concepts": [
+          "沟通已完成，或确认请求已发送并记录等待状态"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "把等待负责人回复作为本轮完成标准"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我已经有清晰的30天书面目标、成功标准和固定复盘时间。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 15
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_007",
+      "case_family_id": "FAMILY_SOP_LANDING_DOC_02",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_LANDING_DOC_02",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_8_30",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 90
+          }
+        ],
+        "current_commitments": [
+          "完成本周小任务"
+        ],
+        "protected_items": [
+          "不占用周末"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第三周，业务、团队、工具和流程的信息散在聊天记录和好几个文档里，我想整理成自己的Landing文档。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [
+          "organization_stakeholder"
+        ],
+        "primary_intent": "template",
+        "allowed_sop_ids": [
+          "SOP_LANDING_DOC_02"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 90,
+        "required_task_concepts": [
+          "建立Landing文档",
+          "整理岗位目标、关键人、流程和工具",
+          "记录未解决问题"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我已经有一份自己持续维护的个人Landing文档，里面覆盖岗位目标、关键人、流程、工具和未解决问题。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 20
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 20,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_008",
+      "case_family_id": "FAMILY_SOP_WEEKLY_UPDATE_02",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_WEEKLY_UPDATE_02",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 30
+          }
+        ],
+        "current_commitments": [
+          "周五前提交项目初稿"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第40天，老板说看不到我的进展，团队要求发周报，给我一个轻量的周反馈结构。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "performance_visibility"
+        ],
+        "primary_intent": "template",
+        "allowed_sop_ids": [
+          "SOP_WEEKLY_UPDATE_02"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": [
+          "整理完成、进行中、下一步和风险求助",
+          "通过团队认可渠道同步"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "团队已经通过每日站会和实时看板完整同步完成项、下一步、风险和求助，不需要额外周报。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_009",
+      "case_family_id": "FAMILY_SOP_FIRST_DELIVERY_02",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_FIRST_DELIVERY_02",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_8_30",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 180
+          }
+        ],
+        "current_commitments": [
+          "周五前完成小分析"
+        ],
+        "protected_items": [
+          "今晚不加班"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第20天，基础流程已经会了，老板给了我一个边界清晰的小分析任务，想把第一次交付做好。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [
+          "performance_visibility"
+        ],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_FIRST_DELIVERY_02"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 180,
+        "required_task_concepts": [
+          "确认目标和完成标准",
+          "设置执行步骤和同步节点",
+          "提交交付物并发送反馈请求"
+        ],
+        "required_completion_concepts": [
+          "交付物已提交且反馈请求已发送或反馈已记录"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "要求等待负责人接收或回复后才算完成"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_61_90"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我还没有拿到完成任务所需的设备和系统权限，基础培训也没完成。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH",
+              "MATCHED"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY",
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 30
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 30,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_010",
+      "case_family_id": "FAMILY_SOP_WORKLOAD_ALIGN_02",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_WORKLOAD_ALIGN_02",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 60
+          }
+        ],
+        "current_commitments": [
+          "客户报告",
+          "数据修复",
+          "内部分享"
+        ],
+        "protected_items": [
+          "客户报告的合规截止时间"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第45天，我手上三个任务都说本周要，预计时间已经超过我的可用时间，我该怎么和老板确认优先级？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "workload_priority",
+        "allowed_secondary_topics": [
+          "manager_communication"
+        ],
+        "primary_intent": "decide",
+        "allowed_sop_ids": [
+          "SOP_WORKLOAD_ALIGN_02"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 60,
+        "required_task_concepts": [
+          "列出任务、期限和投入",
+          "请负责人确认排序",
+          "记录推迟、压缩或移出项"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "当前发生了需要立即处理的人身安全事件，我想先讨论三个普通任务怎么排序。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "ESCALATE",
+            "allowed_decisions": [],
+            "route": "SPECIAL_PROCESS",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 15
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_011",
+      "case_family_id": "FAMILY_SOP_INDEPENDENT_DELIVERY_03",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_INDEPENDENT_DELIVERY_03",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 240
+          }
+        ],
+        "current_commitments": [
+          "两周后完成项目"
+        ],
+        "protected_items": [
+          "每周固定客户支持时间"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第50天，已经完成过一次小交付，现在要独立推进一个范围明确的项目，帮我做执行计划。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "performance_visibility",
+        "allowed_secondary_topics": [],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_INDEPENDENT_DELIVERY_03"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 240,
+        "required_task_concepts": [
+          "编写执行计划和里程碑",
+          "同步进展和风险",
+          "提交交付并复盘"
+        ],
+        "required_completion_concepts": [
+          "交付已提交且复盘已记录"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "要求等待交付被接收后才算完成"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "这个项目的核心权限、必要培训和任务定义都还没有确定。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH",
+              "MATCHED"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY",
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 45
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 45,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_012",
+      "case_family_id": "FAMILY_SOP_PROGRESS_RISK_03",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_PROGRESS_RISK_03",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 30
+          }
+        ],
+        "current_commitments": [
+          "推进两周项目"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第50天，项目会持续两周，还有其他团队的依赖，怎么建立进展和风险同步节奏？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "workload_priority"
+        ],
+        "primary_intent": "communication_script",
+        "allowed_sop_ids": [
+          "SOP_PROGRESS_RISK_03"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": [
+          "确定同步节点",
+          "同步结论、进展、风险和求助"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "这只是一个今天半小时内能结束、没有依赖的一次性小任务。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 5
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 5,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_013",
+      "case_family_id": "FAMILY_SOP_FEEDBACK_LOOP_03",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_FEEDBACK_LOOP_03",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "本周完成报告复盘"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第65天，刚完成一份可以评价的分析报告，但不知道下一步怎么改进，想主动向老板要反馈。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "performance_visibility"
+        ],
+        "primary_intent": "prepare",
+        "allowed_sop_ids": [
+          "SOP_FEEDBACK_LOOP_03"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "选择具体成果和反馈问题",
+          "发送反馈请求或约定反馈时间",
+          "记录反馈状态和跟进安排"
+        ],
+        "required_completion_concepts": [
+          "反馈请求已发送或反馈时间已约定",
+          "待回复状态和跟进时间可被记录"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "要求先收到反馈才允许完成本轮任务"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我目前还没有任何可以展示或评价的产出，只是想泛泛问老板觉得我怎么样。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH",
+              "MATCHED"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY",
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_014",
+      "case_family_id": "FAMILY_SOP_SKILL_GAP_03",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_SKILL_GAP_03",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 90
+          }
+        ],
+        "current_commitments": [
+          "完成本周数据任务"
+        ],
+        "protected_items": [
+          "不报长期课程"
+        ],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "入职第70天，连续两次反馈都说我的SQL查询拖慢当前交付，我想用真实任务补这个能力缺口。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "skill_growth",
+        "allowed_secondary_topics": [],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_SKILL_GAP_03"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 90,
+        "required_task_concepts": [
+          "定义具体工作场景",
+          "找范例或演示",
+          "在真实任务中练习"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "当前工作完全不需要设计能力，但我因为泛化焦虑想立即系统学习UI设计。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "ARCHIVE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 20
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 20,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_015",
+      "case_family_id": "FAMILY_SOP_ACHIEVEMENT_LOG_03",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_ACHIEVEMENT_LOG_03",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_31_60",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 30
+          }
+        ],
+        "current_commitments": [
+          "整理本周工作记录"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第55天，已经做完一次分析并收到正面反馈，但没有记录成果，给我一个简短记录结构。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "performance_visibility",
+        "allowed_secondary_topics": [],
+        "primary_intent": "template",
+        "allowed_sop_ids": [
+          "SOP_ACHIEVEMENT_LOG_03"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 30,
+        "required_task_concepts": [
+          "按背景、行动、结果和证据记录成果"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我刚入职，还没有完成任何交付、获得反馈或解决实际问题。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 5
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 5,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_016",
+      "case_family_id": "FAMILY_SOP_STAKEHOLDER_MAP_04",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_STAKEHOLDER_MAP_04",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "推进跨团队项目"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第80天，项目涉及产品、数据和运营，评价也会参考多名协作者，我想重新校准关键协作者。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "organization_stakeholder",
+        "allowed_secondary_topics": [
+          "peer_collaboration"
+        ],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_STAKEHOLDER_MAP_04"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "列出影响交付和受工作影响的人",
+          "与直属负责人校准关键协作者"
+        ],
+        "required_completion_concepts": [
+          "校准已完成或校准请求已发送"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "要求等待负责人确认后才算完成"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我的职责只涉及一个分工完全清晰的小团队，所有评价都来自直属负责人。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_017",
+      "case_family_id": "FAMILY_SOP_90D_REVIEW_04",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_90D_REVIEW_04",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 90
+          }
+        ],
+        "current_commitments": [
+          "下周参加阶段评估"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第85天，下周要做90天阶段评估，想先整理成果、反馈和下一阶段建议。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "performance_visibility",
+        "allowed_secondary_topics": [
+          "manager_communication"
+        ],
+        "primary_intent": "review",
+        "allowed_sop_ids": [
+          "SOP_90D_REVIEW_04"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 90,
+        "required_task_concepts": [
+          "整理目标、成果、反馈和未完成事项",
+          "提出下一阶段建议并对齐"
+        ],
+        "required_completion_concepts": [
+          "对齐请求已发送或沟通已完成且当前状态已记录"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池",
+          "要求先获得负责人反馈才算完成"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "公司真正的阶段评估在入职六个月，现在离评估节点还很远。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "RESCHEDULE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 20
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 20,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_018",
+      "case_family_id": "FAMILY_SOP_TRANSITION_CRITERIA_04",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_TRANSITION_CRITERIA_04",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [
+          "准备试用期评估"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第75天，公司有试用期转正流程，但我不知道评估时间、材料和评价标准，应该核对什么？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "onboarding_landing",
+        "allowed_secondary_topics": [
+          "manager_communication"
+        ],
+        "primary_intent": "prepare",
+        "allowed_sop_ids": [
+          "SOP_TRANSITION_CRITERIA_04"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "确认正式时间和流程",
+          "确认材料和评价标准"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "公司明确没有试用期、转正或任何对应的阶段评估流程。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 10
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 10,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_019",
+      "case_family_id": "FAMILY_SOP_PERSONAL_PROCESS_04",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_PERSONAL_PROCESS_04",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 60
+          }
+        ],
+        "current_commitments": [
+          "本周再次完成数据报告"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第80天，已经重复做过四次周度数据报告，想把这个高频流程沉淀成自己的工作SOP。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "skill_growth",
+        "allowed_secondary_topics": [],
+        "primary_intent": "template",
+        "allowed_sop_ids": [
+          "SOP_PERSONAL_PROCESS_04"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 60,
+        "required_task_concepts": [
+          "记录触发条件和步骤",
+          "补充卡点和完成标准",
+          "安排真实任务验证和复查时间"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "目前每项工作都是第一次做，还没有出现任何重复的任务或流程模式。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 15
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_020",
+      "case_family_id": "FAMILY_SOP_NEXT_90D_04",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_NEXT_90D_04",
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ],
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 60
+          }
+        ],
+        "current_commitments": [
+          "完成阶段复盘"
+        ],
+        "protected_items": [],
+        "decision_profile": {
+          "decision_approach": "consultative",
+          "authority_response": "clarifying",
+          "conflict_style": "integrating",
+          "initiative_style": "experimental_proactive",
+          "feedback_orientation": "learning_oriented",
+          "decision_reef_candidate": "none",
+          "confidence": "initial"
+        },
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职第88天，已经完成阶段复盘，想和老板对齐下一个90天的主目标和能力目标。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "skill_growth"
+        ],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_NEXT_90D_04"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 60,
+        "required_task_concepts": [
+          "提出主目标和能力目标",
+          "确认优先级",
+          "写下第一步"
+        ],
+        "forbidden_behaviors": [
+          "忽略适用条件或排除条件",
+          "生成不存在的SOP ID",
+          "超过可用时间仍允许直接确认",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_8_30"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "reason": "目标模块与当前阶段不兼容"
+          }
+        },
+        "exclusion": {
+          "user_input": "我已经决定两周后离职，现在想安排离职前的交接和退出。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "EXECUTE"
+            ],
+            "route": "EVENT_ROUTE",
+            "clarification": "OPTIONAL",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ],
+            "reason": "命中目标模块的排除条件"
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 15
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 15,
+            "forbidden_behaviors": [
+              "照搬完整SOP导致超出容量",
+              "静默删除已有任务",
+              "为了适配容量而改写风险等级"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "case_id": "DEV_SOP_021",
+      "case_family_id": "FAMILY_SOP_AI_WORKFLOW_05",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_AI_WORKFLOW_05",
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "DAY_61_90",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 90
+          }
+        ],
+        "current_commitments": [
+          "完成本周常规交付"
+        ],
+        "protected_items": [
+          "未经批准不上传公司敏感信息"
+        ],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职两个月了，想把每周重复做的资料整理交给AI，但怕结果不可靠，怎么先跑通一个可检查的小流程？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "ai_workflow",
+        "allowed_secondary_topics": [
+          "skill_growth"
+        ],
+        "primary_intent": "plan",
+        "allowed_sop_ids": [
+          "SOP_AI_WORKFLOW_05"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 90,
+        "required_task_concepts": [
+          "划分AI与人工责任",
+          "设置验证标准",
+          "小样本试跑",
+          "保存复核点"
+        ],
+        "forbidden_behaviors": [
+          "默认允许上传公司敏感信息",
+          "跳过人工验证",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN"
+          }
+        },
+        "exclusion": {
+          "user_input": "公司明确禁止把这类资料交给AI，资料也无法脱敏或放进获批环境。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH"
+            ],
+            "scope_status": "ESCALATE",
+            "allowed_decisions": [],
+            "route": "SPECIAL_PROCESS",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ]
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 20
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 20
+          }
+        }
+      },
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ]
+    },
+    {
+      "case_id": "DEV_SOP_022",
+      "case_family_id": "FAMILY_SOP_PROJECT_OWNERSHIP_05",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_PROJECT_OWNERSHIP_05",
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "MONTH_4_6",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 90
+          }
+        ],
+        "current_commitments": [
+          "按期完成常规工作"
+        ],
+        "protected_items": [
+          "不影响本周核心交付"
+        ],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职五个月，日常工作已经稳定。我发现每周汇总数据很浪费时间，想先写一个小项目提案跟老板确认值不值得做。",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "performance_visibility",
+        "allowed_secondary_topics": [
+          "manager_communication",
+          "peer_collaboration"
+        ],
+        "primary_intent": "prepare",
+        "allowed_sop_ids": [
+          "SOP_PROJECT_OWNERSHIP_05"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 90,
+        "required_task_concepts": [
+          "定义具体问题",
+          "限制项目范围",
+          "请求优先级判断"
+        ],
+        "forbidden_behaviors": [
+          "未确认优先级就承诺完整项目",
+          "挤占已有核心交付",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_31_60"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN"
+          }
+        },
+        "exclusion": {
+          "user_input": "我入职五个月，但目前日常职责连续延期，本周新增项目还会挤掉已经确认的核心交付。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "NO_MATCH",
+              "MATCHED"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "ARCHIVE",
+              "EXECUTE"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE",
+              "RESCHEDULE"
+            ]
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 20
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 20
+          }
+        }
+      },
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ]
+    },
+    {
+      "case_id": "DEV_SOP_023",
+      "case_family_id": "FAMILY_SOP_GROWTH_1ON1_05",
+      "dataset": "DEV",
+      "target_sop_id": "SOP_GROWTH_1ON1_05",
+      "profile": {
+        "career_phase": "posthire",
+        "journey_stage": "MONTH_4_6",
+        "availability": [
+          {
+            "period": "next_7_days",
+            "minutes": 45
+          }
+        ],
+        "current_commitments": [],
+        "protected_items": [],
+        "decision_profile": {},
+        "role_style_id": "NEUTRAL_TEST"
+      },
+      "user_input": "我入职四个月，想在下次1对1里问老板我接下来应该重点发展什么，但不想只泛泛地问意见，怎么准备？",
+      "expected": {
+        "scope_status": "IN_SCOPE",
+        "risk_level": "normal",
+        "allowed_decisions": [
+          "EXECUTE"
+        ],
+        "primary_topic": "manager_communication",
+        "allowed_secondary_topics": [
+          "skill_growth",
+          "performance_visibility"
+        ],
+        "primary_intent": "prepare",
+        "allowed_sop_ids": [
+          "SOP_GROWTH_1ON1_05"
+        ],
+        "max_returned_modules": 3,
+        "max_total_minutes": 45,
+        "required_task_concepts": [
+          "整理成果和卡点",
+          "准备需要负责人判断的问题",
+          "发送议题或预约时间"
+        ],
+        "forbidden_behaviors": [
+          "把负责人回复作为本轮完成标准",
+          "承诺明确晋升结果",
+          "未经用户同意写入任务池"
+        ]
+      },
+      "variants": {
+        "wrong_stage": {
+          "profile_override": {
+            "journey_stage": "DAY_1_7"
+          },
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN"
+          }
+        },
+        "exclusion": {
+          "user_input": "我已经有明确的下一阶段目标、优先级和固定跟进时间，这次只想问一个具体交付哪里需要修改。",
+          "expected": {
+            "target_sop_retrieval": "FORBIDDEN",
+            "allowed_retrieval_statuses": [
+              "MATCHED",
+              "NO_MATCH"
+            ],
+            "scope_status": "IN_SCOPE",
+            "allowed_decisions": [
+              "EXECUTE",
+              "RESPOND_ONLY"
+            ],
+            "route": "ORDINARY",
+            "clarification": "NOT_REQUIRED",
+            "allowed_capacity_adaptations": [
+              "NONE"
+            ]
+          }
+        },
+        "low_capacity": {
+          "profile_override": {
+            "availability": [
+              {
+                "period": "next_7_days",
+                "minutes": 15
+              }
+            ]
+          },
+          "expected": {
+            "target_sop_eligibility": "UNCHANGED_UNLESS_OTHER_FACTS_CHANGE",
+            "allowed_capacity_adaptations": [
+              "TRIM",
+              "SPLIT",
+              "RESCHEDULE",
+              "ASK_ONE_CAPACITY_QUESTION"
+            ],
+            "max_total_minutes": 15
+          }
+        }
+      },
+      "test_layers": [
+        "L1_CLASSIFICATION",
+        "L4_RETRIEVAL",
+        "L5_TASK_CAPACITY"
+      ]
+    }
+  ]
+}

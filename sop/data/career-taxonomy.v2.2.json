@@ -1,0 +1,61 @@
+{
+  "version": "2.2.1",
+  "updated_at": "2026-07-19",
+  "career_phases": [
+    {"id": "job_seeking", "library_id": "workplace_job_seeking", "default_priority": "secondary"},
+    {"id": "preboarding", "library_id": "workplace_job_seeking", "default_priority": "secondary"},
+    {"id": "posthire", "library_id": "workplace_newcomer_year_one", "default_priority": "core"}
+  ],
+  "journey_stages": {
+    "job_seeking": ["DIRECTION", "PREPARATION", "APPLICATION", "INTERVIEW_OFFER"],
+    "preboarding": ["PREBOARDING"],
+    "posthire": ["DAY_1_7", "DAY_8_30", "DAY_31_60", "DAY_61_90", "MONTH_4_6", "MONTH_7_12"]
+  },
+  "content_priorities": ["core", "extended", "secondary", "event_only", "routing_only"],
+  "topics": [
+    {"id": "career_direction", "phase": "job_seeking", "priority": "secondary", "name": "职业方向"},
+    {"id": "market_research", "phase": "job_seeking", "priority": "secondary", "name": "岗位与行业研究"},
+    {"id": "transferable_skills", "phase": "job_seeking", "priority": "secondary", "name": "可迁移能力"},
+    {"id": "experience_portfolio", "phase": "job_seeking", "priority": "secondary", "name": "经验与作品集"},
+    {"id": "networking_referral", "phase": "job_seeking", "priority": "secondary", "name": "人脉与内推"},
+    {"id": "resume_application", "phase": "job_seeking", "priority": "secondary", "name": "简历与投递"},
+    {"id": "interview", "phase": "job_seeking", "priority": "secondary", "name": "面试表达"},
+    {"id": "offer_negotiation", "phase": "job_seeking", "priority": "secondary", "name": "Offer选择与谈判"},
+    {"id": "job_seeking_risk", "phase": "job_seeking", "priority": "routing_only", "name": "招聘风险"},
+    {"id": "preboarding", "phase": "preboarding", "priority": "secondary", "name": "入职前准备"},
+    {"id": "onboarding_landing", "phase": "posthire", "priority": "core", "name": "入职与Landing"},
+    {"id": "organization_stakeholder", "phase": "posthire", "priority": "core", "name": "组织关系与Stakeholder"},
+    {"id": "workload_priority", "phase": "posthire", "priority": "core", "name": "工作量与优先级"},
+    {"id": "manager_communication", "phase": "posthire", "priority": "core", "name": "向上沟通"},
+    {"id": "peer_collaboration", "phase": "posthire", "priority": "core", "name": "同事与跨部门协作"},
+    {"id": "performance_visibility", "phase": "posthire", "priority": "core", "name": "成果与可见度"},
+    {"id": "boundary_conflict", "phase": "posthire", "priority": "core", "name": "边界与冲突"},
+    {"id": "skill_growth", "phase": "posthire", "priority": "core", "name": "能力发展"},
+    {"id": "ai_workflow", "phase": "posthire", "priority": "extended", "name": "AI与工作方式"},
+    {"id": "promotion_compensation", "phase": "posthire", "priority": "event_only", "name": "晋升与加薪"},
+    {"id": "internal_transfer", "phase": "posthire", "priority": "event_only", "name": "内部转岗"},
+    {"id": "management_path", "phase": "posthire", "priority": "event_only", "name": "管理路径"},
+    {"id": "layoff_risk", "phase": "posthire", "priority": "event_only", "name": "裁员与职业风险"},
+    {"id": "resignation_exit", "phase": "posthire", "priority": "event_only", "name": "离职决策"},
+    {"id": "side_project_income", "phase": "posthire", "priority": "event_only", "name": "副业与第二收入"},
+    {"id": "toxic_workplace", "phase": "posthire", "priority": "routing_only", "name": "有毒环境"},
+    {"id": "burnout_health", "phase": "posthire", "priority": "routing_only", "name": "倦怠与健康"},
+    {"id": "workplace_rights", "phase": "posthire", "priority": "routing_only", "name": "劳动权益"}
+  ],
+  "intents": [
+    "explain",
+    "diagnose",
+    "decide",
+    "plan",
+    "next_action",
+    "communication_script",
+    "template",
+    "prepare",
+    "review",
+    "risk_check",
+    "emotional_support"
+  ],
+  "risk_levels": ["normal", "caution", "high", "emergency"],
+  "scope_statuses": ["IN_SCOPE", "OUT_OF_SCOPE", "ESCALATE"],
+  "ordinary_decisions": ["EXECUTE", "ARCHIVE", "RESPOND_ONLY"]
+}

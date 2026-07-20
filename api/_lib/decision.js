@@ -1,3 +1,5 @@
+import { calculateTaskEconomy } from "./economy.js";
+
 export const CATEGORIES = ["main", "daily", "explore", "delay", "mystic"];
 
 const taskSchema = {
@@ -6,11 +8,9 @@ const taskSchema = {
   properties: {
     title: { type: "string" },
     cat: { type: "string", enum: CATEGORIES },
-    energy: { type: "number" },
-    gold: { type: "number" },
-    restore: { type: "number" }
+    durationMinutes: { type: "number" }
   },
-  required: ["title", "cat", "energy", "gold", "restore"]
+  required: ["title", "cat", "durationMinutes"]
 };
 
 const pathSchema = {
@@ -89,12 +89,15 @@ function cleanText(value, max = 500) {
 
 function cleanTask(task, fallbackCategory) {
   const category = CATEGORIES.includes(task?.cat) ? task.cat : fallbackCategory;
+  const economy = calculateTaskEconomy(task, category);
   return {
     title: cleanText(task?.title, 80) || "推进此事的第一步",
     cat: category,
-    energy: Math.max(-50, Math.min(50, Number(task?.energy) || 0)),
-    gold: Math.max(0, Math.min(100, Number(task?.gold) || 0)),
-    restore: Math.max(0, Math.min(50, Number(task?.restore) || 0))
+    durationMinutes: economy.durationMinutes,
+    energyTier: economy.energyTier,
+    energy: economy.energy,
+    gold: economy.gold,
+    restore: economy.restore
   };
 }
 

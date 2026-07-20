@@ -1,0 +1,1125 @@
+{
+  "library_id": "workplace_newcomer_year_one",
+  "schema_version": "sop.v2.2",
+  "version": "2.3.0-reviewed",
+  "status": "MIGRATED_DRAFT",
+  "updated_at": "2026-07-19",
+  "description": "实习、正式入职或转岗进入新团队后第1天至第12个月的运行时SOP库。当前包含22个REVIEWED模块：入职0-90天19个，4-12个月首批3个；4-12个月覆盖仍待补齐。",
+  "content_priority": "PRIMARY",
+  "scope": {
+    "included": [
+      "internship",
+      "posthire_day_1_90",
+      "posthire_month_4_6",
+      "posthire_month_7_12"
+    ],
+    "core_depth": "posthire_day_1_90",
+    "event_only": [
+      "promotion_compensation",
+      "internal_transfer",
+      "management_path",
+      "layoff_risk",
+      "resignation_exit",
+      "side_project_income"
+    ]
+  },
+  "stages": [
+    {
+      "code": "DAY_1_7",
+      "status": "REVIEWED"
+    },
+    {
+      "code": "DAY_8_30",
+      "status": "REVIEWED"
+    },
+    {
+      "code": "DAY_31_60",
+      "status": "REVIEWED"
+    },
+    {
+      "code": "DAY_61_90",
+      "status": "REVIEWED"
+    },
+    {
+      "code": "MONTH_4_6",
+      "status": "PARTIAL_REVIEWED"
+    },
+    {
+      "code": "MONTH_7_12",
+      "status": "PARTIAL_REVIEWED"
+    }
+  ],
+  "selection_rules": {
+    "planning_horizon_days": 7,
+    "max_modules_per_week": 3,
+    "requires_user_confirmation": true,
+    "allow_no_match": true,
+    "must_merge_with_existing_tasks": true
+  },
+  "modules": [
+    {
+      "sop_id": "SOP_ROLE_PRIORITY_01",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "确认第一周职责与优先级",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_1_7"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [
+        "manager_communication"
+      ],
+      "supported_intents": [
+        "plan",
+        "next_action",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "role_clarity",
+        "priority",
+        "manager_communication"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "岗位目标不清楚",
+        "第一周安排不清楚",
+        "交付标准不清楚"
+      ],
+      "not_applicable_when": [
+        "直属负责人已提供清晰书面计划"
+      ],
+      "estimated_minutes": 25,
+      "tasks": [
+        {
+          "action": "整理2-3个需要确认的问题",
+          "duration_minutes": 10,
+          "done_criteria": "已写出2-3个具体问题"
+        },
+        {
+          "action": "向直属负责人确认第一周重点和完成标准",
+          "duration_minutes": 10,
+          "done_criteria": "已完成沟通或发送确认消息"
+        },
+        {
+          "action": "保存确认后的书面结论",
+          "duration_minutes": 5,
+          "done_criteria": "已记录1-3项第一周重点及完成标准"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_KEY_PEOPLE_01",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "建立关键协作者地图",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_1_7",
+        "DAY_8_30"
+      ],
+      "primary_topic": "organization_stakeholder",
+      "secondary_topics": [
+        "peer_collaboration"
+      ],
+      "supported_intents": [
+        "plan",
+        "template"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "key_people",
+        "collaboration",
+        "who_to_ask",
+        "early_collaborator_map"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "入职前30天不清楚谁负责什么",
+        "入职前30天不知道遇到问题找谁"
+      ],
+      "not_applicable_when": [
+        "关键人员、角色分工和遇事找谁已有清晰书面记录"
+      ],
+      "estimated_minutes": 20,
+      "tasks": [
+        {
+          "action": "建立直属负责人和主要协作者清单",
+          "duration_minutes": 15,
+          "done_criteria": "已记录至少3人的姓名、角色和负责事项"
+        },
+        {
+          "action": "为每位关键人写下适合询问的问题",
+          "duration_minutes": 5,
+          "done_criteria": "每位关键人至少对应1类问题"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_TOOL_FLOW_01",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "跑通一个核心工具或流程",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_1_7"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [],
+      "supported_intents": [
+        "plan",
+        "next_action"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "tools",
+        "workflow"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "岗位需要使用新系统或流程"
+      ],
+      "not_applicable_when": [
+        "系统权限尚未开通"
+      ],
+      "estimated_minutes": 30,
+      "tasks": [
+        {
+          "action": "列出当前岗位必须使用的工具和流程",
+          "duration_minutes": 10,
+          "done_criteria": "已形成工具与流程清单"
+        },
+        {
+          "action": "选择一个高频流程并独立走一遍",
+          "duration_minutes": 20,
+          "done_criteria": "已跑通流程或记录明确阻塞点"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_QUESTION_LOOP_01",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "建立主动提问闭环",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_1_7",
+        "DAY_8_30"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [
+        "skill_growth"
+      ],
+      "supported_intents": [
+        "next_action",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "active_learning",
+        "ask_for_help"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "被具体问题卡住",
+        "因为担心问题基础而不敢提问"
+      ],
+      "not_applicable_when": [
+        "问题涉及保密、安全或指定处理流程"
+      ],
+      "estimated_minutes": 25,
+      "tasks": [
+        {
+          "action": "写明已知事实、已尝试方法和具体卡点",
+          "duration_minutes": 10,
+          "done_criteria": "问题描述包含事实、尝试和卡点"
+        },
+        {
+          "action": "向合适的人提出具体问题",
+          "duration_minutes": 10,
+          "done_criteria": "问题已发送或已完成询问"
+        },
+        {
+          "action": "把答案写入个人记录",
+          "duration_minutes": 5,
+          "done_criteria": "已保存答案和下一步"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_EXPECTATION_30D_02",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "对齐前30天目标",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_8_30"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "onboarding_landing"
+      ],
+      "supported_intents": [
+        "prepare",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "expectation_alignment",
+        "one_on_one",
+        "priority"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "没有书面短期目标",
+        "不清楚负责人如何评价进展"
+      ],
+      "not_applicable_when": [
+        "已有清晰30天目标和固定复盘时间"
+      ],
+      "estimated_minutes": 35,
+      "tasks": [
+        {
+          "action": "整理自己对30天目标的当前理解",
+          "duration_minutes": 10,
+          "done_criteria": "已写出目标、优先级和疑问"
+        },
+        {
+          "action": "与直属负责人确认目标和成功标准",
+          "duration_minutes": 20,
+          "done_criteria": "已完成沟通，或已发送确认请求并记录等待状态"
+        },
+        {
+          "action": "保存确认后的目标记录",
+          "duration_minutes": 5,
+          "done_criteria": "目标记录包含结果、期限和成功标准"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_LANDING_DOC_02",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "建立个人Landing文档",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_8_30"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [
+        "organization_stakeholder"
+      ],
+      "supported_intents": [
+        "plan",
+        "template"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "landing_doc",
+        "workflow",
+        "key_people",
+        "information_hub"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "业务、团队、岗位、流程和工具信息分散"
+      ],
+      "not_applicable_when": [
+        "已有可由本人持续维护且覆盖岗位目标、关键人、流程、工具和未解决问题的等效文档"
+      ],
+      "estimated_minutes": 75,
+      "tasks": [
+        {
+          "action": "建立或汇总Landing文档并写入岗位目标和关键人",
+          "duration_minutes": 25,
+          "done_criteria": "岗位目标和关键人板块已有内容"
+        },
+        {
+          "action": "补充核心流程和常用工具",
+          "duration_minutes": 25,
+          "done_criteria": "流程和工具板块已有内容"
+        },
+        {
+          "action": "整理未解决问题及对应负责人",
+          "duration_minutes": 25,
+          "done_criteria": "每个未解决问题都有下一步或负责人"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_WEEKLY_UPDATE_02",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "建立轻量周反馈",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_8_30",
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "performance_visibility"
+      ],
+      "supported_intents": [
+        "template",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "status_update",
+        "weekly_cadence",
+        "overall_progress"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "团队需要固定周期的周反馈",
+        "负责人难以持续看到总体进展与阻塞"
+      ],
+      "not_applicable_when": [
+        "团队已有等效同步机制"
+      ],
+      "estimated_minutes": 20,
+      "tasks": [
+        {
+          "action": "整理本周完成、进行中、下一步和风险求助",
+          "duration_minutes": 15,
+          "done_criteria": "四部分均有内容或明确写无"
+        },
+        {
+          "action": "通过团队认可的渠道完成同步",
+          "duration_minutes": 5,
+          "done_criteria": "周反馈已发送或已在会议中同步"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_FIRST_DELIVERY_02",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "完成第一次小交付",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_8_30"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [
+        "performance_visibility"
+      ],
+      "supported_intents": [
+        "plan",
+        "prepare"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "first_small_delivery",
+        "guided_delivery",
+        "delivery"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "已了解基础流程",
+        "存在边界清晰的小任务"
+      ],
+      "not_applicable_when": [
+        "权限、设备或基础培训尚未完成"
+      ],
+      "estimated_minutes": null,
+      "tasks": [
+        {
+          "action": "确认任务目标和完成标准",
+          "duration_minutes": 10,
+          "done_criteria": "目标和完成标准已确认"
+        },
+        {
+          "action": "列出执行步骤和中间同步节点",
+          "duration_minutes": 15,
+          "done_criteria": "已有2-4个步骤及至少1个同步节点"
+        },
+        {
+          "action": "提交交付物并发送反馈请求",
+          "duration_minutes": null,
+          "done_criteria": "交付物已提交，且反馈请求已发送或反馈已记录"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_WORKLOAD_ALIGN_02",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "与负责人校准任务优先级",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_8_30",
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "workload_priority",
+      "secondary_topics": [
+        "manager_communication"
+      ],
+      "supported_intents": [
+        "decide",
+        "communication_script",
+        "plan"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "workload",
+        "prioritization",
+        "capacity"
+      ],
+      "recommendation_priority": "CONDITIONAL",
+      "applicable_when": [
+        "多个任务优先级冲突",
+        "工作量超过可用时间"
+      ],
+      "not_applicable_when": [
+        "存在紧急安全事件"
+      ],
+      "estimated_minutes": 30,
+      "tasks": [
+        {
+          "action": "列出任务、期限和估算投入",
+          "duration_minutes": 15,
+          "done_criteria": "任务列表包含期限和投入估算"
+        },
+        {
+          "action": "请负责人确认任务排序",
+          "duration_minutes": 10,
+          "done_criteria": "已获得明确排序或已发出确认请求"
+        },
+        {
+          "action": "记录推迟、压缩或移出的事项",
+          "duration_minutes": 5,
+          "done_criteria": "至少一个冲突已解决或升级"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_INDEPENDENT_DELIVERY_03",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "独立推进一个边界清晰的任务",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60"
+      ],
+      "primary_topic": "performance_visibility",
+      "secondary_topics": [],
+      "supported_intents": [
+        "plan",
+        "prepare"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "independent_delivery",
+        "milestone_ownership",
+        "risk_management"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "已完成至少一次小交付",
+        "已了解基本工作流程"
+      ],
+      "not_applicable_when": [
+        "缺少核心权限、培训或任务定义"
+      ],
+      "estimated_minutes": null,
+      "tasks": [
+        {
+          "action": "编写一页执行计划并确认里程碑",
+          "duration_minutes": 30,
+          "done_criteria": "计划包含目标、步骤、里程碑和风险"
+        },
+        {
+          "action": "按约定节点同步进展和风险",
+          "duration_minutes": 15,
+          "done_criteria": "至少完成一次节点同步"
+        },
+        {
+          "action": "提交交付并写简短复盘",
+          "duration_minutes": null,
+          "done_criteria": "交付已提交，且复盘包含结果和未解决风险"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_PROGRESS_RISK_03",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "建立进展和风险同步节奏",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "workload_priority"
+      ],
+      "supported_intents": [
+        "plan",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "long_running_task",
+        "risk_reporting",
+        "dependency_risk",
+        "milestone_sync"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "任务持续超过一周",
+        "任务存在依赖或不确定性"
+      ],
+      "not_applicable_when": [
+        "一次性短任务"
+      ],
+      "estimated_minutes": 15,
+      "tasks": [
+        {
+          "action": "确定下一次进展同步节点",
+          "duration_minutes": 5,
+          "done_criteria": "同步时间和对象已确定"
+        },
+        {
+          "action": "用结论、进展、风险和求助完成一次同步",
+          "duration_minutes": 10,
+          "done_criteria": "已同步四类信息或明确写无风险求助"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_FEEDBACK_LOOP_03",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "在里程碑后主动获取反馈",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "performance_visibility"
+      ],
+      "supported_intents": [
+        "prepare",
+        "communication_script"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "feedback",
+        "one_on_one",
+        "review"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "完成一个可评价成果",
+        "不确定下一步改进方向"
+      ],
+      "not_applicable_when": [
+        "尚无可评价产出"
+      ],
+      "estimated_minutes": 30,
+      "tasks": [
+        {
+          "action": "选择一个具体成果并准备2个反馈问题",
+          "duration_minutes": 10,
+          "done_criteria": "已写出成果背景和2个问题"
+        },
+        {
+          "action": "向负责人或协作者发送反馈请求或约定反馈时间",
+          "duration_minutes": 10,
+          "done_criteria": "反馈请求已发送或反馈时间已约定"
+        },
+        {
+          "action": "记录反馈状态和下一步跟进安排",
+          "duration_minutes": 10,
+          "done_criteria": "已记录待回复或已回复状态；未回复时有跟进时间，已回复时各有1点保持和调整"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_SKILL_GAP_03",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "修补一个影响交付的能力缺口",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "skill_growth",
+      "secondary_topics": [],
+      "supported_intents": [
+        "plan",
+        "next_action"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "skill_gap",
+        "active_learning"
+      ],
+      "recommendation_priority": "CONDITIONAL",
+      "applicable_when": [
+        "反馈或卡点显示某项技能正在阻碍当前任务"
+      ],
+      "not_applicable_when": [
+        "技能与当前任务无关",
+        "只是出于泛化焦虑"
+      ],
+      "estimated_minutes": 60,
+      "tasks": [
+        {
+          "action": "把能力缺口定义为一个具体工作场景",
+          "duration_minutes": 10,
+          "done_criteria": "缺口描述包含场景和期望结果"
+        },
+        {
+          "action": "找一个范例或请同事演示一次",
+          "duration_minutes": 20,
+          "done_criteria": "已获得范例或完成演示"
+        },
+        {
+          "action": "在真实任务中完成一次小练习",
+          "duration_minutes": 30,
+          "done_criteria": "已产出一个可检查的小成果"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_ACHIEVEMENT_LOG_03",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "开始记录成果证据",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60",
+        "DAY_61_90"
+      ],
+      "primary_topic": "performance_visibility",
+      "secondary_topics": [],
+      "supported_intents": [
+        "template",
+        "review"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "achievement_log",
+        "review"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "已经产生交付、反馈或问题解决记录"
+      ],
+      "not_applicable_when": [
+        "尚未产生任何工作成果"
+      ],
+      "estimated_minutes": 15,
+      "tasks": [
+        {
+          "action": "用背景、行动、结果和证据记录本周成果",
+          "duration_minutes": 15,
+          "done_criteria": "至少新增1条第三方可理解的成果记录"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_STAKEHOLDER_MAP_04",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "校准关键协作者与反馈来源",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_61_90"
+      ],
+      "primary_topic": "organization_stakeholder",
+      "secondary_topics": [
+        "peer_collaboration"
+      ],
+      "supported_intents": [
+        "plan",
+        "template"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "cross_team_stakeholder",
+        "evaluation_feedback_source",
+        "late_onboarding_calibration"
+      ],
+      "recommendation_priority": "OPTIONAL",
+      "applicable_when": [
+        "涉及跨团队协作",
+        "评价依赖多名协作者反馈"
+      ],
+      "not_applicable_when": [
+        "职责只涉及单一小团队和直属负责人"
+      ],
+      "estimated_minutes": 30,
+      "tasks": [
+        {
+          "action": "列出受自己工作影响和影响自己交付的人",
+          "duration_minutes": 15,
+          "done_criteria": "已形成关键协作者初稿"
+        },
+        {
+          "action": "向直属负责人校准关键协作者",
+          "duration_minutes": 15,
+          "done_criteria": "已完成校准，或已发送包含2-5名候选人的校准请求"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_90D_REVIEW_04",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "完成90天阶段复盘",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_61_90"
+      ],
+      "primary_topic": "performance_visibility",
+      "secondary_topics": [
+        "manager_communication"
+      ],
+      "supported_intents": [
+        "review",
+        "prepare"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "review",
+        "feedback",
+        "next_phase"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "接近第90天或正式阶段评估"
+      ],
+      "not_applicable_when": [
+        "公司阶段节点明显不同且尚未接近真实节点"
+      ],
+      "estimated_minutes": 60,
+      "tasks": [
+        {
+          "action": "整理目标、成果、反馈和未完成事项",
+          "duration_minutes": 40,
+          "done_criteria": "四部分均有内容或明确写无"
+        },
+        {
+          "action": "提出下一阶段建议并与负责人对齐",
+          "duration_minutes": 20,
+          "done_criteria": "对齐请求已发送或沟通已完成，且反馈或下一阶段目标的当前状态已记录"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_TRANSITION_CRITERIA_04",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "核对阶段评估标准",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_61_90"
+      ],
+      "primary_topic": "onboarding_landing",
+      "secondary_topics": [
+        "manager_communication"
+      ],
+      "supported_intents": [
+        "prepare",
+        "next_action"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "probation",
+        "transition"
+      ],
+      "recommendation_priority": "CONDITIONAL",
+      "applicable_when": [
+        "公司存在转正、试用期或阶段评估流程"
+      ],
+      "not_applicable_when": [
+        "没有相应流程"
+      ],
+      "estimated_minutes": 30,
+      "tasks": [
+        {
+          "action": "从正式文件或HR处确认评估时间和流程",
+          "duration_minutes": 15,
+          "done_criteria": "已记录时间、流程和信息来源"
+        },
+        {
+          "action": "向直属负责人确认材料和评价标准",
+          "duration_minutes": 15,
+          "done_criteria": "已记录所需材料和评价标准"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_PERSONAL_PROCESS_04",
+      "version": "1.1.0",
+      "status": "REVIEWED",
+      "title": "沉淀一份个人工作SOP",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_61_90"
+      ],
+      "primary_topic": "skill_growth",
+      "secondary_topics": [],
+      "supported_intents": [
+        "plan",
+        "template"
+      ],
+      "content_priority": "extended",
+      "retrieval_tags": [
+        "workflow",
+        "review"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "已经重复完成过某类任务或流程"
+      ],
+      "not_applicable_when": [
+        "尚未出现重复工作模式"
+      ],
+      "estimated_minutes": 40,
+      "tasks": [
+        {
+          "action": "选择一个高频流程并记录触发条件和步骤",
+          "duration_minutes": 25,
+          "done_criteria": "文档包含触发条件和完整步骤"
+        },
+        {
+          "action": "补充常见卡点和完成标准",
+          "duration_minutes": 10,
+          "done_criteria": "至少记录1个卡点和完成标准"
+        },
+        {
+          "action": "安排下一次真实任务中的验证",
+          "duration_minutes": 5,
+          "done_criteria": "已记录验证场景、复查时间和验证后需要更新的字段"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_NEXT_90D_04",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "对齐下一阶段目标",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_61_90"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "skill_growth"
+      ],
+      "supported_intents": [
+        "plan",
+        "prepare"
+      ],
+      "content_priority": "core",
+      "retrieval_tags": [
+        "next_phase",
+        "expectation_alignment"
+      ],
+      "recommendation_priority": "REQUIRED_CANDIDATE",
+      "applicable_when": [
+        "已完成阶段复盘并准备进入下一周期"
+      ],
+      "not_applicable_when": [
+        "即将离职或转岗",
+        "正在处理需要专门升级的问题"
+      ],
+      "estimated_minutes": 40,
+      "tasks": [
+        {
+          "action": "基于反馈提出一个主目标和一个能力目标",
+          "duration_minutes": 15,
+          "done_criteria": "两个目标均有预期结果"
+        },
+        {
+          "action": "与直属负责人确认优先级",
+          "duration_minutes": 20,
+          "done_criteria": "已确认目标顺序或已发送确认请求"
+        },
+        {
+          "action": "写下下一阶段第一步",
+          "duration_minutes": 5,
+          "done_criteria": "第一步包含动作和时间"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_AI_WORKFLOW_05",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "建立可验证的AI辅助工作流",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "DAY_31_60",
+        "DAY_61_90",
+        "MONTH_4_6"
+      ],
+      "primary_topic": "ai_workflow",
+      "secondary_topics": [
+        "skill_growth"
+      ],
+      "supported_intents": [
+        "plan",
+        "prepare",
+        "next_action"
+      ],
+      "content_priority": "extended",
+      "retrieval_tags": [
+        "ai_assisted_workflow",
+        "human_review",
+        "verification_loop"
+      ],
+      "recommendation_priority": "CONDITIONAL",
+      "applicable_when": [
+        "用户希望把AI用于一个重复或边界清晰的工作流程",
+        "用户能对最终结果承担检查责任"
+      ],
+      "not_applicable_when": [
+        "公司明确禁止该任务使用AI",
+        "任务包含无法脱敏且不得进入获批AI环境的信息"
+      ],
+      "estimated_minutes": 60,
+      "tasks": [
+        {
+          "action": "写明AI负责、人工负责和禁止交给AI的环节",
+          "duration_minutes": 15,
+          "done_criteria": "已形成三类边界清单"
+        },
+        {
+          "action": "为输出设置至少两项可检查标准",
+          "duration_minutes": 15,
+          "done_criteria": "已写出至少两项验证标准和检查方式"
+        },
+        {
+          "action": "用一个小样本跑通计划、生成、验证和修正流程",
+          "duration_minutes": 20,
+          "done_criteria": "已完成一个小样本并记录至少一处修正"
+        },
+        {
+          "action": "保存可复用步骤和人工复核点",
+          "duration_minutes": 10,
+          "done_criteria": "已保存步骤、输入边界和复核点"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_PROJECT_OWNERSHIP_05",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "提出一个边界清晰的小项目",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "MONTH_4_6"
+      ],
+      "primary_topic": "performance_visibility",
+      "secondary_topics": [
+        "manager_communication",
+        "peer_collaboration"
+      ],
+      "supported_intents": [
+        "plan",
+        "prepare",
+        "communication_script"
+      ],
+      "content_priority": "extended",
+      "retrieval_tags": [
+        "project_ownership",
+        "problem_definition",
+        "small_project_proposal"
+      ],
+      "recommendation_priority": "CONDITIONAL",
+      "applicable_when": [
+        "用户已能稳定完成日常职责",
+        "用户观察到一个具体且可验证的流程问题"
+      ],
+      "not_applicable_when": [
+        "当前职责交付仍不稳定",
+        "新增项目会挤占已确认的更高优先级任务"
+      ],
+      "estimated_minutes": 60,
+      "tasks": [
+        {
+          "action": "用现状、影响和证据描述一个具体问题",
+          "duration_minutes": 20,
+          "done_criteria": "问题描述包含现状、影响和至少一项可检查证据"
+        },
+        {
+          "action": "写一页小项目提案并限制范围",
+          "duration_minutes": 25,
+          "done_criteria": "提案包含目标、非目标、最小产出、投入和验证方式"
+        },
+        {
+          "action": "向负责人发送提案并请求优先级判断",
+          "duration_minutes": 15,
+          "done_criteria": "提案已发送，且请求中包含是否值得做和应排在何处"
+        }
+      ]
+    },
+    {
+      "sop_id": "SOP_GROWTH_1ON1_05",
+      "version": "1.0.0",
+      "status": "REVIEWED",
+      "title": "准备一次成长型1对1沟通",
+      "career_phase": "posthire",
+      "journey_stages": [
+        "MONTH_4_6",
+        "MONTH_7_12"
+      ],
+      "primary_topic": "manager_communication",
+      "secondary_topics": [
+        "skill_growth",
+        "performance_visibility"
+      ],
+      "supported_intents": [
+        "prepare",
+        "communication_script",
+        "plan"
+      ],
+      "content_priority": "extended",
+      "retrieval_tags": [
+        "growth_one_on_one",
+        "development_conversation",
+        "trajectory_check"
+      ],
+      "recommendation_priority": "OPTIONAL",
+      "applicable_when": [
+        "用户希望与负责人讨论未来一段时间的发展重点",
+        "用户已有近期成果或反馈可作为讨论依据"
+      ],
+      "not_applicable_when": [
+        "本轮只需要针对一个具体交付获取反馈",
+        "下一阶段目标和跟进时间已经明确记录"
+      ],
+      "estimated_minutes": 35,
+      "tasks": [
+        {
+          "action": "整理近期成果、卡点和希望发展的一个方向",
+          "duration_minutes": 15,
+          "done_criteria": "三部分均有至少一条可讨论内容"
+        },
+        {
+          "action": "准备两个需要负责人判断的问题",
+          "duration_minutes": 10,
+          "done_criteria": "已写出两个会影响后续行动的问题"
+        },
+        {
+          "action": "发送1对1议题或预约沟通时间",
+          "duration_minutes": 10,
+          "done_criteria": "议题已发送或沟通时间已预约"
+        }
+      ]
+    }
+  ]
+}

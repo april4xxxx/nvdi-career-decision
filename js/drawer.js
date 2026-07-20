@@ -36,7 +36,7 @@
   function renderPetitions() {
     var st = store.get();
     // 待办奏折 = 已投放但未办结的地图任务
-    var pending = st.mapTasks.filter(function (t) { return !t.done; });
+    var pending = st.mapTasks.filter(function (t) { return !t.done && !t.expired; });
     if (!pending.length) {
       body.innerHTML = '<div class="empty-hint">奏折已尽批阅<br/>陛下与大臣商讨国事后，任务将投放至此。</div>';
       return;
@@ -45,10 +45,14 @@
       var sc = data.sceneById(t.scene);
       var cat = data.CATEGORIES[t.cat];
       return '<div class="petition-item">' +
-        '<h5>' + ui.esc(t.title) + '</h5>' +
-        '<div class="meta">' + (cat ? cat.label : "") + ' · ' + ui.esc(sc ? sc.name : "") +
-          ' · 耗精力 ' + Math.abs(t.energy) + ' · 赏 ' + (t.gold || 0) + ' 金</div>' +
-        (t.from ? '<div class="muted" style="font-size:12px">出自「' + ui.esc(t.from) + '」</div>' : '') +
+        '<h5>' + (t.isDailyMystic ? '<span class="mystic-inline-label">天象·' + ui.esc(t.mysticName || "微探索") + '</span>' : '') + ui.esc(t.title) + '</h5>' +
+        (t.isDailyMystic && t.mysticSign ? '<div class="muted" style="font-size:12px">「' + ui.esc(t.mysticSign) + '」</div>' : '') +
+        '<div class="meta">' + (t.isDailyMystic ? "微探索" : (cat ? cat.label : "")) + ' · ' + ui.esc(sc ? sc.name : "") +
+          ' · ' + (t.restore ? '恢复精力 +' + t.restore : '耗精力 ' + Math.abs(t.energy)) +
+          ' · 约 ' + (t.durationMinutes || 30) + ' 分钟 · ' +
+          (t.restore ? '无金币奖励' : '赏 ' + (t.gold || 0) + ' 金') + '</div>' +
+        (t.from && !t.isDailyMystic ? '<div class="muted" style="font-size:12px">源自决策「' + ui.esc(t.from) + '」</div>' : '') +
+        (t.knowledgeRefs && t.knowledgeRefs.length ? '<div class="muted" style="font-size:12px">参考「' + t.knowledgeRefs.map(ui.esc).join('、') + '」</div>' : '') +
         '<div class="pi-btns" style="margin-top:8px;display:flex;gap:8px">' +
           '<button class="btn go" data-scene="' + t.scene + '" style="padding:6px 12px">前往场景 ▸</button>' +
           '<button class="btn btn-jade done" data-task="' + t.id + '" style="padding:6px 12px">呈报办结 ✓</button>' +

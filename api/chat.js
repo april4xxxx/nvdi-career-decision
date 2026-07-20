@@ -2,9 +2,10 @@ import { decisionResponseSchema, normalizeDecisionResponse } from "./_lib/decisi
 import { deepseekFetch, extractDeepSeekText } from "./_lib/deepseek.js";
 import { errorResponse, HttpError, json, readJson } from "./_lib/http.js";
 import { checkRateLimit, clientIp } from "./_lib/rate-limit.js";
+import { compactSopForPrompt, retrieveSopCandidates } from "./_lib/sop-retrieval.js";
 
 const PUBLIC_KNOWLEDGE = `
-《女帝职场决策原则》：先判断闲聊、追问或可决策；关键信息不足只追问一轮，之后基于明确假设给临时方案。决策必须呈现投入、收益、机会成本、推荐路径和可选备选路径，并拆成 1-4 个今天可执行的小任务。优先选择低风险、可验证、可退出的行动。任务分类：main 为岗位胜任和核心交付；daily 为例行协作；explore 为低风险试探；delay 为长期搁置事项；mystic 为休息恢复。普通任务精力 2-20、金币 5-40；恢复任务使用 restore 5-50。不得虚构公司制度、薪资或项目背景；医疗、法律、财务问题提示咨询专业人士。
+《女帝职场决策原则》：先判断闲聊、追问或可决策；关键信息不足只追问一轮，之后基于明确假设给临时方案。决策必须呈现投入、收益、机会成本、推荐路径和可选备选路径，并拆成 1-4 个今天可执行的小任务。优先选择低风险、可验证、可退出的行动。任务分类：main 为岗位胜任和核心交付；daily 为例行协作；explore 为低风险试探；delay 为长期搁置事项；mystic 为休息恢复。模型只估算任务时长，程序按固定档位结算：5-30 分钟耗 10 精力、奖 10 金；31-90 分钟耗 20 精力、奖 20 金；91-240 分钟耗 30 精力、奖 30 金。恢复使用独立档位：10-15 分钟恢复 10，30-45 分钟恢复 20，60-90 分钟恢复 30；恢复任务不发金币且不计普通任务数。金币只在普通任务确认完成后发放。不得虚构公司制度、薪资或项目背景；医疗、法律、财务问题提示咨询专业人士。
 `.trim();
 
 const SYSTEM_PROMPT = `
@@ -15,8 +16,9 @@ const SYSTEM_PROMPT = `
 - 最多追问一轮，每次给 2-3 个短选项；若历史里已经追问过，必须给出带合理假设的临时决策。
 - 决策必须说明投入、收益、机会成本，并给一个推荐方案和一个可为空的备选方案。
 - 推荐方案拆成 1-4 个今天可以执行的任务。任务分类只能是 main、daily、explore、delay、mystic。
-- energy 表示精力消耗，通常 2-20；恢复任务用 restore 5-50，energy 可为负数；gold 通常 5-40。
-- 使用提供的典籍片段时，把实际使用的典籍名放入 sources；没有使用则返回空数组。
+- 每个任务必须给出 durationMinutes（5-240 分钟）。不要生成 energy、gold 或 restore，这些由程序按时长固定计算。
+- 使用提供的典籍或已发布 SOP 时，把实际使用的典籍名或 SOP 的 source_label 原样放入 sources；没有使用则返回空数组。
+- 已发布 SOP 只是候选模板：必须再次核对 applicable_when，任何 not_applicable_when 命中时不得使用，也不得通过删减步骤绕过整个模块的排除条件。
 - 不虚构用户公司制度、薪资、医疗或法律事实；证据不足时明确假设，并给可逆的小步验证。
 
 表达风格由请求中的 minister 决定：直臣先结论再证据，顺臣先承接情绪再建议，卦师优先寻找可试探且可退出的第三条路。
@@ -32,9 +34,18 @@ function cleanHistory(history) {
 }
 
 function cleanState(state) {
+  const day = Math.max(1, Math.min(365, Math.round(Number(state?.day) || 1)));
+  const journeyStage = day <= 7 ? "DAY_1_7"
+    : day <= 30 ? "DAY_8_30"
+      : day <= 60 ? "DAY_31_60"
+        : day <= 90 ? "DAY_61_90"
+          : day <= 180 ? "MONTH_4_6" : "MONTH_7_12";
   return {
     nickname: String(state?.nickname || "陛下").slice(0, 20),
     empressType: String(state?.empressType || "").slice(0, 30),
+    careerPhase: "posthire",
+    day,
+    journeyStage,
     energy: Number(state?.energy) || 0,
     gold: Number(state?.gold) || 0,
     scene: String(state?.scene || "court").slice(0, 30),
@@ -52,7 +63,10 @@ function cleanKnowledge(knowledge) {
     const title = String(item?.title || item?.fileName || "用户典籍").trim().slice(0, 80);
     const content = String(item?.content || "").trim().slice(0, Math.min(remaining, 5000));
     if (!content) continue;
-    documents.push({ title, content });
+    const journeyStages = (Array.isArray(item?.journeyStages) ? item.journeyStages : [])
+      .filter((stage) => ["DAY_1_7", "DAY_8_30", "DAY_31_60", "DAY_61_90", "MONTH_4_6", "MONTH_7_12"].includes(stage))
+      .slice(0, 2);
+    documents.push({ title, content, journeyStages });
     remaining -= content.length;
   }
   return documents;
@@ -74,9 +88,11 @@ export default {
 
       const appState = cleanState(body?.state);
       const knowledge = cleanKnowledge(body?.knowledge);
+      const sopCandidates = retrieveSopCandidates({ message, journeyStage: appState.journeyStage });
       const knowledgeBlock = [
         "公共典籍《女帝职场决策原则》：\n" + PUBLIC_KNOWLEDGE,
-        ...knowledge.map((item) => `用户典籍《${item.title}》：\n${item.content}`)
+        ...knowledge.map((item) => `用户典籍《${item.title}》${item.journeyStages.length ? `（适用阶段：${item.journeyStages.join("、")}）` : ""}：\n${item.content}`),
+        ...(sopCandidates.length ? ["已发布 SOP 候选（最多使用 3 个，排除条件优先）：\n" + JSON.stringify(sopCandidates.map(compactSopForPrompt))] : [])
       ].join("\n\n---\n\n");
       const contextMessage = [
         "当前大臣：" + String(body?.minister || "顺臣").slice(0, 20),
@@ -104,13 +120,24 @@ export default {
       try { parsed = JSON.parse(outputText); }
       catch { throw new HttpError(502, "AI 奏折格式异常，请再试一次", "INVALID_AI_RESPONSE"); }
 
+      const result = normalizeDecisionResponse(parsed);
+      if (result.decision) {
+        const allowedSources = new Set([
+          "女帝职场决策原则",
+          "女帝职场决策原则.md",
+          ...knowledge.map((item) => item.title),
+          ...sopCandidates.map((module) => module.source_label)
+        ]);
+        result.decision.sources = result.decision.sources.filter((source) => allowedSources.has(source));
+      }
       return json({
-        result: normalizeDecisionResponse(parsed),
+        result,
         meta: {
           mode: "deepseek",
           model: response.model || payload.model,
           usedKnowledgeBase: true,
           userKnowledgeDocuments: knowledge.length,
+          publishedSopCandidates: sopCandidates.map((module) => module.sop_id),
           responseId: response.id || null
         }
       });

@@ -167,7 +167,6 @@
           cover: covers[store.get().books.length % 3],
           remote: true, fileName: result.book.fileName, status: result.book.status
         });
-        store.addGold(20, "library");
         store.addJournal("藏经纳典", "陛下亲纳《" + title + "》入 AI 决策知识。后续奏对可参考此典。" );
         ui.closeModal();
         if (tab === "books") renderBody();

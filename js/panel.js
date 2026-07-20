@@ -9,15 +9,40 @@
   var data = App.data, store = App.store, ui = App.ui;
 
   var sidebar;
+  var sidebarScrollTop = 0;
+
+  function rememberSidebarScroll() {
+    var inner = sidebar && sidebar.querySelector(".sb-inner");
+    if (inner) sidebarScrollTop = inner.scrollTop;
+  }
+
+  function restoreSidebarScroll() {
+    var inner = sidebar && sidebar.querySelector(".sb-inner");
+    if (!inner) return;
+    var target = sidebarScrollTop;
+    function apply() {
+      inner.scrollTop = Math.min(target, Math.max(0, inner.scrollHeight - inner.clientHeight));
+    }
+    apply();
+    requestAnimationFrame(apply);
+    inner.addEventListener("scroll", function () {
+      sidebarScrollTop = inner.scrollTop;
+    }, { passive: true });
+  }
 
   function mapItems() {
     var st = store.get();
     return data.SCENES.map(function (s) {
       var active = st.scene === s.id ? " active" : "";
+      var session = store.getConversation(s.id);
+      var sessionState = session && session.pendingDecision ? "pending" : (session && session.activeQuestion ? "question" : "");
+      var sessionLabel = sessionState === "pending" ? "待批" : "待答";
       return '<button class="sb-map-item' + active + '" data-scene="' + s.id + '" title="' + ui.esc(s.name) + '">' +
         '<img src="' + ui.esc(s.icon) + '" alt="" onerror="this.style.visibility=\'hidden\'" />' +
         '<div class="mtext"><div class="mt">' + ui.esc(s.name) + '</div>' +
-        '<div class="mr">' + ui.esc(s.role) + '</div></div></button>';
+        '<div class="mr">' + ui.esc(s.role) + '</div></div>' +
+        (sessionState ? '<span class="sb-conv-state ' + sessionState + '" title="' + sessionLabel + '">' + sessionLabel + '</span>' : '') +
+        '</button>';
     }).join("");
   }
 
@@ -29,7 +54,9 @@
     var subPct = p.subTotal ? Math.round(p.subDone / p.subTotal * 100) : 0;
 
     sidebar.innerHTML =
-      '<button class="sb-toggle" id="sbToggle" title="收起/展开">' + (st.sidebarCollapsed ? "»" : "«") + '</button>' +
+      '<button class="sb-toggle" id="sbToggle" title="' + (st.sidebarCollapsed ? "展开侧栏" : "收起侧栏") +
+        '" aria-label="' + (st.sidebarCollapsed ? "展开侧栏" : "收起侧栏") + '">' +
+        (st.sidebarCollapsed ? "&gt;" : "&lt;") + '</button>' +
       '<div class="sb-inner">' +
         '<div class="sb-avatar">' +
           '<img src="' + ui.esc(t ? t.portrait : data.ASSET_BASE + "人物/女皇1.png") + '" alt="" onerror="this.style.display=\'none\'" />' +
@@ -53,6 +80,7 @@
       '</div>';
 
     bind();
+    restoreSidebarScroll();
   }
 
   function bind() {
@@ -61,6 +89,7 @@
     });
     Array.prototype.forEach.call(sidebar.querySelectorAll(".sb-map-item"), function (btn) {
       btn.addEventListener("click", function () {
+        rememberSidebarScroll();
         var id = btn.getAttribute("data-scene");
         App.nav ? App.nav.goScene(id) : store.moveScene(id);
       });
@@ -95,6 +124,7 @@
     applyCollapse();
     store.on("change", function () { render(); applyCollapse(); });
     store.on("sidebar", applyCollapse);
+    store.on("conversation", function () { render(); applyCollapse(); });
   }
 
   App.panel = { init: init, render: render };
