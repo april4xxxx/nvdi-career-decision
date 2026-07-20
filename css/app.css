@@ -1,0 +1,415 @@
+/* =============================================================
+   app.css —— 主应用：顶栏 / 个人面板侧栏 / 场景 / 对话 / 奏折匣 / 模式
+   ============================================================= */
+
+#screen-app { display: none; }
+#screen-app.active { display: grid; grid-template-rows: var(--topbar-h) 1fr; height: 100%; }
+
+/* ================= 顶栏 ================= */
+.topbar {
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 20px; background: linear-gradient(180deg, #232a31, #1b2129);
+  border-bottom: 1px solid var(--gold-deep); color: var(--paper); z-index: 40;
+}
+.topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .14em; font-size: 17px; }
+.topbar .brand .seal { width: 30px; height: 30px; font-size: 15px; }
+
+/* 模式切换 tabs */
+.mode-tabs { display: flex; gap: 4px; background: rgba(0,0,0,.25); padding: 4px; border-radius: 999px; }
+.mode-tab {
+  padding: 6px 16px; border-radius: 999px; font-size: 13px; letter-spacing: .08em;
+  color: rgba(247,242,230,.66); transition: all .18s;
+}
+.mode-tab.active { background: linear-gradient(135deg, var(--gold-light), var(--gold)); color: #3a2a08; font-weight: 700; }
+.mode-tab:hover:not(.active) { color: var(--paper); }
+
+.topbar .spacer { flex: 1; }
+
+/* 资源显示 */
+.res-group { display: flex; align-items: center; gap: 16px; }
+.res-item { display: flex; align-items: center; gap: 7px; font-size: 14px; }
+.res-item img { width: 22px; height: 22px; }
+.res-item .val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.energy-bar-wrap { cursor: pointer; }
+.energy-bar {
+  width: 108px; height: 12px; border-radius: 999px; overflow: hidden;
+  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.2); position: relative;
+}
+.energy-bar .fill { height: 100%; background: linear-gradient(90deg, var(--jade), var(--jade-light)); transition: width .4s cubic-bezier(.2,.9,.3,1); }
+.energy-bar.high .fill { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.energy-bar.low .fill { background: linear-gradient(90deg, #8a3b32, var(--verm-light)); }
+.day-chip { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 4px 14px; font-size: 13px; letter-spacing: .08em; }
+
+/* ================= 主体网格 ================= */
+.app-body { display: grid; grid-template-columns: var(--sidebar-w) 1fr; overflow: hidden; position: relative; }
+.app-body.sb-collapsed { grid-template-columns: var(--sidebar-w-collapsed) 1fr; }
+
+/* ================= 个人面板侧栏 ================= */
+.sidebar {
+  background: linear-gradient(180deg, #f2ead6, #e7dcc2);
+  border-right: 1px solid var(--gold-deep);
+  display: flex; flex-direction: column; overflow: hidden; position: relative;
+  transition: all .25s;
+}
+.sidebar .sb-toggle {
+  position: absolute; top: 12px; right: 10px; z-index: 5;
+  width: 26px; height: 26px; border-radius: 6px; background: var(--paper-3);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  border: 1px solid var(--line-strong);
+}
+.sidebar .sb-inner { flex: 1; overflow-y: auto; padding: 16px 14px; }
+.sb-collapsed .sb-inner { padding: 16px 6px; }
+
+/* 头像卡 */
+.sb-avatar { text-align: center; margin-bottom: 14px; }
+.sb-avatar img { width: 96px; height: 96px; object-fit: contain; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: var(--shadow-sm); }
+.sb-avatar .nick { font-size: 18px; font-weight: 800; margin-top: 8px; letter-spacing: .06em; }
+.sb-avatar .type { font-size: 13px; color: var(--verm); letter-spacing: .1em; }
+.sb-collapsed .sb-avatar img { width: 40px; height: 40px; border-width: 2px; }
+.sb-collapsed .sb-avatar .nick, .sb-collapsed .sb-avatar .type, .sb-collapsed .sb-section-t, .sb-collapsed .sb-progress, .sb-collapsed .sb-map-label, .sb-collapsed .sb-foot { display: none; }
+
+.sb-section-t { font-size: 12px; letter-spacing: .2em; color: var(--gold-deep); margin: 16px 4px 8px; font-weight: 700; }
+
+/* 进度条 */
+.sb-progress { margin-bottom: 8px; }
+.sb-progress .lbl { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.sb-progress .bar { height: 8px; border-radius: 999px; background: var(--paper-3); overflow: hidden; }
+.sb-progress .bar .fill { height: 100%; border-radius: 999px; transition: width .5s; }
+.sb-progress.main .bar .fill { background: linear-gradient(90deg, var(--cat-bronze), var(--gold)); }
+.sb-progress.sub .bar .fill { background: linear-gradient(90deg, var(--jade), var(--jade-light)); }
+
+/* 地图导航 */
+.sb-map { display: flex; flex-direction: column; gap: 5px; }
+.sb-map-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm);
+  transition: all .16s; border: 1px solid transparent; text-align: left; width: 100%;
+}
+.sb-map-item img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.sb-map-item .mt { font-size: 14px; font-weight: 600; }
+.sb-map-item .mr { font-size: 11px; color: var(--ink-mute); }
+.sb-map-item:hover { background: var(--paper); border-color: var(--line-strong); }
+.sb-map-item.active { background: linear-gradient(135deg, var(--gold-light), #fff); border-color: var(--gold); }
+.sb-collapsed .sb-map-item { justify-content: center; padding: 9px 4px; }
+.sb-collapsed .sb-map-item .mtext { display: none; }
+
+.sb-foot { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; gap: 8px; position: relative; z-index: 1; }
+.sb-foot .btn { flex: 1; padding: 7px; font-size: 12px; }
+
+/* 侧栏空白处的祥云暗纹装饰（视觉素材） */
+.sidebar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 40px; height: 190px;
+  background: url("../assets/svg图标/装饰svg/古风祥云云朵42.svg") no-repeat center bottom;
+  background-size: 92% auto; opacity: .08; pointer-events: none; z-index: 0;
+}
+.sb-collapsed .sidebar::after, .sb-collapsed.sidebar::after { display: none; }
+.sidebar .sb-inner { position: relative; z-index: 1; }
+
+/* ================= 场景 + 对话 主舞台 ================= */
+.stage { position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.scene-bg {
+  position: absolute; inset: 0; background-size: cover; background-position: center;
+  transition: opacity .6s ease; filter: brightness(.94);
+}
+.scene-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,26,32,.05) 0%, rgba(20,26,32,.02) 40%, rgba(20,26,32,.35) 100%); }
+
+/* 场景信息条 */
+.scene-head {
+  position: relative; z-index: 3; margin: 14px 16px 0;
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(31,40,48,.72); color: var(--paper);
+  border-radius: var(--r-md); padding: 10px 16px; backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.12); align-self: flex-start; max-width: calc(100% - 32px);
+}
+.scene-head img { width: 30px; height: 30px; }
+.scene-head .sn { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
+.scene-head .sr { font-size: 12px; color: var(--gold-light); letter-spacing: .1em; }
+
+/* ===== 场景任务卡（生成任务投放到地图，铺任务底图） ===== */
+.task-field {
+  position: relative; z-index: 3; margin: 14px 16px 0;
+  display: flex; gap: 14px; flex-wrap: wrap; align-content: flex-start;
+  max-width: min(760px, calc(100% - 40px));
+}
+.task-card {
+  position: relative; width: 224px; min-height: 118px; border-radius: var(--r-md);
+  overflow: hidden; text-align: left; color: #fff; padding: 12px 14px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  background-size: cover; background-position: center;
+  border: 1px solid rgba(255,255,255,.35); box-shadow: var(--shadow-md);
+  transition: transform .16s, box-shadow .2s; animation: riseIn .45s ease backwards;
+}
+.task-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.task-card .tc-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(24,20,14,.28), rgba(24,20,14,.82)); z-index: 0; }
+.task-card > *:not(.tc-scrim) { position: relative; z-index: 1; }
+.task-card .tc-top { display: flex; align-items: center; justify-content: space-between; }
+.task-card .tc-cat { font-size: 11px; letter-spacing: .12em; padding: 2px 9px; border-radius: 999px; background: var(--c, var(--gold)); color: #fff; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.task-card .tc-flag { font-size: 11px; color: #ffe9b8; letter-spacing: .1em; }
+.task-card .tc-done { font-size: 11px; color: #bfe6cf; letter-spacing: .1em; }
+.task-card .tc-title { font-size: 16px; font-weight: 800; line-height: 1.4; letter-spacing: .02em; text-shadow: 0 1px 6px rgba(0,0,0,.55); margin-top: 2px; }
+.task-card .tc-meta { font-size: 11.5px; color: rgba(255,255,255,.82); line-height: 1.5; margin-top: auto; }
+.task-card .tc-cta { font-size: 12px; color: #ffe9b8; font-weight: 700; letter-spacing: .06em; margin-top: 6px; }
+.task-card.done { filter: saturate(.5); }
+.task-card.done .tc-scrim { background: linear-gradient(180deg, rgba(24,20,14,.5), rgba(24,20,14,.9)); }
+.task-card.done .tc-title { text-decoration: line-through; opacity: .85; }
+
+/* 任务办结确认弹层 */
+.task-confirm { padding: 26px 30px; text-align: center; max-width: 380px; }
+.task-confirm h3 { font-size: 19px; letter-spacing: .08em; margin-bottom: 12px; }
+.task-confirm .tcf-title { font-size: 16px; font-weight: 700; color: var(--gold-deep); margin-bottom: 8px; }
+.task-confirm .tcf-btns { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+
+/* NPC 立绘 */
+.npc-portrait {
+  position: absolute; right: 3%; bottom: 0; z-index: 2; height: 74%;
+  filter: drop-shadow(-8px 0 20px rgba(0,0,0,.35)); pointer-events: none;
+  animation: riseIn .6s ease; object-fit: contain;
+}
+
+/* ================= 对话区（模块 03） ================= */
+.convo {
+  position: relative; z-index: 4; margin-top: auto;
+  display: flex; flex-direction: column; padding: 0 18px 16px;
+}
+/* 折叠态：只显示底部 GAL 框 + 输入区；完整态：显示顶条 + 滚动区 */
+.convo-top, .convo-scroll { display: none; }
+.convo.expanded { max-height: 78%; }
+.convo.expanded .convo-top { display: flex; }
+.convo.expanded .convo-scroll { display: flex; }
+
+/* 顶部条：当前大臣 + 主题 + 查看奏折 + 关闭（金色封皮书页样式） */
+.convo-top {
+  align-items: center; gap: 12px; margin: 0 2px 8px;
+  background: linear-gradient(180deg, rgba(247,242,230,.96), rgba(240,231,211,.94));
+  border: 1px solid var(--gold); border-radius: var(--r-md);
+  padding: 9px 14px; box-shadow: var(--shadow-sm); backdrop-filter: blur(4px);
+}
+.ct-minister { font-size: 15px; font-weight: 800; color: var(--ink); letter-spacing: .04em; }
+.ct-minister .caret { color: var(--gold-deep); font-size: 12px; margin-left: 2px; }
+.ct-minister:hover { color: var(--verm); }
+.ct-topic { font-size: 14px; color: var(--ink-soft); letter-spacing: .04em; }
+.convo-top .spacer { flex: 1; }
+.ct-petition {
+  font-size: 13px; padding: 6px 14px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--verm-light), var(--verm)); color: #fff;
+  letter-spacing: .06em; box-shadow: var(--shadow-sm); display: inline-flex; align-items: center; gap: 6px;
+}
+.ct-petition b { font-variant-numeric: tabular-nums; }
+.ct-petition:hover { filter: brightness(1.06); }
+.ct-close { width: 30px; height: 30px; border-radius: 8px; font-size: 20px; color: var(--ink-mute); background: rgba(0,0,0,.05); }
+.ct-close:hover { background: rgba(167,71,60,.14); color: var(--verm); }
+
+/* 完整对话滚动区 */
+.convo-scroll {
+  flex-direction: column; gap: 12px; overflow-y: auto; padding: 10px 4px; margin-bottom: 8px;
+  max-height: 40vh;
+  background: linear-gradient(180deg, rgba(247,242,230,0), rgba(247,242,230,.72) 12%, rgba(247,242,230,.72));
+  border-radius: var(--r-md);
+}
+.msg { display: flex; gap: 10px; max-width: 82%; animation: riseIn .3s ease; }
+.msg .mwrap { display: flex; flex-direction: column; }
+.msg .who { font-size: 12px; color: var(--gold-deep); margin-bottom: 3px; letter-spacing: .08em; }
+.msg .bubble { padding: 11px 15px; border-radius: 14px; line-height: 1.7; font-size: 15px; box-shadow: var(--shadow-sm); }
+.msg.npc { align-self: flex-start; }
+.msg.npc .bubble { background: rgba(255,255,255,.96); border: 1px solid var(--line); border-top-left-radius: 4px; }
+.msg.me { align-self: flex-end; flex-direction: row-reverse; }
+.msg.me .bubble { background: linear-gradient(135deg, var(--jade), var(--jade-light)); color: #fff; border-top-right-radius: 4px; }
+.msg.sys { align-self: center; max-width: 94%; }
+.msg.sys .bubble { background: rgba(230,218,191,.9); color: var(--ink-soft); font-size: 13px; border-radius: 999px; box-shadow: none; }
+/* 思考中省略号 */
+.msg.typing .dots { display: inline-flex; gap: 4px; }
+.msg.typing .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-deep); animation: dotPulse 1s infinite; }
+.msg.typing .dots i:nth-child(2) { animation-delay: .15s; }
+.msg.typing .dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes dotPulse { 0%,60%,100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+/* ===== 底部 GAL 对话框（金色细线 + 淡金白渐变 + 半透明） ===== */
+.gal-box {
+  position: relative; border: 1px solid var(--gold);
+  background: linear-gradient(180deg, rgba(255,253,247,.92), rgba(247,242,230,.9));
+  border-radius: var(--r-md); padding: 14px 18px; box-shadow: var(--shadow-md);
+  backdrop-filter: blur(6px); min-height: 74px;
+}
+.gal-box .gal-name {
+  position: absolute; top: -13px; left: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #fff;
+  font-size: 13px; font-weight: 700; letter-spacing: .12em; padding: 3px 16px;
+  border-radius: 999px; box-shadow: var(--shadow-sm);
+}
+.gal-box .gal-text { font-size: 15.5px; line-height: 1.75; color: var(--ink); padding-top: 4px; }
+/* 完整态：GAL 框只承载回复/决策区，隐藏折叠态那句话 */
+.convo.expanded .gal-box { background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0; min-height: 0; }
+.convo.expanded .gal-box .gal-name, .convo.expanded .gal-box .gal-text { display: none; }
+.reply-zone:empty { margin: 0; }
+.reply-zone { margin-top: 4px; }
+
+/* ===== 常驻输入区（整段对话保持可用） ===== */
+.convo-input {
+  display: flex; gap: 10px; align-items: center; margin-top: 10px;
+}
+.convo-input input {
+  flex: 1; padding: 13px 18px; border-radius: 999px; font-size: 15px;
+  background: rgba(255,255,255,.94); border: 1px solid var(--gold);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.06); color: var(--ink);
+}
+.convo-input input:focus { outline: none; border-color: var(--gold-deep); box-shadow: 0 0 0 3px rgba(185,138,59,.18); }
+.convo-input input::placeholder { color: var(--ink-mute); }
+/* 主按钮：常态「探讨国事」红边白底；决策态变「同意」印章 */
+.ci-send {
+  flex: none; padding: 13px 22px; border-radius: 999px; font-size: 15px; font-weight: 700;
+  letter-spacing: .08em; color: var(--verm); background: #fff; border: 1.5px solid var(--verm);
+  transition: all .16s; white-space: nowrap;
+}
+.ci-send:hover { background: var(--verm); color: #fff; }
+.ci-send.stamp {
+  color: #fff; border-color: #7d2b22; letter-spacing: .28em; padding: 13px 26px;
+  background: radial-gradient(circle at 50% 42%, var(--verm-light), var(--verm) 70%);
+  box-shadow: 0 2px 10px rgba(167,71,60,.5), inset 0 0 0 2px rgba(255,255,255,.35);
+  font-family: var(--serif); animation: stampIn .3s ease;
+}
+.ci-send.stamp:hover { filter: brightness(1.08); transform: scale(1.03); }
+@keyframes stampIn { 0% { transform: scale(1.5) rotate(-8deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* ===== 选项追问 ===== */
+.opt-list { display: grid; gap: 10px; margin-top: 4px; }
+.opt-btn {
+  text-align: left; padding: 13px 16px; border-radius: var(--r-md);
+  background: rgba(247,242,230,.96); border: 1px solid var(--line-strong); font-size: 15px;
+  transition: all .15s;
+}
+.opt-btn:hover { border-color: var(--gold); background: #fff; transform: translateX(4px); }
+.opt-hint { font-size: 12px; color: var(--ink-mute); text-align: center; padding: 4px; letter-spacing: .04em; }
+
+/* ===== 决策奏折（金色半角矩形 + 祥云暗纹） ===== */
+.decision-sheet {
+  position: relative; overflow: hidden; margin-top: 4px;
+  background: linear-gradient(180deg, #fdf3cf, #f6e6b0);
+  border: 1.5px solid var(--gold); border-radius: 4px 18px 4px 18px;
+  padding: 16px 18px 14px; box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(255,255,255,.4);
+  animation: riseIn .4s ease;
+}
+.decision-sheet .ds-cloud { position: absolute; opacity: .1; pointer-events: none; z-index: 0; }
+.decision-sheet .ds-cloud.l { width: 150px; left: -22px; bottom: -20px; }
+.decision-sheet .ds-cloud.r { width: 120px; right: -14px; top: -18px; transform: scaleX(-1); }
+.decision-sheet > *:not(.ds-cloud) { position: relative; z-index: 1; }
+.ds-head { display: flex; align-items: center; justify-content: space-between; }
+.ds-cat { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #fff; background: var(--c, var(--gold)); padding: 3px 11px; border-radius: 999px; letter-spacing: .06em; }
+.ds-cat img { width: 15px; height: 15px; filter: brightness(0) invert(1); }
+.ds-badge { font-size: 12px; color: var(--verm); letter-spacing: .28em; font-weight: 700; }
+.ds-title { font-size: 19px; margin: 8px 0 6px; letter-spacing: .04em; color: var(--ink); font-family: var(--serif); }
+.ds-summary { font-size: 14px; line-height: 1.75; color: var(--ink-soft); margin-bottom: 12px; }
+.ds-sources { margin-top: 10px; padding: 7px 10px; border-left: 3px solid var(--jade); background: rgba(255,255,255,.45); color: var(--jade); font-size: 11.5px; line-height: 1.55; }
+/* 三镜：投入 / 收益 / 机会成本 */
+.ds-mirror { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.ds-mirror .mc { background: rgba(255,255,255,.6); border: 1px solid rgba(185,138,59,.4); border-radius: var(--r-sm); padding: 8px 10px; }
+.ds-mirror .mk { display: block; font-size: 11px; color: var(--gold-deep); letter-spacing: .1em; margin-bottom: 2px; }
+.ds-mirror .mv { font-size: 13px; color: var(--ink); line-height: 1.5; }
+/* 推荐 / 备选 路径 */
+.ds-paths { display: flex; flex-direction: column; gap: 8px; }
+.path-row {
+  display: flex; align-items: flex-start; gap: 10px; text-align: left;
+  background: rgba(255,255,255,.66); border: 1px solid rgba(185,138,59,.45);
+  border-radius: var(--r-sm); padding: 10px 12px; transition: all .15s;
+}
+.path-row:hover { background: #fff; border-color: var(--gold); }
+.path-row.chosen { background: #fff; border-color: var(--jade); box-shadow: 0 0 0 2px rgba(72,123,112,.28); }
+.pr-tag { flex: none; font-size: 11px; font-weight: 700; color: #fff; padding: 2px 8px; border-radius: 999px; letter-spacing: .08em; margin-top: 2px; }
+.pr-tag.recommend { background: var(--jade); }
+.pr-tag.alt { background: var(--gold-deep); }
+.pr-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.pr-body b { font-size: 14.5px; color: var(--ink); }
+.pr-text { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); }
+.pr-pick { flex: none; color: var(--line-strong); font-size: 18px; }
+.path-row.chosen .pr-pick { color: var(--jade); }
+.path-row.chosen .pr-pick::before { content: "●"; }
+.path-row:not(.chosen) .pr-pick::before { content: "○"; }
+.path-row .pr-pick { font-size: 14px; }
+/* 卡内动作：再议 / 大胆（同意在底部输入区） */
+.ds-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.ds-hint { flex: 1; font-size: 11.5px; color: var(--gold-deep); letter-spacing: .02em; }
+.pizhu-btn { padding: 9px 20px; border-radius: var(--r-sm); font-weight: 700; font-size: 14px; letter-spacing: .1em; color: #fff; transition: transform .12s, box-shadow .18s; border: 1px solid rgba(0,0,0,.15); }
+.pizhu-btn.again { background: linear-gradient(135deg, #b9903b, var(--gold-deep)); }
+.pizhu-btn.bold { background: linear-gradient(135deg, var(--verm-light), var(--verm)); }
+.pizhu-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+/* ================= 奏折匣抽屉 ================= */
+.drawer-tab {
+  position: absolute; right: 0; top: 40%; z-index: 20;
+  writing-mode: vertical-rl; background: var(--verm); color: #fff;
+  padding: 16px 8px; border-radius: 10px 0 0 10px; letter-spacing: .3em;
+  font-size: 15px; box-shadow: var(--shadow-md); border: 1px solid #833229;
+}
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 340px; z-index: 60;
+  background: var(--paper); border-left: 1px solid var(--gold);
+  box-shadow: var(--shadow-lg); transform: translateX(100%); transition: transform .3s;
+  display: flex; flex-direction: column;
+}
+.drawer.open { transform: none; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.drawer-head h3 { font-size: 17px; letter-spacing: .1em; }
+.drawer-tabs { display: flex; gap: 6px; padding: 10px 14px 0; }
+.drawer-tabs .dt { flex: 1; padding: 8px; text-align: center; font-size: 13px; border-radius: var(--r-sm) var(--r-sm) 0 0; background: var(--paper-2); border: 1px solid var(--line); border-bottom: none; }
+.drawer-tabs .dt.active { background: #fff; font-weight: 700; color: var(--verm); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 14px; }
+
+.petition-item, .journal-item {
+  background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--gold);
+  border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 10px; animation: riseIn .3s ease;
+}
+.petition-item h5, .journal-item h5 { font-size: 15px; margin-bottom: 4px; }
+.petition-item .meta, .journal-item .meta { font-size: 12px; color: var(--ink-mute); margin-bottom: 8px; }
+.petition-item .go { font-size: 12px; }
+.journal-item p { font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+.empty-hint { text-align: center; color: var(--ink-mute); padding: 30px 10px; font-size: 14px; }
+
+/* ================= 精力校准弹层 ================= */
+.calib { padding: 26px 30px; text-align: center; }
+.calib h3 { font-size: 20px; letter-spacing: .1em; margin-bottom: 6px; }
+.calib p { color: var(--ink-mute); font-size: 14px; margin-bottom: 20px; }
+.calib input[type=range] { width: 100%; accent-color: var(--jade); }
+.calib .valbig { font-size: 40px; font-weight: 800; color: var(--jade); font-variant-numeric: tabular-nums; }
+.calib .note { font-size: 13px; color: var(--gold-deep); margin: 10px 0 20px; }
+
+/* ================= 模式：心流 / 预言 ================= */
+/* 心流专注遮罩 */
+.flow-veil {
+  position: absolute; inset: 0; z-index: 50; display: none;
+  background: radial-gradient(circle at 50% 40%, rgba(40,60,56,.82), rgba(18,22,27,.96));
+  backdrop-filter: blur(4px); color: var(--paper);
+  flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+}
+.flow-veil.active { display: flex; animation: fadeIn .4s ease; }
+.flow-veil .ftitle { letter-spacing: .3em; color: var(--jade-light); font-size: 15px; }
+.flow-ring { position: relative; width: 240px; height: 240px; }
+.flow-ring svg { transform: rotate(-90deg); }
+.flow-ring .track { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 10; }
+.flow-ring .prog { fill: none; stroke: url(#flowGrad); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.flow-ring .time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.flow-ring .time .tt { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.flow-ring .time .ss { font-size: 13px; color: var(--jade-light); letter-spacing: .2em; }
+.flow-task { font-size: 16px; max-width: 460px; text-align: center; line-height: 1.7; color: rgba(247,242,230,.85); }
+.flow-ctrl { display: flex; gap: 12px; }
+
+/* 预言模式 */
+.prophecy-veil {
+  position: absolute; inset: 0; z-index: 50; display: none;
+  background-size: cover; background-position: center; color: var(--paper);
+}
+.prophecy-veil.active { display: block; animation: fadeIn .5s ease; }
+.prophecy-veil::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,22,30,.7), rgba(18,22,30,.88)); }
+.prophecy-inner { position: relative; z-index: 2; height: 100%; overflow-y: auto; padding: 30px 8%; }
+.prophecy-inner h2 { text-align: center; letter-spacing: .3em; font-size: 26px; margin-bottom: 4px; color: var(--gold-light); }
+.prophecy-inner .sub { text-align: center; color: rgba(247,242,230,.7); font-size: 14px; margin-bottom: 26px; }
+.forecast-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
+.forecast-card {
+  background: rgba(31,40,48,.7); border: 1px solid var(--gold); border-radius: var(--r-md);
+  padding: 18px; backdrop-filter: blur(6px); animation: riseIn .5s ease backwards;
+}
+.forecast-card h4 { font-size: 17px; letter-spacing: .1em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.forecast-card .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
+.forecast-card.agree .pill { background: var(--jade); }
+.forecast-card.again .pill { background: var(--gold-deep); }
+.forecast-card.bold .pill { background: var(--verm); }
+.forecast-card p { font-size: 13px; line-height: 1.8; color: rgba(247,242,230,.86); margin-bottom: 10px; }
+.forecast-card .stat { display: flex; justify-content: space-between; font-size: 12px; color: var(--gold-light); border-top: 1px dashed rgba(255,255,255,.2); padding-top: 8px; }
+.prophecy-foot { text-align: center; margin-top: 24px; }

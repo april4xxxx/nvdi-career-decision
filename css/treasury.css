@@ -1,0 +1,80 @@
+/* =============================================================
+   treasury.css —— 珍宝阁（59 成就网格 / 筛选 / 详情）
+   同样以 panel-screen 覆盖舞台
+   ============================================================= */
+
+/* 筛选条（玻璃质感，浮在珍宝阁场景素材之上） */
+.tr-toolbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 14px 22px; background: rgba(20,25,32,.42); border-bottom: 1px solid rgba(255,255,255,.14); backdrop-filter: blur(6px); }
+.tr-filters { display: flex; gap: 6px; }
+.tr-chip {
+  padding: 7px 15px; border-radius: 999px; font-size: 13px; letter-spacing: .06em; color: rgba(247,242,230,.9);
+  background: rgba(247,242,230,.14); border: 1px solid rgba(255,255,255,.24); transition: all .15s;
+}
+.tr-chip.active { background: var(--gold); color: #3a2a08; border-color: var(--gold); font-weight: 700; }
+.tr-chip:hover:not(.active) { border-color: var(--gold); }
+.tr-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.tr-cat { padding: 7px 14px; border-radius: 999px; font-size: 13px; border: 1px solid rgba(255,255,255,.24); background: rgba(247,242,230,.14); color: rgba(247,242,230,.9); display: flex; align-items: center; gap: 6px; }
+.tr-cat .swatch { width: 10px; height: 10px; border-radius: 50%; }
+.tr-cat.active { color: #fff; border-color: transparent; font-weight: 600; }
+.tr-summary { margin-left: auto; font-size: 13px; color: var(--gold-light); }
+.tr-summary b { color: #fff; font-size: 16px; }
+
+.tr-body { flex: 1; overflow-y: auto; padding: 20px 22px 40px; }
+/* 分组标题在深色场景上需提亮 */
+.tr-body .cat-group .ch .csay { color: rgba(247,242,230,.7); }
+.tr-body .cat-group .ch .ccount { color: var(--gold-light); }
+/* 成就卡在场景上加一层轻微底板，保证可读 */
+.tr-body .ach-card { background: rgba(247,242,230,.94); }
+
+/* 分类分组标题 */
+.cat-group { margin-bottom: 26px; }
+.cat-group .ch { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid; }
+.cat-group .ch .cname { font-size: 18px; font-weight: 800; letter-spacing: .1em; }
+.cat-group .ch .csay { font-size: 12px; color: var(--ink-mute); }
+.cat-group .ch .ccount { margin-left: auto; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* 成就网格 */
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+.ach-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 10px; text-align: center; cursor: pointer; position: relative; overflow: hidden;
+  transition: transform .16s, box-shadow .2s; animation: riseIn .3s ease backwards;
+}
+.ach-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.ach-card .imgwrap { position: relative; width: 100%; aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden; background: var(--paper-3); margin-bottom: 8px; }
+.ach-card .imgwrap img { width: 100%; height: 100%; object-fit: cover; transition: filter .3s, transform .3s; }
+.ach-card.locked .imgwrap img { filter: grayscale(1) brightness(.7) opacity(.5); }
+.ach-card:hover .imgwrap img { transform: scale(1.06); }
+.ach-card .lock-badge { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.ach-card .lock-badge svg { width: 30px; height: 30px; color: rgba(255,255,255,.85); filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.ach-card.unlocked .lock-badge { display: none; }
+.ach-card .nm { font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+.ach-card .tierdots { display: flex; gap: 2px; justify-content: center; margin-top: 4px; }
+.ach-card .tierdots i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: .3; }
+.ach-card .tierdots i.on { opacity: 1; }
+/* 进度条(部分完成) */
+.ach-card .mini-prog { height: 4px; border-radius: 999px; background: var(--paper-3); overflow: hidden; margin-top: 6px; }
+.ach-card .mini-prog .f { height: 100%; background: var(--gold); }
+/* 已解锁角标 */
+.ach-card.unlocked::after { content: "✓"; position: absolute; top: 6px; right: 8px; width: 20px; height: 20px; background: var(--jade); color: #fff; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); }
+.ach-card.newly { animation: newlyPulse 1.2s ease 2; }
+@keyframes newlyPulse { 0%,100% { box-shadow: var(--shadow-sm); } 50% { box-shadow: 0 0 0 4px var(--gold-light), var(--shadow-md); } }
+
+/* 成就详情弹层 */
+.ach-detail { padding: 0; overflow: hidden; }
+.ach-detail .hero { display: flex; gap: 18px; padding: 24px; background: linear-gradient(135deg, #2c343c, #1f2830); color: var(--paper); align-items: center; }
+.ach-detail .hero img { width: 110px; height: 110px; border-radius: var(--r-md); object-fit: cover; border: 2px solid var(--gold); background: #000; flex: none; }
+.ach-detail .hero.locked img { filter: grayscale(1) brightness(.7) opacity(.6); }
+.ach-detail .hero .cat-lbl { font-size: 12px; color: var(--gold-light); letter-spacing: .16em; }
+.ach-detail .hero h3 { font-size: 24px; letter-spacing: .08em; margin: 4px 0; }
+.ach-detail .hero .flavor { font-size: 13px; color: rgba(247,242,230,.75); font-style: italic; line-height: 1.6; }
+.ach-detail .dbody { padding: 20px 24px; }
+.ach-detail .drow { display: flex; gap: 10px; margin-bottom: 12px; font-size: 14px; }
+.ach-detail .drow .k { color: var(--ink-mute); flex: none; width: 72px; letter-spacing: .08em; }
+.ach-detail .drow .v { color: var(--ink); line-height: 1.6; }
+.ach-detail .prog-big { height: 10px; border-radius: 999px; background: var(--paper-3); overflow: hidden; margin: 4px 0; }
+.ach-detail .prog-big .f { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width .5s; }
+.ach-detail .reward-chip { display: inline-block; background: var(--gold); color: #3a2a08; padding: 3px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.ach-detail .refs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ach-detail .refs .tag { background: var(--jade); color: #fff; border-color: #35625a; }
+.ach-detail .locked-note { color: var(--verm); font-weight: 600; }

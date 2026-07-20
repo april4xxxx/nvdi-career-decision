@@ -1,0 +1,14 @@
+{
+  "name": "nvdi-career-decision-demo",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test tests/*.test.js",
+    "knowledge:seed": "node scripts/seed-knowledge.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

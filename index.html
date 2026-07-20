@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>女帝职场决策系统 · 完整版</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/onboarding.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/library.css" />
+  <link rel="stylesheet" href="css/treasury.css" />
+</head>
+<body>
+
+  <!-- ============ 屏幕 1：御前推演（Onboarding） ============ -->
+  <section id="screen-onboarding" class="screen active">
+    <div class="onb-wrap" id="onbWrap"><!-- onboarding.js 渲染 --></div>
+  </section>
+
+  <!-- ============ 屏幕 2：登基过场 CG ============ -->
+  <section id="screen-transition" class="screen">
+    <div class="cg-stage" id="cgStage">
+      <button class="cg-skip" id="cgSkip">跳过 ▸</button>
+      <!-- 图与文由 onboarding.js 注入 -->
+    </div>
+  </section>
+
+  <!-- ============ 屏幕 3：主应用 ============ -->
+  <section id="screen-app" class="screen">
+
+    <!-- 顶栏 -->
+    <header class="topbar" id="topbar"><!-- topbar.js 渲染 --></header>
+
+    <!-- 主体：侧栏 + 舞台 -->
+    <div class="app-body" id="appBody">
+
+      <!-- 个人面板侧栏 -->
+      <aside class="sidebar" id="sidebar"><!-- panel.js 渲染 --></aside>
+
+      <!-- 舞台（场景 + 对话 + 覆盖面板） -->
+      <div class="stage" id="stage">
+        <div class="scene-bg" id="sceneBg"></div>
+        <div class="scene-head" id="sceneHead"></div>
+        <div class="task-field" id="taskField"></div>
+        <img class="npc-portrait" id="npcPortrait" alt="" />
+
+        <!-- 对话区（模块 03：GAL 折叠态 ↔ 完整对话态） -->
+        <div class="convo" id="convo">
+          <!-- 顶部条：仅完整态显示（当前大臣 + 主题 + 查看奏折 + 关闭） -->
+          <div class="convo-top" id="convoTop">
+            <button class="ct-minister" id="ctMinister">
+              和【<span id="ctMinisterName">直臣</span>】<span class="caret">▾</span>
+            </button>
+            <span class="ct-topic">商讨【<span id="ctTopic">如何治国</span>】</span>
+            <div class="spacer"></div>
+            <button class="ct-petition" id="ctPetition">查看奏折 <b id="ctPetitionN">0</b></button>
+            <button class="ct-close" id="ctClose">×</button>
+          </div>
+
+          <!-- 完整对话滚动区：仅完整态显示 -->
+          <div class="convo-scroll" id="convoScroll"></div>
+
+          <!-- GAL 底部对话框：折叠态显示大臣一句话；完整态作为回复/决策区 -->
+          <div class="gal-box" id="galBox">
+            <div class="gal-name" id="galName">近臣</div>
+            <div class="gal-text" id="galText"></div>
+            <div class="reply-zone" id="replyZone"></div>
+          </div>
+
+          <!-- 常驻输入区（整段对话保持可用） -->
+          <div class="convo-input" id="convoInput">
+            <input type="text" id="convoText" placeholder="陛下，随意说出你的想法…（探讨国事，可直接输入）" autocomplete="off" />
+            <button class="ci-send" id="convoSend">探讨国事</button>
+          </div>
+        </div>
+
+        <!-- 奏折匣抽屉 -->
+        <button class="drawer-tab" id="drawerTab">奏 折 匣</button>
+        <aside class="drawer" id="drawer">
+          <div class="drawer-head">
+            <h3>奏折匣</h3>
+            <button class="panel-close" id="drawerClose">×</button>
+          </div>
+          <div class="drawer-tabs" id="drawerTabs">
+            <div class="dt active" data-dt="petition">待办奏折</div>
+            <div class="dt" data-dt="journal">起居注</div>
+          </div>
+          <div class="drawer-body" id="drawerBody"></div>
+        </aside>
+
+        <!-- 心流模式遮罩 -->
+        <div class="flow-veil" id="flowVeil"></div>
+        <!-- 预言模式遮罩 -->
+        <div class="prophecy-veil" id="prophecyVeil"></div>
+
+        <!-- 藏书阁面板 -->
+        <div class="panel-screen" id="libraryPanel"></div>
+        <!-- 珍宝阁面板 -->
+        <div class="panel-screen" id="treasuryPanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 全局层 ============ -->
+  <div id="achToastLayer"></div>
+  <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+  <div class="demo-badge" id="demoBadge"><span class="dot"></span><span id="demoBadgeText">演示模式进行中</span></div>
+
+  <!-- ============ 脚本：data → store → 模块 → demo → main ============ -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/onboarding.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/topbar.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/conversation.js"></script>
+  <script src="js/drawer.js"></script>
+  <script src="js/modes.js"></script>
+  <script src="js/library.js"></script>
+  <script src="js/treasury.js"></script>
+  <script src="js/demo.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

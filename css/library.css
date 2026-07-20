@@ -1,0 +1,102 @@
+/* =============================================================
+   library.css —— 藏书阁（主线任务 / 起居注 / 治国之策 三 tab + 上传）
+   以全屏面板形式覆盖舞台
+   ============================================================= */
+
+/* 面板：不再用黄色纸底，改为显露背后的场景视觉素材（暗色玻璃罩其上） */
+.panel-screen {
+  position: absolute; inset: 0; z-index: 55; display: none;
+  overflow: hidden; flex-direction: column;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+.panel-screen::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, rgba(18,22,28,.62), rgba(18,22,28,.8));
+  backdrop-filter: blur(2px);
+}
+.panel-screen > * { position: relative; z-index: 1; }
+.panel-screen.active { display: flex; animation: fadeIn .35s ease; }
+/* 各面板对应的场景素材 */
+#libraryPanel { background-image: url("../assets/场景/藏书阁.png"); }
+#treasuryPanel { background-image: url("../assets/场景/珍宝阁.png"); }
+
+.panel-head {
+  display: flex; align-items: center; gap: 14px; padding: 16px 22px;
+  background: linear-gradient(180deg, rgba(20,25,32,.72), rgba(20,25,32,.5));
+  border-bottom: 1px solid var(--gold); color: var(--paper); backdrop-filter: blur(6px);
+}
+.panel-head .picon { width: 34px; height: 34px; object-fit: contain; }
+.panel-head h2 { font-size: 22px; letter-spacing: .12em; color: var(--paper); }
+.panel-head .psub { font-size: 13px; color: var(--gold-light); }
+.panel-head .spacer { flex: 1; }
+.panel-close { width: 34px; height: 34px; border-radius: 8px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); font-size: 18px; color: var(--paper); }
+.panel-close:hover { background: rgba(167,71,60,.5); }
+
+/* 藏书阁 tabs（玻璃质感，浮在场景上） */
+.lib-tabs { display: flex; gap: 6px; padding: 14px 22px 0; background: rgba(20,25,32,.34); }
+.lib-tab {
+  padding: 10px 20px; border-radius: var(--r-sm) var(--r-sm) 0 0; font-size: 14px; color: rgba(247,242,230,.8);
+  background: rgba(247,242,230,.14); border: 1px solid rgba(255,255,255,.16); border-bottom: none; letter-spacing: .06em;
+}
+.lib-tab.active { background: rgba(247,242,230,.94); border-color: var(--gold); font-weight: 700; color: var(--gold-deep); }
+.lib-body { flex: 1; overflow-y: auto; padding: 22px; }
+
+/* 主线任务时间线 */
+.timeline { position: relative; padding-left: 30px; max-width: 720px; margin: 0 auto; }
+.timeline::before { content: ""; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 2px; background: var(--gold); }
+.tl-node { position: relative; margin-bottom: 22px; animation: riseIn .4s ease backwards; }
+.tl-node .dot { position: absolute; left: -25px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper); border: 3px solid var(--gold); }
+.tl-node.done .dot { background: var(--jade); border-color: var(--jade); }
+.tl-node .card { background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 18px; box-shadow: var(--shadow-sm); }
+.tl-node .day { font-size: 12px; color: var(--verm); letter-spacing: .1em; }
+.tl-node h4 { font-size: 17px; margin: 3px 0 6px; }
+.tl-node p { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+.tl-node .status { margin-top: 8px; font-size: 12px; }
+.tl-node .seal-mini { display: inline-block; background: var(--verm); color: #fff; padding: 2px 10px; border-radius: 4px; letter-spacing: .1em; }
+
+/* 起居注列表 */
+.journal-feed { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.jf-item { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--jade); border-radius: var(--r-md); padding: 14px 18px; animation: riseIn .35s ease backwards; }
+.jf-item .d { font-size: 12px; color: var(--jade); letter-spacing: .1em; }
+.jf-item h4 { font-size: 16px; margin: 3px 0 6px; }
+.jf-item p { font-size: 14px; line-height: 1.8; color: var(--ink-soft); }
+
+/* 治国之策 —— 书架 + 上传 */
+.book-toolbar { max-width: 860px; margin: 0 auto 18px; display: flex; justify-content: space-between; align-items: center; }
+.book-toolbar h3 { font-size: 16px; letter-spacing: .06em; }
+.shelf { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+.book-card {
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden;
+  box-shadow: var(--shadow-sm); transition: transform .16s, box-shadow .2s; cursor: pointer; animation: riseIn .4s ease backwards;
+}
+.book-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.book-card .cover { height: 150px; background: var(--paper-3); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.book-card .cover img { height: 100%; object-fit: contain; }
+.book-card .info { padding: 10px 12px; }
+.book-card .info .bt { font-size: 15px; font-weight: 700; }
+.book-card .info .ba { font-size: 12px; color: var(--ink-mute); }
+.book-card .info .bn { font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+.bk-status { margin-top: 7px; font-size: 10px; letter-spacing: .04em; color: var(--gold-deep); }
+.bk-status.ready { color: var(--jade); }
+.bk-status::before { content: "●"; margin-right: 4px; }
+.book-card.upload { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 2px dashed var(--gold); color: var(--gold-deep); min-height: 200px; background: var(--paper-2); }
+.book-card.upload .plus { font-size: 40px; line-height: 1; }
+.book-card.upload span { font-size: 13px; letter-spacing: .1em; }
+
+/* 上传弹层 */
+.upload-form { padding: 26px 30px; }
+.upload-form h3 { font-size: 20px; letter-spacing: .1em; margin-bottom: 16px; text-align: center; }
+.upload-form label { display: block; font-size: 13px; color: var(--ink-mute); margin: 12px 0 5px; letter-spacing: .08em; }
+.upload-form input, .upload-form textarea {
+  width: 100%; padding: 10px 13px; font-family: var(--serif); font-size: 15px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fff; color: var(--ink);
+}
+.upload-form textarea { resize: vertical; min-height: 70px; }
+.upload-form .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.drop-zone { border: 2px dashed var(--gold); border-radius: var(--r-md); padding: 16px; text-align: center; color: var(--gold-deep); background: var(--paper-2); margin-top: 6px; font-size: 13px; }
+.drop-zone input[type=file] { display: block; padding: 8px; margin-bottom: 8px; font-size: 13px; background: rgba(255,255,255,.7); }
+.drop-zone span { display: block; line-height: 1.6; }
+.upload-status { margin-top: 10px; min-height: 20px; font-size: 12px; color: var(--ink-mute); line-height: 1.6; }
+.upload-status.loading { color: var(--gold-deep); }
+.upload-status.error { color: var(--verm); }
+.knowledge-note { margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--jade); background: var(--paper-2); color: var(--jade) !important; font-size: 12px; }
