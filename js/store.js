@@ -57,7 +57,7 @@
       pendingPetitions: [],   // 奏折匣中待办 {taskId, title, scene, day}
       journals: [],           // 起居注 {id,day,title,text}
       books: [],              // 治国之策藏书
-      knowledge: { token: null }, // 用户私有 Vector Store 的服务端签名令牌
+      knowledge: { documents: [] }, // 浏览器本地保存的用户典籍文本
       achievements: freshAchMap(),
       counters: {
         tasksDone: 0,
@@ -87,7 +87,8 @@
         // 合并成就 map，兼容新增成就
         var freshMap = freshAchMap();
         state.achievements = Object.assign(freshMap, parsed.achievements || {});
-        state.knowledge = Object.assign({ token: null }, parsed.knowledge || {});
+        state.knowledge = Object.assign({ documents: [] }, parsed.knowledge || {});
+        if (!Array.isArray(state.knowledge.documents)) state.knowledge.documents = [];
         // 迁移：旧存档无地图任务且已登基 → 直接播种初始任务（不触发事件）
         if (state.onboarded && (!state.mapTasks || !state.mapTasks.length)) {
           state.mapTasks = [];
@@ -368,10 +369,19 @@
     commit("book");
     return book;
   }
-  function setKnowledgeToken(token) {
-    state.knowledge = state.knowledge || { token: null };
-    state.knowledge.token = token || null;
+  function addKnowledgeDocument(document) {
+    state.knowledge = state.knowledge || { documents: [] };
+    state.knowledge.documents = state.knowledge.documents || [];
+    var entry = {
+      id: document.id || ("kd" + Date.now() + Math.random().toString(36).slice(2, 7)),
+      title: String(document.title || document.fileName || "用户典籍").slice(0, 80),
+      fileName: String(document.fileName || "").slice(0, 160),
+      content: String(document.content || "").slice(0, 60000)
+    };
+    state.knowledge.documents.unshift(entry);
+    state.knowledge.documents = state.knowledge.documents.slice(0, 12);
     commit("knowledge");
+    return entry;
   }
 
   /* ---------- 模式 ---------- */
@@ -441,7 +451,7 @@
     achState: achState, progress: progress,
     // 藏书起居注
     addJournal: addJournal, readArchive: readArchive, addBook: addBook,
-    setKnowledgeToken: setKnowledgeToken,
+    addKnowledgeDocument: addKnowledgeDocument,
     // 模式
     setMode: setMode, addFlowMinutes: addFlowMinutes, useProphecy: useProphecy,
     // 生命周期

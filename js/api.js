@@ -41,10 +41,10 @@
     }, 45000);
   }
 
-  function uploadKnowledge(file, knowledgeToken) {
+  function uploadKnowledge(file, title) {
     var form = new FormData();
     form.set("file", file, file.name);
-    if (knowledgeToken) form.set("knowledgeToken", knowledgeToken);
+    if (title) form.set("title", title);
     return request("/api/knowledge/upload", { method: "POST", body: form }, 60000);
   }
 

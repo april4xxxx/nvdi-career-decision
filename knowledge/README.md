@@ -1,13 +1,7 @@
-# 知识库目录
+# 公共知识库
 
-这里放需要成为“公共治国之策”的 `.md`、`.txt` 或 `.pdf` 文件。
+`女帝职场决策原则.md` 是公共决策知识的可读、可维护原稿。为保证 Vercel Function 部署稳定，当前版本把它的核心规则同步到 `api/chat.js` 的 `PUBLIC_KNOWLEDGE`，每次 DeepSeek 对话都会使用。
 
-运行：
+用户上传的 TXT、Markdown、PDF 不进入公共知识库。服务端只负责提取文字并立即返回；浏览器在 `localStorage(nvdi-full-v1)` 的 `knowledge.documents` 中保存文本，并在每次对话前做轻量相关片段检索。
 
-```bash
-OPENAI_API_KEY="你的项目 Key" npm run knowledge:seed
-```
-
-脚本会新建 OpenAI Vector Store、上传本目录文件，并输出 `OPENAI_VECTOR_STORE_ID`。将该 ID 配置到 Vercel 环境变量后重新部署。
-
-不要把个人隐私、公司机密、API Key 或未获授权的材料放进公共知识库。用户在页面内上传的典籍会进入单独的用户 Vector Store，不会加入这里的公共库。
+更新公共原则时，应同时更新原稿与 `api/chat.js` 中的精简版本，并运行 `npm test`。

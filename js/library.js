@@ -87,8 +87,7 @@
         '<div class="info"><div class="bt">' + ui.esc(b.title) + '</div>' +
         '<div class="ba">' + ui.esc(b.author || "佚名") + '</div>' +
         '<div class="bn">' + ui.esc(b.note || "") + '</div>' +
-        (b.remote ? '<div class="bk-status ' + (b.status === "completed" ? "ready" : "indexing") + '">' +
-          (b.status === "completed" ? "AI 知识库可检索" : "已提交 AI 知识库") + '</div>' : '') +
+        (b.remote ? '<div class="bk-status ready">AI 决策知识已就绪</div>' : '') +
         '</div></div>';
     }).join("");
     var uploadCard = '<div class="book-card upload" id="bookUpload"><div class="plus">+</div><span>上传典籍</span></div>';
@@ -115,9 +114,7 @@
       '<div><div class="tag">治国之策</div><h3 style="font-size:22px;margin:6px 0">' + ui.esc(b.title) + '</h3>' +
       '<div class="muted">' + ui.esc(b.author || "佚名") + (b.fileName ? ' · ' + ui.esc(b.fileName) : '') + '</div></div></div>' +
       '<p style="line-height:1.9;color:var(--ink-soft)">' + ui.esc(b.note || b.content || "此卷暂无摘要。") + '</p>' +
-      (b.remote ? '<p class="knowledge-note">' + (b.status === "completed"
-        ? '此典籍已接入御前 AI 决策知识库，后续奏对可检索其内容。'
-        : '此典籍已提交知识库并在后台建立索引，稍后即可用于御前奏对。') + '</p>' : '') +
+      (b.remote ? '<p class="knowledge-note">此典籍文字已保存在当前浏览器。后续奏对会选取相关片段交给 DeepSeek-V4-Pro 参考。</p>' : '') +
       '<div style="text-align:right;margin-top:18px"><button class="btn btn-gold" id="bkClose">合卷</button></div></div>'
     );
     ui.$("#bkClose").onclick = ui.closeModal;
@@ -133,7 +130,7 @@
       '<label>典籍文件</label>' +
       '<div class="drop-zone"><input type="file" id="upFile" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" />' +
       '<span>支持 TXT、Markdown、PDF，单份不超过 4MB。若不选文件，将把上方心得制成 TXT 典籍。</span></div>' +
-      '<div class="upload-status" id="upStatus">文件只会发送到服务端知识库，API Key 不会进入浏览器。</div>' +
+      '<div class="upload-status" id="upStatus">服务端只提取文字并立即返回，不长期保存文件；提取结果保存在当前浏览器。</div>' +
       '<div class="actions"><button class="btn" id="upCancel">取消</button>' +
       '<button class="btn btn-gold" id="upOk">呈入藏书阁</button></div></div>'
     );
@@ -157,14 +154,13 @@
         file = new File([rawNote], safeName + ".txt", { type: "text/plain;charset=utf-8" });
       }
       submit.disabled = true;
-      submit.textContent = "正在建立索引…";
+      submit.textContent = "正在提取典籍…";
       statusEl.className = "upload-status loading";
-      statusEl.textContent = "典籍正在上传并建立可检索索引，请稍候。";
+      statusEl.textContent = "正在提取可用于 AI 决策的文字，请稍候。";
       try {
         if (!App.api || !App.api.uploadKnowledge) throw new Error("知识库服务未载入");
-        var st = store.get();
-        var result = await App.api.uploadKnowledge(file, st.knowledge && st.knowledge.token);
-        store.setKnowledgeToken(result.knowledgeToken);
+        var result = await App.api.uploadKnowledge(file, title);
+        store.addKnowledgeDocument(result.knowledgeDocument);
         var covers = [data.ASSET_BASE + "物品/书1.png", data.ASSET_BASE + "物品/书2.png", data.ASSET_BASE + "物品/书3.png"];
         store.addBook({
           title: title, author: author, note: note,
@@ -172,7 +168,7 @@
           remote: true, fileName: result.book.fileName, status: result.book.status
         });
         store.addGold(20, "library");
-        store.addJournal("藏经纳典", "陛下亲纳《" + title + "》入 AI 知识库。后续决策可检索此典。" );
+        store.addJournal("藏经纳典", "陛下亲纳《" + title + "》入 AI 决策知识。后续奏对可参考此典。" );
         ui.closeModal();
         if (tab === "books") renderBody();
       } catch (error) {

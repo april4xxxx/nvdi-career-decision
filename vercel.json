@@ -5,7 +5,8 @@
       "maxDuration": 30
     },
     "api/knowledge/upload.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"
     }
   },
   "headers": [

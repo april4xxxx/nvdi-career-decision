@@ -182,17 +182,49 @@
     };
   }
 
+  function queryTerms(text) {
+    var value = String(text || "").toLowerCase();
+    var terms = value.match(/[a-z0-9]{2,}/g) || [];
+    var chineseRuns = value.match(/[\u3400-\u9fff]+/g) || [];
+    chineseRuns.forEach(function (run) {
+      if (run.length === 1) terms.push(run);
+      for (var i = 0; i < run.length - 1; i++) terms.push(run.slice(i, i + 2));
+    });
+    return terms.filter(function (term, index) { return terms.indexOf(term) === index; }).slice(0, 30);
+  }
+
+  // 在浏览器内做轻量词法检索，只把最相关的少量片段随本轮对话发给服务端。
+  function knowledgeForApi(text) {
+    var st = store.get();
+    var documents = st.knowledge && Array.isArray(st.knowledge.documents) ? st.knowledge.documents : [];
+    var terms = queryTerms(text);
+    var candidates = [];
+    documents.slice(0, 12).forEach(function (document) {
+      var content = String(document.content || "");
+      for (var start = 0; start < content.length; start += 2100) {
+        var chunk = content.slice(start, start + 2400);
+        if (!chunk) continue;
+        var haystack = (String(document.title || "") + " " + chunk).toLowerCase();
+        var score = terms.reduce(function (sum, term) {
+          return sum + (haystack.indexOf(term) >= 0 ? (term.length > 1 ? 3 : 1) : 0);
+        }, 0);
+        candidates.push({ title: document.title || document.fileName || "用户典籍", content: chunk, score: score, order: start });
+      }
+    });
+    candidates.sort(function (a, b) { return b.score - a.score || a.order - b.order; });
+    return candidates.slice(0, 4).map(function (item) { return { title: item.title, content: item.content }; });
+  }
+
   async function analyzeWithApi(text) {
     if (App.api && typeof App.api.chat === "function") {
       try {
-        var st = store.get();
         var payload = await App.api.chat({
           message: text,
           minister: ministerKey,
           probed: !!ctx.probed,
           history: aiHistory.slice(0, -1),
           state: stateForApi(),
-          knowledgeToken: st.knowledge && st.knowledge.token
+          knowledge: knowledgeForApi(text)
         });
         return payload.result;
       } catch (error) {

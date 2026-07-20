@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.2.0 - 2026-07-20
+
+### Changed
+
+- 真实对话提供方由 OpenAI Responses API 改为 DeepSeek Chat Completions。
+- 默认模型固定为官方模型 ID `deepseek-v4-pro`，并兼容 Vercel 现有变量名 `deepseek`。
+- 公共决策原则改为每轮直接注入上下文，不再依赖外部 Vector Store。
+- 用户典籍改为服务端真实提取文字、浏览器本地保存和对话前轻量相关片段检索。
+- DeepSeek 的 JSON 输出继续经过原有奏折结构清洗，任务、金币、精力和成就链路保持不变。
+
+### Added
+
+- 新增 TXT、Markdown 和可选文字 PDF 的提取结果、字符数与截断状态。
+- 新增 PDF 提取依赖 `pdf-parse@^2.4.5`、Vercel Node 图形兼容依赖 `@napi-rs/canvas@0.1.80` 和依赖锁文件。
+- Vercel Function 显式包含 `pdf.worker.mjs`，避免 Node File Trace 遗漏 PDF.js worker。
+
+### Removed
+
+- 移除 OpenAI Files、Vector Store、File Search、知识库令牌签名和公共知识库播种脚本。
+
+### Security
+
+- 用户原文件不长期保存在服务端；提取文本仅返回并保存在当前浏览器。
+- 每轮用户知识上下文限制为最多 6 份输入、18,000 字，前端实际最多选择 4 个相关片段。
+
 ## 1.1.0 - 2026-07-20
 
 ### Added
