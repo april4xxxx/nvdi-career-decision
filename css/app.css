@@ -255,7 +255,7 @@
   align-items: center; gap: 12px; margin: 0 2px 8px;
   background: linear-gradient(180deg, rgba(247,242,230,.96), rgba(240,231,211,.94));
   border: 1px solid var(--gold); border-radius: var(--r-md);
-  padding: 9px 14px; box-shadow: var(--shadow-sm); backdrop-filter: blur(4px);
+  min-height: 54px; padding: 9px 14px; box-shadow: var(--shadow-sm); backdrop-filter: blur(4px);
 }
 .ct-minister { font-size: 15px; font-weight: 800; color: var(--ink); letter-spacing: .04em; }
 .ct-minister .caret { color: var(--gold-deep); font-size: 12px; margin-left: 2px; }
@@ -311,8 +311,8 @@
 .gal-box {
   position: relative; border: 1px solid var(--gold);
   background: linear-gradient(180deg, rgba(255,253,247,.92), rgba(247,242,230,.9));
-  border-radius: var(--r-md); padding: 14px 220px 14px 18px; box-shadow: var(--shadow-md);
-  backdrop-filter: blur(6px); min-height: 74px;
+  border-radius: var(--r-md); padding: 9px 220px 9px 18px; box-shadow: var(--shadow-md);
+  backdrop-filter: blur(6px); min-height: 54px;
 }
 .gal-box .gal-name {
   position: absolute; top: -13px; left: 16px;
@@ -320,7 +320,7 @@
   font-size: 13px; font-weight: 700; letter-spacing: .12em; padding: 3px 16px;
   border-radius: 999px; box-shadow: var(--shadow-sm);
 }
-.gal-box .gal-text { font-size: 15.5px; line-height: 1.75; color: var(--ink); padding-top: 4px; }
+.gal-box .gal-text { font-size: 15.5px; line-height: 1.5; color: var(--ink); }
 .gal-box.attention { border-color: var(--verm); box-shadow: 0 0 0 2px rgba(167,71,60,.12), var(--shadow-md); }
 .gal-box.attention .gal-name { background: linear-gradient(135deg, var(--verm-light), var(--verm)); }
 .gal-actions {
@@ -329,9 +329,13 @@
 }
 .gal-actions button {
   box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
-  height: 36px; min-height: 36px; padding: 0 16px; border-radius: 999px;
+  height: 34px; min-height: 34px; padding: 0 16px; border-radius: 999px;
   font-size: 13px; font-weight: 700; line-height: 1;
   white-space: nowrap; transition: all .16s;
+}
+.convo:not(.expanded) .gal-box { display: flex; align-items: center; }
+.convo:not(.expanded) .gal-text {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .gal-continue { color: #fff; background: linear-gradient(135deg, var(--jade-light), var(--jade)); border: 1px solid #35625a; }
 .gal-continue:hover { filter: brightness(1.06); transform: translateY(-1px); }
