@@ -2,6 +2,8 @@
 
 一个将真实职场困境转化为“决策奏折、地图任务与成就”的交互式黑客松 Demo。
 
+线上演示：[https://nvdi-career-decision.vercel.app](https://nvdi-career-decision.vercel.app)
+
 ## 当前能力
 
 - 真实 OpenAI Responses API 对话，服务端返回结构化奏折。
@@ -37,7 +39,7 @@ vercel dev
 | 名称 | 是否必填 | 用途 |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | 真实 AI 必填 | OpenAI 项目 Key，仅由服务端读取 |
-| `OPENAI_MODEL` | 可选 | 默认 `gpt-5.6-terra`，可按账号可用模型调整 |
+| `OPENAI_MODEL` | 可选 | 默认 `gpt-5.6-sol`，可按账号可用模型调整 |
 | `OPENAI_VECTOR_STORE_ID` | 可选 | 公共预置知识库 ID |
 | `APP_SESSION_SECRET` | 用户上传必填 | 签名用户私有 Vector Store 令牌，建议至少 32 位随机字符串 |
 | `CHAT_RATE_LIMIT` | 可选 | 单服务实例每 10 分钟对话请求上限，默认 24 |
@@ -55,6 +57,8 @@ npm run knowledge:seed
 4. 把脚本输出的 `OPENAI_VECTOR_STORE_ID` 添加到 Vercel。
 
 ## 部署到 GitHub + Vercel
+
+当前 Vercel 项目：`april4xxxxs-projects/nvdi-career-decision`，生产域名为 `nvdi-career-decision.vercel.app`。
 
 1. 将本目录初始化为独立 Git 仓库并推送到 GitHub。
 2. 在 Vercel 选择 **New Project**，导入该仓库。

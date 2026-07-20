@@ -7,17 +7,17 @@ import { verifyVectorStoreToken } from "../api/_lib/session.js";
 test("chat function sends a structured Responses API request", async () => {
   const originalFetch = globalThis.fetch;
   process.env.OPENAI_API_KEY = "test-key";
-  process.env.OPENAI_MODEL = "gpt-5.6-terra";
+  process.env.OPENAI_MODEL = "gpt-5.6-sol";
   delete process.env.OPENAI_VECTOR_STORE_ID;
   globalThis.fetch = async (url, options) => {
     assert.equal(url, "https://api.openai.com/v1/responses");
     const body = JSON.parse(options.body);
-    assert.equal(body.model, "gpt-5.6-terra");
+    assert.equal(body.model, "gpt-5.6-sol");
     assert.equal(body.text.format.type, "json_schema");
     assert.equal(body.text.format.strict, true);
     return new Response(JSON.stringify({
       id: "resp_test",
-      model: "gpt-5.6-terra",
+      model: "gpt-5.6-sol",
       output: [{
         type: "message",
         content: [{

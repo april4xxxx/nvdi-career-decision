@@ -71,7 +71,7 @@ export default {
       if (userVectorStoreId && !vectorStoreIds.includes(userVectorStoreId)) vectorStoreIds.push(userVectorStoreId);
 
       const payload = {
-        model: process.env.OPENAI_MODEL || "gpt-5.6-terra",
+        model: process.env.OPENAI_MODEL || "gpt-5.6-sol",
         instructions: SYSTEM_PROMPT,
         input,
         reasoning: { effort: "low" },
