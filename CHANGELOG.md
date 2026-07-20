@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 - 2026-07-20
+
+### Deployment
+
+- 创建公开 GitHub 仓库 `april4xxxx/nvdi-career-decision`，并推送完整提交历史。
+- 将 Vercel 项目连接到 GitHub `main` 分支，后续推送自动触发生产部署。
+- Vercel GitHub App 权限限定为仅访问本项目仓库。
+
 ## 1.2.0 - 2026-07-20
 
 ### Changed
