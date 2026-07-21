@@ -510,7 +510,7 @@
         gold: values.gold,
         restore: values.restore,
         from: decision.title,
-        sourceKind: window.App.demo && window.App.demo.isRunning() ? "demo" : "decision",
+        sourceKind: window.App.demo && window.App.demo.active === true ? "demo" : "decision",
         knowledgeRefs: Array.isArray(decision.sources) ? decision.sources.slice(0, 5) : []
       };
     });

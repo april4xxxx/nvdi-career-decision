@@ -22,7 +22,7 @@ test("hardcoded decision templates stay inside explicit demo mode", async () => 
     readFile(new URL("../js/modes.js", import.meta.url), "utf8")
   ]);
 
-  assert.match(conversation, /App\.demo && App\.demo\.isRunning\(\)/);
+  assert.match(conversation, /App\.demo && App\.demo\.active === true/);
   assert.doesNotMatch(conversation, /else presentDecision\(data\.brain\.genericDecision/);
   assert.doesNotMatch(modes, /data\.SCENARIOS\[0\]/);
 });

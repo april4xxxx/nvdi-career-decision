@@ -72,13 +72,13 @@
   }
 
   function stopDemo() {
-    cancelFlag = true; running = false; setBadge(false); App.modes.setDemoSpeed(false);
+    cancelFlag = true; running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
     if (store.clearDemoTasks) store.clearDemoTasks();
   }
 
   async function run(key) {
     if (running) { cancelFlag = true; await sleep(300); }
-    cancelFlag = false; running = true;
+    cancelFlag = false; running = true; App.demo.active = true;
     setBadge(true, "演示：" + ((ITEMS.filter(function (i) { return i.key === key; })[0] || {}).label || ""));
     try {
       if (key === "tour") await demoTour();
@@ -89,7 +89,7 @@
       else if (key === "library") await demoLibrary();
       else if (key === "treasury") await demoTreasury();
     } catch (e) { console.warn("[demo] interrupted", e); }
-    running = false; setBadge(false); App.modes.setDemoSpeed(false);
+    running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
     if (store.clearDemoTasks) store.clearDemoTasks();
   }
   function guard() { if (cancelFlag) throw new Error("cancelled"); }
@@ -230,5 +230,5 @@
 
   function init() { setBadge(false); }
 
-  App.demo = { init: init, openMenu: openMenu, run: run, stop: stopDemo, isRunning: function () { return running; } };
+  App.demo = { active: false, init: init, openMenu: openMenu, run: run, stop: stopDemo, isRunning: function () { return running; } };
 })();

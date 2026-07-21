@@ -302,7 +302,7 @@
 
   async function analyzeWithApi(text) {
     // 写死情景仅服务于用户明确点击的演示，绝不进入普通会话任务池。
-    if (App.demo && App.demo.isRunning()) return data.brain.analyze(text, ctx);
+    if (App.demo && App.demo.active === true) return data.brain.analyze(text, ctx);
     if (App.api && typeof App.api.chat === "function") {
       try {
         var payload = await App.api.chat({
