@@ -60,6 +60,16 @@ test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
   assert.match(source, /chapter:\s*1200/);
 });
 
+test("藏书阁演示无论典籍上传结果都会收起弹窗", async () => {
+  const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
+  const demoLibrary = source.match(/async function demoLibrary\(\) \{([\s\S]*?)\n  \}\n\n  async function demoTreasury/);
+
+  assert.ok(demoLibrary, "demoLibrary function should remain discoverable");
+  const uploadWait = demoLibrary[1].indexOf("await sleep(DEMO_PACE.readShort);");
+  const modalClose = demoLibrary[1].indexOf("ui.closeModal();", uploadWait);
+  assert.ok(uploadWait >= 0 && modalClose > uploadWait, "upload modal should close after its result is shown");
+});
+
 test("public product surfaces use the unified brand name", async () => {
   const [html, onboarding, topbar, readme, chat] = await Promise.all([
     readFile(new URL("../index.html", import.meta.url), "utf8"),

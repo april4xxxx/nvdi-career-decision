@@ -191,6 +191,8 @@
     await sleep(DEMO_PACE.readMedium); guard();
     var ok = ui.$("#upOk"); if (ok) ok.click();
     await sleep(DEMO_PACE.readShort);
+    // 演示不应因本地 API 不可用或上传失败而把用户留在弹窗中。
+    ui.closeModal();
   }
 
   async function demoTreasury() {
