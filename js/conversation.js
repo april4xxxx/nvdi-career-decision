@@ -3,8 +3,8 @@
    交互按线框图：
      · 折叠态：底部 GAL 对话框显示大臣一句话 + 常驻输入框
      · 用户输入 / 点「探讨国事」→ 展开完整对话区（顶部大臣+主题）
-     · 优先调用同源服务端 AI；不可用时回退 data.brain.analyze：
-         对话(dialogue) / 选项追问(question) / 决策奏折(decision)
+     · 普通使用只调用同源服务端 AI；不可用时明确失败且不生成任务。
+       data.brain.analyze 的写死情景只在用户主动开启演示时使用。
      · 决策奏折为黄色祥云暗纹卡，内含「再议 / 大胆」；
        底部输入区主按钮变为「同意」印章 —— 同意后按分类生成任务投放地图。
    window.App.conversation
@@ -26,7 +26,6 @@
   var activeSceneId = null;      // 会话所属场景，避免切换后串写
   var restoring = false;
   var busy = false;
-  var fallbackAnnounced = false;
   var thinkingBubble = null;
   var MIN_THINKING_MS = 420;
 
@@ -35,6 +34,7 @@
   function scrollDown() { els.scroll.scrollTop = els.scroll.scrollHeight; }
 
   function pushMsg(role, who, text, skipRecord) {
+    if (role === "npc") text = data.cleanMinisterSpeech(text);
     var m = document.createElement("div");
     m.className = "msg " + role;
     if (role === "sys") {
@@ -301,6 +301,8 @@
   }
 
   async function analyzeWithApi(text) {
+    // 写死情景仅服务于用户明确点击的演示，绝不进入普通会话任务池。
+    if (App.demo && App.demo.isRunning()) return data.brain.analyze(text, ctx);
     if (App.api && typeof App.api.chat === "function") {
       try {
         var payload = await App.api.chat({
@@ -314,13 +316,13 @@
         return payload.result;
       } catch (error) {
         console.warn("[conversation] AI API unavailable", error && error.status, error && error.code, error && error.message);
-        if (!fallbackAnnounced) {
-          fallbackAnnounced = true;
-          pushMsg("sys", "", "AI 驿站未连通，已自动切换为本地演示大脑。部署并配置 API Key 后会自动启用真实 AI。");
-        }
       }
     }
-    return data.brain.analyze(text, ctx);
+    return {
+      type: "dialogue",
+      topic: topic,
+      message: "AI 驿站暂未连通，本轮没有生成任务，请稍后重试。"
+    };
   }
 
   function chatReply(text) {
@@ -355,7 +357,8 @@
           var r = await analyzeWithApi(o.tag + " " + o.text);
           return function presentAnswerDecision() {
             if (r.type === "decision") presentDecision(r.decision);
-            else presentDecision(data.brain.genericDecision(o.text));
+            else if (r.type === "question") askQuestion(r.question);
+            else pushMsg("npc", minister().role, r.message || "AI 驿站暂未连通，本轮没有生成任务，请稍后重试。");
           };
         });
       });
@@ -723,6 +726,7 @@
     collapse: collapse,
     newConversation: requestNewConversation,
     pushMsg: pushMsg,
+    getPendingDecision: function () { return pendingDecision && pendingDecision.decision; },
     setMinister: function (k) { if (data.MINISTERS[k]) { ministerKey = k; if (expanded) renderTop(); saveSession(); } },
     getState: function () { return { expanded: expanded, ministerKey: ministerKey, pending: !!pendingDecision }; }
   };

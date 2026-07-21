@@ -9,7 +9,7 @@
   window.App = window.App || {};
   var data = window.App.data;
   var STORAGE_KEY = "nvdi-full-v1";
-  var STATE_VERSION = 6;
+  var STATE_VERSION = 8;
   var ENERGY_CAP = 150;
   var DAILY_ENERGY_GAIN = 30;
   var MAX_DAILY_COUNTED_RESTORE = 60;
@@ -137,6 +137,60 @@
     };
   }
 
+  function cleanTaskTitle(value) {
+    return data.cleanTaskTitle ? data.cleanTaskTitle(value) : String(value || "").trim();
+  }
+
+  function cleanTaskMarkersInSystemText(value) {
+    return String(value || "").replace(
+      /(^|[·•]\s*)[\[【]\s*(?:main|daily|explore|delay|mystic)\s*[\]】]\s*[:：\-–—]?\s*/gi,
+      "$1"
+    );
+  }
+
+  function cleanMinisterSpeech(value) {
+    return data.cleanMinisterSpeech ? data.cleanMinisterSpeech(value) : String(value || "").replace(/朕/g, "臣");
+  }
+
+  function cleanSavedDecisionTaskTitles(decision) {
+    if (!decision || typeof decision !== "object") return decision;
+    ["recommend", "alt"].forEach(function (key) {
+      var path = decision[key];
+      if (!path || !Array.isArray(path.tasks)) return;
+      path.tasks = path.tasks.map(function (task) {
+        return Object.assign({}, task, { title: cleanTaskTitle(task.title) || "推进此事的第一步" });
+      });
+    });
+    decision.title = cleanTaskTitle(decision.title) || decision.title;
+    return decision;
+  }
+
+  function cleanSavedConversationSession(session) {
+    if (!session || typeof session !== "object") return session;
+    var cleaned = Object.assign({}, session);
+    cleaned.transcript = (Array.isArray(session.transcript) ? session.transcript : []).map(function (message) {
+      if (!message) return message;
+      if (message.role === "sys") return Object.assign({}, message, { text: cleanTaskMarkersInSystemText(message.text) });
+      if (message.role === "npc") return Object.assign({}, message, { text: cleanMinisterSpeech(message.text) });
+      return message;
+    });
+    cleaned.aiHistory = (Array.isArray(session.aiHistory) ? session.aiHistory : []).map(function (message) {
+      if (!message || message.role !== "assistant") return message;
+      return Object.assign({}, message, { content: cleanMinisterSpeech(message.content) });
+    });
+    if (cleaned.activeQuestion && cleaned.activeQuestion.q) {
+      cleaned.activeQuestion = Object.assign({}, cleaned.activeQuestion, {
+        q: cleanMinisterSpeech(cleaned.activeQuestion.q)
+      });
+    }
+    if (cleaned.pendingDecision && cleaned.pendingDecision.decision) {
+      cleaned.pendingDecision = Object.assign({}, cleaned.pendingDecision, {
+        decision: cleanSavedDecisionTaskTitles(cleaned.pendingDecision.decision)
+      });
+    }
+    return cleaned;
+  }
+
   function normalizedConversationText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
   }
@@ -243,30 +297,26 @@
         if (!Array.isArray(state.knowledge.documents)) state.knowledge.documents = [];
         state.journals = (Array.isArray(parsed.journals) ? parsed.journals : []).map(cleanLegacyConversationJournal).filter(Boolean);
         state.conversationSessions = state.conversationSessions && typeof state.conversationSessions === "object" ? state.conversationSessions : {};
+        Object.keys(state.conversationSessions).forEach(function (sceneId) {
+          var session = cleanSavedConversationSession(state.conversationSessions[sceneId]);
+          // 早期存档未写入会话日期；视为当前游戏日，避免刷新后被误判为过期而消失。
+          if (session && !Number.isFinite(Number(session.day))) session.day = state.day;
+          state.conversationSessions[sceneId] = session;
+        });
         state.dailyMystic = Object.assign({
           dayKey: state.dayKey || localDayKey(), status: "idle", taskId: null,
           cardId: null, trigger: null, rerollsUsed: 0
         }, parsed.dailyMystic || {});
         state.mysticRecentCards = Array.isArray(parsed.mysticRecentCards) ? parsed.mysticRecentCards.slice(-12) : [];
-        // 迁移：旧存档无地图任务且已登基 → 直接播种初始任务（不触发事件）
-        if (state.onboarded && (!state.mapTasks || !state.mapTasks.length)) {
-          state.mapTasks = [];
-          (data.SEED_MAP_TASKS || []).forEach(function (tpl, i) {
-            var catDef = data.CATEGORIES[tpl.cat] || data.CATEGORIES.daily;
-            var values = window.App.economy.calculate(tpl, tpl.cat);
-            state.mapTasks.push({
-              id: "mt-seed-" + i, title: tpl.title, cat: tpl.cat, scene: catDef.scene,
-              durationMinutes: values.durationMinutes, energyTier: values.energyTier,
-              energy: values.energy, gold: values.gold, restore: values.restore,
-              from: tpl.from || "", knowledgeRefs: [],
-              bg: data.brain.taskBg(i), done: false, day: state.day || 1
-            });
-          });
-        }
         // 迁移：旧任务可能保存过模型或旧情景给出的任意数值；统一按时长重新计算。
         state.mapTasks = (Array.isArray(state.mapTasks) ? state.mapTasks : []).map(function (task) {
-          var values = window.App.economy.calculate(task, task.cat);
+          var category = data.correctTaskCategory(task.title, task.cat);
+          var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
+          var values = window.App.economy.calculate(task, category);
           return Object.assign({}, task, {
+            title: cleanTaskTitle(task.title) || "推进此事的第一步",
+            cat: category,
+            scene: catDef.scene,
             durationMinutes: values.durationMinutes,
             energyTier: values.energyTier,
             energy: values.energy,
@@ -279,6 +329,10 @@
             relatedFrom: Array.isArray(task.relatedFrom) ? task.relatedFrom.slice(0, 8) : (task.from ? [task.from] : [])
           });
         });
+        // v8 一次性移除过去自动播种、被模型复制或由旧演示遗留的硬编码任务。
+        if (oldVersion < 8) state.mapTasks = state.mapTasks.filter(function (task) { return !data.isLegacySeedTask(task); });
+        // 旧版本可能让同一事项因“完成 / 准备 / 的 / 大纲”等措辞差异绕过去重；刷新时合回较早的原任务。
+        state.mapTasks = mergeSavedActiveTaskDuplicates(state.mapTasks);
         return;
       }
     } catch (e) { console.warn("[store] load failed, reset", e); }
@@ -779,16 +833,24 @@
   function normalizeTaskTitle(value) {
     return String(value || "").toLowerCase().replace(/[\s\-_\u2013\u2014，。！？、；：,.!?;:'"“”‘’（）()\[\]{}【】]/g, "");
   }
+  function taskSemanticCore(value) {
+    return normalizeTaskTitle(value)
+      .replace(/^(?:完成|准备|制定|撰写|编写|整理|梳理|制作|创建|推进|执行|开始|提交|输出|检查|确认)+/, "")
+      .replace(/的/g, "");
+  }
   function titleBigrams(value) {
-    var text = normalizeTaskTitle(value), result = [];
+    var text = taskSemanticCore(value), result = [];
     if (text.length < 2) return text ? [text] : result;
     for (var i = 0; i < text.length - 1; i++) result.push(text.slice(i, i + 2));
     return result;
   }
   function taskTitleSimilarity(left, right) {
-    var a = normalizeTaskTitle(left), b = normalizeTaskTitle(right);
+    var rawA = normalizeTaskTitle(left), rawB = normalizeTaskTitle(right);
+    if (!rawA || !rawB) return 0;
+    if (rawA === rawB) return 1;
+    var a = taskSemanticCore(left), b = taskSemanticCore(right);
     if (!a || !b) return 0;
-    if (a === b) return 1;
+    if (a === b) return 0.96;
     if (Math.min(a.length, b.length) >= 6 && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0)) return 0.92;
     var ap = titleBigrams(a), bp = titleBigrams(b), seenA = {}, seenB = {}, intersection = 0;
     ap.forEach(function (pair) { seenA[pair] = true; });
@@ -797,21 +859,58 @@
     var total = Object.keys(seenA).length + Object.keys(seenB).length;
     return total ? (2 * intersection) / total : 0;
   }
+
+  function mergeTaskMetadata(existing, incoming) {
+    existing.relatedFrom = Array.isArray(existing.relatedFrom) ? existing.relatedFrom : (existing.from ? [existing.from] : []);
+    var incomingSources = Array.isArray(incoming.relatedFrom) ? incoming.relatedFrom : (incoming.from ? [incoming.from] : []);
+    incomingSources.forEach(function (source) {
+      if (source && existing.relatedFrom.indexOf(source) < 0 && existing.relatedFrom.length < 8) existing.relatedFrom.push(source);
+    });
+    existing.knowledgeRefs = Array.isArray(existing.knowledgeRefs) ? existing.knowledgeRefs : [];
+    (Array.isArray(incoming.knowledgeRefs) ? incoming.knowledgeRefs : []).forEach(function (ref) {
+      if (existing.knowledgeRefs.indexOf(ref) < 0 && existing.knowledgeRefs.length < 5) existing.knowledgeRefs.push(ref);
+    });
+    existing.updatedDay = Math.max(Number(existing.updatedDay) || 0, Number(incoming.updatedDay || incoming.day) || 0) || existing.updatedDay;
+    return existing;
+  }
+
+  function mergeSavedActiveTaskDuplicates(tasks) {
+    var kept = [];
+    (tasks || []).forEach(function (task) {
+      if (!task || task.done || task.expired) { kept.push(task); return; }
+      var duplicate = null;
+      kept.some(function (candidate) {
+        if (!candidate || candidate.done || candidate.expired) return false;
+        var similarity = taskTitleSimilarity(candidate.title, task.title);
+        var threshold = candidate.scene === task.scene ? 0.72 : 0.9;
+        if (similarity < threshold) return false;
+        duplicate = candidate;
+        return true;
+      });
+      if (duplicate) mergeTaskMetadata(duplicate, task);
+      else kept.push(task);
+    });
+    return kept;
+  }
   function overlappingTask(title, scene) {
     var best = null;
     state.mapTasks.forEach(function (task) {
-      if (task.done || task.scene !== scene) return;
+      if (task.done) return;
       var similarity = taskTitleSimilarity(task.title, title);
-      if (similarity >= 0.72 && (!best || similarity > best.similarity)) best = { task: task, similarity: similarity };
+      var threshold = task.scene === scene ? 0.72 : 0.9;
+      if (similarity >= threshold && (!best || similarity > best.similarity)) best = { task: task, similarity: similarity };
     });
     return best;
   }
 
   function previewTaskOverlaps(templates) {
     return (templates || []).map(function (tpl) {
-      var catDef = data.CATEGORIES[tpl.cat] || data.CATEGORIES.daily;
-      var overlap = overlappingTask(tpl.title, catDef.scene);
-      return overlap ? { template: tpl, task: overlap.task, similarity: overlap.similarity } : null;
+      var title = cleanTaskTitle(tpl.title) || "推进此事的第一步";
+      var category = data.correctTaskCategory(title, tpl.cat);
+      var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
+      var safeTemplate = Object.assign({}, tpl, { title: title, cat: category });
+      var overlap = overlappingTask(safeTemplate.title, catDef.scene);
+      return overlap ? { template: safeTemplate, task: overlap.task, similarity: overlap.similarity } : null;
     }).filter(Boolean);
   }
 
@@ -821,37 +920,34 @@
     var created = [];
     var merged = [];
     (templates || []).forEach(function (tpl, i) {
-      var catDef = data.CATEGORIES[tpl.cat] || data.CATEGORIES.daily;
-      var values = window.App.economy.calculate(tpl, tpl.cat);
-      var overlap = overlappingTask(tpl.title, catDef.scene);
+      var title = cleanTaskTitle(tpl.title) || "推进此事的第一步";
+      var category = data.correctTaskCategory(title, tpl.cat);
+      var safeTemplate = Object.assign({}, tpl, { title: title, cat: category });
+      var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
+      var values = window.App.economy.calculate(safeTemplate, safeTemplate.cat);
+      var overlap = overlappingTask(safeTemplate.title, catDef.scene);
       if (overlap) {
         var existing = overlap.task;
-        existing.relatedFrom = Array.isArray(existing.relatedFrom) ? existing.relatedFrom : (existing.from ? [existing.from] : []);
-        if (tpl.from && existing.relatedFrom.indexOf(tpl.from) < 0) existing.relatedFrom.push(tpl.from);
-        existing.knowledgeRefs = Array.isArray(existing.knowledgeRefs) ? existing.knowledgeRefs : [];
-        (Array.isArray(tpl.knowledgeRefs) ? tpl.knowledgeRefs : []).forEach(function (ref) {
-          if (existing.knowledgeRefs.indexOf(ref) < 0 && existing.knowledgeRefs.length < 5) existing.knowledgeRefs.push(ref);
-        });
-        existing.updatedDay = state.day;
-        merged.push({ task: existing, template: tpl, similarity: overlap.similarity });
+        mergeTaskMetadata(existing, Object.assign({}, safeTemplate, { updatedDay: state.day }));
+        merged.push({ task: existing, template: safeTemplate, similarity: overlap.similarity });
         return;
       }
       var task = {
         id: nextTaskId(),
-        title: tpl.title,
-        cat: tpl.cat,
+        title: safeTemplate.title,
+        cat: safeTemplate.cat,
         scene: catDef.scene,
         durationMinutes: values.durationMinutes,
         energyTier: values.energyTier,
         energy: values.energy,
         gold: values.gold,
         restore: values.restore,
-        from: tpl.from || "",
-        sourceKind: tpl.sourceKind || "",
-        tags: Array.isArray(tpl.tags) ? tpl.tags.slice(0, 8) : [],
-        independent: !!tpl.independent,
-        relatedFrom: tpl.from ? [tpl.from] : [],
-        knowledgeRefs: Array.isArray(tpl.knowledgeRefs) ? tpl.knowledgeRefs.slice(0, 5) : [],
+        from: safeTemplate.from || "",
+        sourceKind: safeTemplate.sourceKind || "",
+        tags: Array.isArray(safeTemplate.tags) ? safeTemplate.tags.slice(0, 8) : [],
+        independent: !!safeTemplate.independent,
+        relatedFrom: safeTemplate.from ? [safeTemplate.from] : [],
+        knowledgeRefs: Array.isArray(safeTemplate.knowledgeRefs) ? safeTemplate.knowledgeRefs.slice(0, 5) : [],
         bg: data.brain.taskBg(state.mapTasks.length + i),
         done: false,
         day: state.day
@@ -863,6 +959,13 @@
     commit("task");
     emit("deploy", { created: created, merged: merged });
     return created;
+  }
+
+  function clearDemoTasks() {
+    var before = state.mapTasks.length;
+    state.mapTasks = state.mapTasks.filter(function (task) { return task.sourceKind !== "demo"; });
+    if (state.mapTasks.length !== before) commit("task");
+    return before - state.mapTasks.length;
   }
 
   function tasksForScene(sceneId) {
@@ -1190,8 +1293,6 @@
     data.JOURNALS_SEED.forEach(function (j) { state.journals.push(Object.assign({}, j)); });
     // 播种默认藏书
     data.BOOKS.forEach(function (b) { state.books.push(Object.assign({}, b)); });
-    // 播种初始地图任务（登基之初已在案的事务）
-    if (!state.mapTasks.length) deployTasks(data.SEED_MAP_TASKS);
     commit("onboarded");
   }
 
@@ -1218,7 +1319,7 @@
     settle: settleEconomy, addEnergy: addEnergy, setEnergy: setEnergy, addGold: addGold,
     // 场景 + 地图任务
     moveScene: moveScene,
-    deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask,
+    deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask, clearDemoTasks: clearDemoTasks,
     tasksForScene: tasksForScene, pendingCount: pendingCount,
     maybeOfferDailyMystic: maybeOfferDailyMystic, rerollDailyMystic: rerollDailyMystic,
     applyPizhu: applyPizhu,

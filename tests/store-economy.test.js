@@ -101,13 +101,39 @@ test("v1 saves migrate to the current version without shrinking the 150 energy c
     mapTasks: []
   });
 
-  assert.equal(store.get().version, 6);
+  assert.equal(store.get().version, 8);
   assert.equal(store.get().energy, 140);
   assert.equal(store.get().energyCap, 150);
   assert.equal(store.get().gold, 100);
   assert.equal(store.get().totalGold, 120);
   assert.equal(store.get().achievements["gold-50"].rewardGranted, true);
   assert.equal(store.get().totalActualRestored, 0);
+});
+
+test("onboarding does not auto-create fabricated career tasks", () => {
+  const { store, data } = createStore();
+  store.finishOnboarding({ nickname: "测试", answers: [] }, "铁腕", "2026-07-20T08:00:00+08:00");
+
+  assert.equal(data.SEED_MAP_TASKS.length, 0);
+  assert.equal(store.get().mapTasks.length, 0);
+});
+
+test("old saves remove seeded, copied and demo template tasks once", () => {
+  const { store } = createStore({
+    version: 6,
+    onboarded: true,
+    day: 2,
+    mapTasks: [
+      { id: "mt-seed-0", title: "完成入职培训的结业答辩", cat: "main", scene: "court", durationMinutes: 90, from: "入职清单", done: false, day: 1 },
+      { id: "mt-seed-2", title: "约同组前辈喝杯咖啡认识一下", cat: "explore", scene: "garden", durationMinutes: 20, from: "融入团队", done: false, day: 1 },
+      { id: "copied-coffee", title: "约同组前辈喝杯咖啡认识一下", cat: "daily", scene: "ministry", durationMinutes: 30, from: "明日就医日的双翼安排", done: false, day: 2 },
+      { id: "copied-outline", title: "准备入职培训结业答辩大纲", cat: "main", scene: "court", durationMinutes: 60, from: "明日就医日的双翼安排", done: false, day: 2 },
+      { id: "demo-help", title: "限时 20 分钟协助同事", cat: "daily", scene: "ministry", durationMinutes: 20, from: "同事临时求助", done: false, day: 1 },
+      { id: "real-task", title: "在部门群里说明下午请假", cat: "daily", scene: "ministry", durationMinutes: 10, from: "明日就医日的双翼安排", done: false, day: 2 }
+    ]
+  });
+
+  assert.deepEqual(Array.from(store.get().mapTasks, (task) => task.id), ["real-task"]);
 });
 
 test("day sync grants 30 energy once for the same date", () => {
@@ -212,6 +238,81 @@ test("overlapping active tasks are linked instead of duplicated", () => {
   assert.deepEqual(Array.from(store.get().mapTasks[0].relatedFrom), ["第一份决策", "第二份决策"]);
 });
 
+test("task content corrects unsafe AI category routing", () => {
+  const { store } = createStore();
+  const coffee = store.deployTasks([{
+    title: "约同组前辈喝杯咖啡认识一下", cat: "daily", durationMinutes: 30, from: "测试"
+  }])[0];
+  const rest = store.deployTasks([{
+    title: "就医前预留时间休息", cat: "daily", durationMinutes: 30, from: "测试"
+  }])[0];
+
+  assert.equal(coffee.cat, "explore");
+  assert.equal(coffee.scene, "garden");
+  assert.equal(rest.cat, "mystic");
+  assert.equal(rest.scene, "observatory");
+});
+
+test("identical active tasks cannot bypass deduplication by changing scenes", () => {
+  const { store } = createStore();
+  const first = store.deployTasks([{
+    title: "汇总客户访谈反馈", cat: "explore", durationMinutes: 30, from: "第一份决策"
+  }]);
+  const second = store.deployTasks([{
+    title: "汇总客户访谈反馈", cat: "daily", durationMinutes: 30, from: "第二份决策"
+  }]);
+
+  assert.equal(first.length, 1);
+  assert.equal(second.length, 0);
+  assert.equal(second.merged.length, 1);
+  assert.equal(store.get().mapTasks.length, 1);
+});
+
+test("explicit demo tasks are removed when the demo ends", () => {
+  const { store } = createStore();
+  store.deployTasks([{ title: "演示任务", cat: "daily", durationMinutes: 10, sourceKind: "demo" }]);
+  store.deployTasks([{ title: "真实任务", cat: "daily", durationMinutes: 10, sourceKind: "decision" }]);
+
+  assert.equal(store.clearDemoTasks(), 1);
+  assert.deepEqual(Array.from(store.get().mapTasks, (task) => task.title), ["真实任务"]);
+});
+
+test("task deduplication ignores planning verbs and particles", () => {
+  const { store } = createStore();
+  const first = store.deployTasks([{
+    title: "完成入职培训的结业答辩", cat: "main", durationMinutes: 90, from: "入职清单"
+  }]);
+  const second = store.deployTasks([{
+    title: "准备入职培训结业答辩大纲", cat: "main", durationMinutes: 60, from: "明日：半日理政，半日就医"
+  }]);
+
+  assert.equal(first.length, 1);
+  assert.equal(second.length, 0);
+  assert.equal(second.merged.length, 1);
+  assert.equal(store.get().mapTasks.length, 1);
+});
+
+test("saved active near-duplicate tasks are merged on refresh", () => {
+  const { store } = createStore({
+    version: 8,
+    day: 2,
+    mapTasks: [
+      {
+        id: "original", title: "完成入职培训的结业答辩", cat: "main", scene: "court",
+        durationMinutes: 90, from: "入职清单", relatedFrom: ["入职清单"], done: false, day: 1
+      },
+      {
+        id: "duplicate", title: "准备入职培训结业答辩大纲", cat: "main", scene: "court",
+        durationMinutes: 60, from: "明日：半日理政，半日就医", done: false, day: 2
+      }
+    ]
+  });
+
+  assert.equal(store.get().mapTasks.length, 1);
+  assert.equal(store.get().mapTasks[0].id, "original");
+  assert.deepEqual(Array.from(store.get().mapTasks[0].relatedFrom), ["入职清单", "明日：半日理政，半日就医"]);
+});
+
 test("completed tasks may be created again in a later decision", () => {
   const { store } = createStore();
   const first = store.deployTasks([{ title: "整理周报", cat: "daily", durationMinutes: 30, from: "本周周报" }]);
@@ -221,6 +322,40 @@ test("completed tasks may be created again in a later decision", () => {
   assert.equal(second.length, 1);
   assert.equal(second.merged.length, 0);
   assert.equal(store.get().mapTasks.length, 2);
+});
+
+test("new tasks and saved conversations hide internal category markers", () => {
+  const { store } = createStore({
+    version: 6,
+    mapTasks: [{
+      id: "legacy-tagged-task", title: "[main] 备齐材料", cat: "main", scene: "court",
+      durationMinutes: 15, done: false, day: 1
+    }],
+    conversationSessions: {
+      court: {
+        transcript: [
+          { role: "sys", who: "", text: "· [main] 备齐材料（约 15 分钟）" },
+          { role: "npc", who: "铁面直臣", text: "朕理解，工作可缓，朕可为你谋划。" },
+          { role: "me", who: "陛下", text: "朕明日先去医院。" }
+        ],
+        pendingDecision: {
+          decision: {
+            recommend: { tasks: [{ title: "[daily] 检查通知", cat: "daily", durationMinutes: 10 }] },
+            alt: null
+          }
+        }
+      }
+    }
+  });
+  const created = store.deployTasks([{ title: "【explore】记录观察", cat: "explore", durationMinutes: 20 }]);
+  const saved = store.getConversation("court");
+
+  assert.equal(store.get().mapTasks[0].title, "备齐材料");
+  assert.equal(created[0].title, "记录观察");
+  assert.equal(saved.transcript[0].text, "· 备齐材料（约 15 分钟）");
+  assert.equal(saved.transcript[1].text, "臣理解，工作可缓，臣可为你谋划。");
+  assert.equal(saved.transcript[2].text, "朕明日先去医院。");
+  assert.equal(saved.pendingDecision.decision.recommend.tasks[0].title, "检查通知");
 });
 
 test("conversation sessions survive scene switches and archive on a new day", () => {

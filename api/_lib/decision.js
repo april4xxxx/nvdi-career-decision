@@ -87,11 +87,22 @@ function cleanText(value, max = 500) {
   return String(value || "").trim().slice(0, max);
 }
 
+function cleanMinisterSpeech(value, max = 800) {
+  // “朕”只属于用户扮演的女帝；模型在大臣回复中误用时统一纠正身份。
+  return cleanText(value, max).replace(/朕/g, "臣");
+}
+
+function cleanTaskTitle(value) {
+  return cleanText(value, 80)
+    .replace(/^\s*[\[【]\s*(?:main|daily|explore|delay|mystic)\s*[\]】]\s*[:：\-–—]?\s*/i, "")
+    .trim();
+}
+
 function cleanTask(task, fallbackCategory) {
   const category = CATEGORIES.includes(task?.cat) ? task.cat : fallbackCategory;
   const economy = calculateTaskEconomy(task, category);
   return {
-    title: cleanText(task?.title, 80) || "推进此事的第一步",
+    title: cleanTaskTitle(task?.title) || "推进此事的第一步",
     cat: category,
     durationMinutes: economy.durationMinutes,
     energyTier: economy.energyTier,
@@ -114,14 +125,14 @@ export function normalizeDecisionResponse(value) {
   const result = {
     type,
     topic: cleanText(value?.topic, 80) || "御前议事",
-    message: cleanText(value?.message, 800),
+    message: cleanMinisterSpeech(value?.message, 800),
     question: null,
     decision: null
   };
   if (type === "question") {
     const options = (Array.isArray(value?.question?.options) ? value.question.options : []).slice(0, 3);
     result.question = {
-      q: cleanText(value?.question?.q, 240) || "这件事眼下最重要的约束是什么？",
+      q: cleanMinisterSpeech(value?.question?.q, 240) || "这件事眼下最重要的约束是什么？",
       options: options.map((option) => ({ text: cleanText(option?.text, 100), tag: cleanText(option?.tag, 40) }))
     };
   }
@@ -129,7 +140,7 @@ export function normalizeDecisionResponse(value) {
     const category = CATEGORIES.includes(value?.decision?.category) ? value.decision.category : "daily";
     result.decision = {
       category,
-      title: cleanText(value?.decision?.title, 80) || "御前决策",
+      title: cleanTaskTitle(value?.decision?.title) || "御前决策",
       summary: cleanText(value?.decision?.summary, 500),
       mirror: {
         invest: cleanText(value?.decision?.mirror?.invest, 120),

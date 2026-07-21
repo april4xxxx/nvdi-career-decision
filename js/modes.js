@@ -94,7 +94,7 @@
   /* ================= 预言模式 ================= */
   // 推演一份「决策奏折」在三种朱批下的走向：同意(采纳推荐) / 再议(暂缓) / 大胆(另采备选)
   function openProphecy() {
-    var d = (data.SCENARIOS[0] && data.SCENARIOS[0].decision) || null;
+    var d = App.conversation && App.conversation.getPendingDecision ? App.conversation.getPendingDecision() : null;
     prophVeil.style.backgroundImage = "url('" + data.ASSET_BASE + "场景/预言模式底图.png')";
     if (!d) {
       prophVeil.innerHTML =

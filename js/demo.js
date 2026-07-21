@@ -71,7 +71,10 @@
     var stop = ui.$("#demoStop"); if (stop) stop.onclick = function () { ui.closeModal(); stopDemo(); };
   }
 
-  function stopDemo() { cancelFlag = true; running = false; setBadge(false); App.modes.setDemoSpeed(false); }
+  function stopDemo() {
+    cancelFlag = true; running = false; setBadge(false); App.modes.setDemoSpeed(false);
+    if (store.clearDemoTasks) store.clearDemoTasks();
+  }
 
   async function run(key) {
     if (running) { cancelFlag = true; await sleep(300); }
@@ -87,6 +90,7 @@
       else if (key === "treasury") await demoTreasury();
     } catch (e) { console.warn("[demo] interrupted", e); }
     running = false; setBadge(false); App.modes.setDemoSpeed(false);
+    if (store.clearDemoTasks) store.clearDemoTasks();
   }
   function guard() { if (cancelFlag) throw new Error("cancelled"); }
 
@@ -226,5 +230,5 @@
 
   function init() { setBadge(false); }
 
-  App.demo = { init: init, openMenu: openMenu, run: run, stop: stopDemo };
+  App.demo = { init: init, openMenu: openMenu, run: run, stop: stopDemo, isRunning: function () { return running; } };
 })();

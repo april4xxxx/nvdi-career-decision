@@ -16,6 +16,17 @@ test("conversation thinking round awaits the async AI result", async () => {
   assert.match(source, /think\(function \(\) \{ return regenerate\(text\); \}\);/);
 });
 
+test("hardcoded decision templates stay inside explicit demo mode", async () => {
+  const [conversation, modes] = await Promise.all([
+    readFile(new URL("../js/conversation.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/modes.js", import.meta.url), "utf8")
+  ]);
+
+  assert.match(conversation, /App\.demo && App\.demo\.isRunning\(\)/);
+  assert.doesNotMatch(conversation, /else presentDecision\(data\.brain\.genericDecision/);
+  assert.doesNotMatch(modes, /data\.SCENARIOS\[0\]/);
+});
+
 test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
   const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
 

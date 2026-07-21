@@ -14,6 +14,7 @@ test("chat function sends a JSON DeepSeek-V4-Pro request with knowledge", async 
     assert.equal(body.model, "deepseek-v4-pro");
     assert.equal(body.response_format.type, "json_object");
     assert.equal(body.thinking.type, "disabled");
+    assert.match(body.messages[0].content, /已有待办只用于查重/);
     assert.match(body.messages.at(-1).content, /我的复盘/);
     assert.match(body.messages.at(-1).content, /DAY_31_60/);
     return new Response(JSON.stringify({

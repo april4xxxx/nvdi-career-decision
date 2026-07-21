@@ -49,3 +49,47 @@ test("limits questions to three choices", () => {
   });
   assert.equal(result.question.options.length, 3);
 });
+
+test("strips internal category markers from AI task titles", () => {
+  const result = normalizeDecisionResponse({
+    type: "decision",
+    decision: {
+      category: "main",
+      title: "入职准备",
+      summary: "分步完成",
+      mirror: {},
+      recommend: {
+        label: "今晚先准备",
+        text: "把材料收齐",
+        tasks: [
+          { title: "[main] 备齐材料", cat: "main", durationMinutes: 15 },
+          { title: "【daily】检查通知", cat: "daily", durationMinutes: 10 }
+        ]
+      },
+      alt: null,
+      sources: []
+    }
+  });
+
+  assert.deepEqual(result.decision.recommend.tasks.map((task) => task.title), ["备齐材料", "检查通知"]);
+});
+
+test("keeps the minister role from speaking as the empress", () => {
+  const dialogue = normalizeDecisionResponse({
+    type: "dialogue",
+    topic: "医院安排",
+    message: "朕理解，明日当以龙体为重；若需安排，朕可为你谋划。",
+    question: null,
+    decision: null
+  });
+  const question = normalizeDecisionResponse({
+    type: "question",
+    topic: "医院安排",
+    message: "",
+    question: { q: "朕先问一句：明日可以请假吗？", options: [] },
+    decision: null
+  });
+
+  assert.equal(dialogue.message, "臣理解，明日当以龙体为重；若需安排，臣可为你谋划。");
+  assert.equal(question.question.q, "臣先问一句：明日可以请假吗？");
+});

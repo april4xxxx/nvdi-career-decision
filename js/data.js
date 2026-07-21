@@ -238,13 +238,14 @@
   ].map(function (p) { return A + p; });
   function taskBg(i) { return TASK_BGS[((i % TASK_BGS.length) + TASK_BGS.length) % TASK_BGS.length]; }
 
-  /* ---------- 初始地图任务（登基之初已在案的事务，避免地图空荡） ----------
-     结构与生成任务一致：{title, cat, durationMinutes, from} */
-  var SEED_MAP_TASKS = [
+  /* ---------- v7 前自动写入真实任务池的演示模板 ----------
+     仅用于识别并清理旧存档；普通用户不再自动获得虚构职场任务。 */
+  var LEGACY_SEED_MAP_TASKS = [
     { title: "完成入职培训的结业答辩", cat: "main", durationMinutes: 90, from: "入职清单" },
     { title: "整理并发出本周周报", cat: "daily", durationMinutes: 20, from: "例行事务" },
     { title: "约同组前辈喝杯咖啡认识一下", cat: "explore", durationMinutes: 20, from: "融入团队" }
   ];
+  var SEED_MAP_TASKS = [];
 
   /* ---------- 每日天象·微探索 ----------
      只提供无门槛、无需文字回顾的小探索；数值由 store 固定为恢复 10 精力、0 金币。 */
@@ -465,13 +466,41 @@
   }
 
   /* 将一条决策路径展开为可投放地图的任务模板（无 id/bg，交由 store 落地） */
+  function cleanTaskTitle(value) {
+    return String(value || "")
+      .replace(/^\s*[\[【]\s*(?:main|daily|explore|delay|mystic)\s*[\]】]\s*[:：\-–—]?\s*/i, "")
+      .trim();
+  }
+
+  function cleanMinisterSpeech(value) {
+    return String(value || "").replace(/朕/g, "臣");
+  }
+
+  function isLegacySeedTask(task) {
+    var title = cleanTaskTitle(task && task.title);
+    if (LEGACY_SEED_MAP_TASKS.some(function (template) { return template.title === title; })) return true;
+    var source = String(task && task.from || "");
+    if (["行业分享邀约", "3999 元职业课程", "同事临时求助", "拖了很久的那件事", "精力告急"].indexOf(source) >= 0) return true;
+    return /入职培训.*(?:结业)?答辩/.test(title) ||
+      /(?:整理|撰写|发出|提交).{0,5}(?:本周)?周报/.test(title) ||
+      /(?:同组)?前辈.*咖啡|咖啡.*(?:同组)?前辈/.test(title);
+  }
+
+  /* 只校正语义明确、错投场景会造成明显误导的 AI 分类。 */
+  function correctTaskCategory(title, proposed) {
+    var text = String(title || "").toLowerCase();
+    if (/(休息|休整|睡眠|午睡|小睡|离屏|放松|恢复精力|养神|缓一缓)/.test(text)) return "mystic";
+    if (/(咖啡|coffee)/i.test(text) || /(?:约|联系|结识|认识|拜访|交流).{0,8}(?:前辈|同事|同行|导师)/.test(text)) return "explore";
+    return CATEGORIES[proposed] ? proposed : "daily";
+  }
+
   function tasksFromPath(decision, pathKey) {
     var path = decision[pathKey] || decision.recommend;
     return (path.tasks || []).map(function (t) {
-      var category = t.cat || decision.category;
+      var category = correctTaskCategory(t.title, t.cat || decision.category);
       var values = window.App.economy.calculate(t, category);
       return {
-        title: t.title,
+        title: cleanTaskTitle(t.title) || "推进此事的第一步",
         cat: category,
         durationMinutes: values.durationMinutes,
         energyTier: values.energyTier,
@@ -479,7 +508,7 @@
         gold: values.gold,
         restore: values.restore,
         from: decision.title,
-        sourceKind: "decision",
+        sourceKind: window.App.demo && window.App.demo.isRunning() ? "demo" : "decision",
         knowledgeRefs: Array.isArray(decision.sources) ? decision.sources.slice(0, 5) : []
       };
     });
@@ -592,7 +621,11 @@
     CATEGORY_ORDER: CATEGORY_ORDER,
     TASK_BGS: TASK_BGS,
     SEED_MAP_TASKS: SEED_MAP_TASKS,
+    isLegacySeedTask: isLegacySeedTask,
+    correctTaskCategory: correctTaskCategory,
     MYSTIC_CARDS: MYSTIC_CARDS,
+    cleanTaskTitle: cleanTaskTitle,
+    cleanMinisterSpeech: cleanMinisterSpeech,
     SCENARIOS: SCENARIOS,
     brain: brain,
     // 成就
