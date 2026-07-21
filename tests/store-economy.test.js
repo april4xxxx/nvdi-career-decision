@@ -116,6 +116,7 @@ test("onboarding does not auto-create fabricated career tasks", () => {
 
   assert.equal(data.SEED_MAP_TASKS.length, 0);
   assert.equal(store.get().mapTasks.length, 0);
+  assert.equal(Object.keys(data.SCENE_TASK_TEMPLATES).length, 5);
 });
 
 test("old saves remove seeded, copied and demo template tasks once", () => {
@@ -238,7 +239,7 @@ test("overlapping active tasks are linked instead of duplicated", () => {
   assert.deepEqual(Array.from(store.get().mapTasks[0].relatedFrom), ["第一份决策", "第二份决策"]);
 });
 
-test("task content corrects unsafe AI category routing", () => {
+test("frontend preserves the category returned by the backend AI", () => {
   const { store } = createStore();
   const coffee = store.deployTasks([{
     title: "约同组前辈喝杯咖啡认识一下", cat: "daily", durationMinutes: 30, from: "测试"
@@ -247,10 +248,10 @@ test("task content corrects unsafe AI category routing", () => {
     title: "就医前预留时间休息", cat: "daily", durationMinutes: 30, from: "测试"
   }])[0];
 
-  assert.equal(coffee.cat, "explore");
-  assert.equal(coffee.scene, "garden");
-  assert.equal(rest.cat, "mystic");
-  assert.equal(rest.scene, "observatory");
+  assert.equal(coffee.cat, "daily");
+  assert.equal(coffee.scene, "ministry");
+  assert.equal(rest.cat, "daily");
+  assert.equal(rest.scene, "ministry");
 });
 
 test("identical active tasks cannot bypass deduplication by changing scenes", () => {

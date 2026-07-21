@@ -310,7 +310,7 @@
         state.mysticRecentCards = Array.isArray(parsed.mysticRecentCards) ? parsed.mysticRecentCards.slice(-12) : [];
         // 迁移：旧任务可能保存过模型或旧情景给出的任意数值；统一按时长重新计算。
         state.mapTasks = (Array.isArray(state.mapTasks) ? state.mapTasks : []).map(function (task) {
-          var category = data.correctTaskCategory(task.title, task.cat);
+          var category = data.CATEGORIES[task.cat] ? task.cat : "daily";
           var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
           var values = window.App.economy.calculate(task, category);
           return Object.assign({}, task, {
@@ -906,7 +906,7 @@
   function previewTaskOverlaps(templates) {
     return (templates || []).map(function (tpl) {
       var title = cleanTaskTitle(tpl.title) || "推进此事的第一步";
-      var category = data.correctTaskCategory(title, tpl.cat);
+      var category = data.CATEGORIES[tpl.cat] ? tpl.cat : "daily";
       var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
       var safeTemplate = Object.assign({}, tpl, { title: title, cat: category });
       var overlap = overlappingTask(safeTemplate.title, catDef.scene);
@@ -921,7 +921,7 @@
     var merged = [];
     (templates || []).forEach(function (tpl, i) {
       var title = cleanTaskTitle(tpl.title) || "推进此事的第一步";
-      var category = data.correctTaskCategory(title, tpl.cat);
+      var category = data.CATEGORIES[tpl.cat] ? tpl.cat : "daily";
       var safeTemplate = Object.assign({}, tpl, { title: title, cat: category });
       var catDef = data.CATEGORIES[category] || data.CATEGORIES.daily;
       var values = window.App.economy.calculate(safeTemplate, safeTemplate.cat);

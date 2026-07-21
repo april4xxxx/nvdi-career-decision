@@ -229,6 +229,16 @@
   };
   var CATEGORY_ORDER = ["main", "daily", "explore", "delay", "mystic"];
 
+  /* ---------- 场景空态任务范例 ----------
+     只用于说明每个场景可承接的任务类型，不写入 mapTasks，也不参与查重或结算。 */
+  var SCENE_TASK_TEMPLATES = {
+    court: { title: "核心交付与岗位胜任", hint: "把今天最关键的工作告诉大臣" },
+    ministry: { title: "例行协作与日常事务", hint: "说说你正在推进的日常待办" },
+    garden: { title: "低风险试探与新机会", hint: "讲讲你想尝试、又有些犹豫的事" },
+    folk: { title: "搁置已久的待启事项", hint: "说出一件想重新启动的事" },
+    observatory: { title: "身心节奏与状态调整", hint: "说说你当下的精力和节奏" }
+  };
+
   /* ---------- 任务底图池（每生成一个任务，取一张底图铺在卡片上） ---------- */
   var TASK_BGS = [
     "任务底图/image_0 (11).png", "任务底图/image_0 (27).png", "任务底图/image_0 (36).png",
@@ -486,18 +496,10 @@
       /(?:同组)?前辈.*咖啡|咖啡.*(?:同组)?前辈/.test(title);
   }
 
-  /* 只校正语义明确、错投场景会造成明显误导的 AI 分类。 */
-  function correctTaskCategory(title, proposed) {
-    var text = String(title || "").toLowerCase();
-    if (/(休息|休整|睡眠|午睡|小睡|离屏|放松|恢复精力|养神|缓一缓)/.test(text)) return "mystic";
-    if (/(咖啡|coffee)/i.test(text) || /(?:约|联系|结识|认识|拜访|交流).{0,8}(?:前辈|同事|同行|导师)/.test(text)) return "explore";
-    return CATEGORIES[proposed] ? proposed : "daily";
-  }
-
   function tasksFromPath(decision, pathKey) {
     var path = decision[pathKey] || decision.recommend;
     return (path.tasks || []).map(function (t) {
-      var category = correctTaskCategory(t.title, t.cat || decision.category);
+      var category = CATEGORIES[t.cat] ? t.cat : (CATEGORIES[decision.category] ? decision.category : "daily");
       var values = window.App.economy.calculate(t, category);
       return {
         title: cleanTaskTitle(t.title) || "推进此事的第一步",
@@ -619,10 +621,10 @@
     MINISTER_ORDER: MINISTER_ORDER,
     CATEGORIES: CATEGORIES,
     CATEGORY_ORDER: CATEGORY_ORDER,
+    SCENE_TASK_TEMPLATES: SCENE_TASK_TEMPLATES,
     TASK_BGS: TASK_BGS,
     SEED_MAP_TASKS: SEED_MAP_TASKS,
     isLegacySeedTask: isLegacySeedTask,
-    correctTaskCategory: correctTaskCategory,
     MYSTIC_CARDS: MYSTIC_CARDS,
     cleanTaskTitle: cleanTaskTitle,
     cleanMinisterSpeech: cleanMinisterSpeech,

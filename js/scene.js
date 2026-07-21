@@ -43,7 +43,7 @@
   function renderTasks(sc, st) {
     if (!fieldEl) return;
     var tasks = store.tasksForScene(sc.id);
-    if (!tasks.length) { fieldEl.innerHTML = ""; return; }
+    if (!tasks.length) { renderTaskTemplate(sc); return; }
     var cat = data.catByScene(sc.id) || { color: "var(--gold)", label: "" };
     fieldEl.innerHTML = tasks.map(function (t, i) {
       var isDailyMystic = !!t.isDailyMystic;
@@ -85,6 +85,27 @@
         if (!task || task.done) return;
         confirmComplete(task);
       });
+    });
+  }
+
+  // 空场景仍给出任务范例；该卡不是真实待办，点击只展开 AI 议事。
+  function renderTaskTemplate(sc) {
+    var template = data.SCENE_TASK_TEMPLATES && data.SCENE_TASK_TEMPLATES[sc.id];
+    var cat = data.catByScene(sc.id);
+    if (!template || !cat) { fieldEl.innerHTML = ""; return; }
+    var bgIndex = data.CATEGORY_ORDER.indexOf(cat.key);
+    fieldEl.innerHTML =
+      '<button class="task-template-card" type="button" style="--c:' + cat.color +
+        ';background-image:url(\'' + ui.esc(data.brain.taskBg(bgIndex)) + '\')"' +
+        ' aria-label="与大臣商议：' + ui.esc(template.title) + '">' +
+        '<span class="tc-scrim"></span>' +
+        '<span class="tc-top"><span class="tc-cat">任务范例</span><span class="tc-flag">尚未生成</span></span>' +
+        '<span class="tc-title">' + ui.esc(template.title) + '</span>' +
+        '<span class="tc-meta">' + ui.esc(template.hint) + '。AI 会根据你的实际内容分类并投放。</span>' +
+        '<span class="tc-cta">与大臣商议 ▸</span>' +
+      '</button>';
+    fieldEl.querySelector(".task-template-card").addEventListener("click", function () {
+      if (App.conversation) App.conversation.expand();
     });
   }
 

@@ -27,6 +27,27 @@ test("hardcoded decision templates stay inside explicit demo mode", async () => 
   assert.doesNotMatch(modes, /data\.SCENARIOS\[0\]/);
 });
 
+test("场景任务范例只是空态入口，不写入真实任务池", async () => {
+  const [scene, store] = await Promise.all([
+    readFile(new URL("../js/scene.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/store.js", import.meta.url), "utf8")
+  ]);
+
+  assert.match(scene, /task-template-card/);
+  assert.match(scene, /App\.conversation\.expand\(\)/);
+  assert.doesNotMatch(store, /SCENE_TASK_TEMPLATES/);
+});
+
+test("前端不使用标题关键词篡改 AI 任务分类", async () => {
+  const [data, store] = await Promise.all([
+    readFile(new URL("../js/data.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/store.js", import.meta.url), "utf8")
+  ]);
+
+  assert.doesNotMatch(data, /function correctTaskCategory/);
+  assert.doesNotMatch(store, /correctTaskCategory/);
+});
+
 test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
   const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
 
