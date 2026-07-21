@@ -426,7 +426,12 @@
     var raw = (text || "").trim();
     var lower = raw.toLowerCase();
     var hit = null;
+    // 用户回答追问时，延续上一轮命中的情景，不用单独的选项文字重新猜测主题。
+    if (ctx.probed && ctx.scenarioId && ctx.scenarioId !== "generic") {
+      hit = SCENARIOS.filter(function (scenario) { return scenario.id === ctx.scenarioId; })[0] || null;
+    }
     for (var i = 0; i < SCENARIOS.length; i++) {
+      if (hit) break;
       var sc = SCENARIOS[i];
       for (var k = 0; k < sc.keywords.length; k++) {
         if (lower.indexOf(sc.keywords[k].toLowerCase()) >= 0) { hit = sc; break; }

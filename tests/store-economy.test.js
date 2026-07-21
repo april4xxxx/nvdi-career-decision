@@ -254,6 +254,19 @@ test("frontend preserves the category returned by the backend AI", () => {
   assert.equal(rest.scene, "ministry");
 });
 
+test("演示追问答案会延续原情景，不退化成通用任务", () => {
+  const { data } = createStore();
+  const question = data.brain.analyze("下周部门周会邀请我做一次行业分享，我有点犹豫", { probed: false });
+  const answer = data.brain.analyze("缺时间 准备时间实在不够", {
+    probed: true,
+    scenarioId: question.scenarioId
+  });
+
+  assert.equal(answer.type, "decision");
+  assert.equal(answer.decision.title, "行业分享邀约");
+  assert.equal(answer.decision.category, "main");
+});
+
 test("identical active tasks cannot bypass deduplication by changing scenes", () => {
   const { store } = createStore();
   const first = store.deployTasks([{
