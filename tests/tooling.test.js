@@ -70,6 +70,17 @@ test("藏书阁演示无论典籍上传结果都会收起弹窗", async () => {
   assert.ok(uploadWait >= 0 && modalClose > uploadWait, "upload modal should close after its result is shown");
 });
 
+test("藏书阁演示先预览主线任务，再浏览起居注和治国之策", async () => {
+  const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
+  const demoLibrary = source.match(/async function demoLibrary\(\) \{([\s\S]*?)\n  \}\n\n  async function demoTreasury/);
+
+  assert.ok(demoLibrary, "demoLibrary function should remain discoverable");
+  const milestone = demoLibrary[1].indexOf("tabs[0]");
+  const journal = demoLibrary[1].indexOf("tabs[1]");
+  const books = demoLibrary[1].indexOf("tabs[2]");
+  assert.ok(milestone >= 0 && milestone < journal && journal < books, "library demo should preview tabs in product order");
+});
+
 test("演示追问区内部滚动，最底部输入对话框不被挤出舞台", async () => {
   const css = await readFile(new URL("../css/app.css", import.meta.url), "utf8");
 

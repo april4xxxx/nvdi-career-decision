@@ -174,9 +174,16 @@
   }
 
   async function demoLibrary() {
-    App.nav.goScene("library"); await sleep(DEMO_PACE.scene); guard();
-    // 切到起居注
+    App.nav.goScene("library");
+    // 藏书阁会记住用户上次停留的页签；演示必须始终从主线任务开始。
     var tabs = document.querySelectorAll("#libTabs .lib-tab");
+    if (tabs[0]) tabs[0].click();
+    await sleep(DEMO_PACE.scene); guard();
+    tabs = document.querySelectorAll("#libTabs .lib-tab");
+    if (tabs[0]) flash(tabs[0]);
+    await sleep(DEMO_PACE.readMedium); guard();
+    // 切到起居注
+    tabs = document.querySelectorAll("#libTabs .lib-tab");
     if (tabs[1]) { flash(tabs[1]); tabs[1].click(); }
     await sleep(DEMO_PACE.readMedium); guard();
     // 切到治国之策并上传
