@@ -70,6 +70,14 @@ test("藏书阁演示无论典籍上传结果都会收起弹窗", async () => {
   assert.ok(uploadWait >= 0 && modalClose > uploadWait, "upload modal should close after its result is shown");
 });
 
+test("演示追问区内部滚动，最底部输入对话框不被挤出舞台", async () => {
+  const css = await readFile(new URL("../css/app.css", import.meta.url), "utf8");
+
+  assert.match(css, /\.convo\.expanded\s*\{[^}]*height:\s*78%/s);
+  assert.match(css, /\.convo\.expanded \.convo-input\s*\{[^}]*flex:\s*0 0 auto/s);
+  assert.match(css, /\.convo\.expanded:not\(\.decision-pending\) \.gal-box\s*\{[^}]*flex:\s*0 0 auto[^}]*overflow-y:\s*auto/s);
+});
+
 test("public product surfaces use the unified brand name", async () => {
   const [html, onboarding, topbar, readme, chat] = await Promise.all([
     readFile(new URL("../index.html", import.meta.url), "utf8"),

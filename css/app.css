@@ -256,9 +256,12 @@
 }
 /* 折叠态：只显示底部 GAL 框 + 输入区；完整态：显示顶条 + 滚动区 */
 .convo-top, .convo-scroll { display: none; }
-.convo.expanded { max-height: 78%; }
-.convo.expanded .convo-top { display: flex; }
-.convo.expanded .convo-scroll { display: flex; }
+.convo.expanded { height: 78%; max-height: 78%; min-height: 0; }
+.convo.expanded .convo-top { display: flex; flex: 0 0 auto; }
+.convo.expanded .convo-scroll {
+  display: flex; flex: 1 1 auto; min-height: 64px; max-height: none;
+}
+.convo.expanded .convo-input { flex: 0 0 auto; }
 /* 待批奏折态：底部对话输入栏保持可见，历史与长奏折分别在上方滚动。 */
 .convo.expanded.decision-pending {
   height: 78%; max-height: 78%; min-height: 0;
@@ -354,6 +357,10 @@
 /* 完整态：GAL 框只承载回复/决策区，隐藏折叠态那句话 */
 .convo.expanded .gal-box { background: transparent; border: none; box-shadow: none; backdrop-filter: none; padding: 0; min-height: 0; }
 .convo.expanded .gal-box .gal-name, .convo.expanded .gal-box .gal-text { display: none; }
+.convo.expanded:not(.decision-pending) .gal-box {
+  flex: 0 0 auto; max-height: min(42%, 260px); overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-gutter: stable;
+}
 .reply-zone:empty { margin: 0; }
 .reply-zone { margin-top: 4px; }
 

@@ -961,11 +961,15 @@
     return created;
   }
 
-  function clearDemoTasks() {
-    var before = state.mapTasks.length;
-    state.mapTasks = state.mapTasks.filter(function (task) { return task.sourceKind !== "demo"; });
-    if (state.mapTasks.length !== before) commit("task");
-    return before - state.mapTasks.length;
+  function finalizeDemoTasks() {
+    var finalized = 0;
+    state.mapTasks.forEach(function (task) {
+      if (task.sourceKind !== "demo") return;
+      task.sourceKind = "demo-kept";
+      finalized += 1;
+    });
+    if (finalized) commit("task");
+    return finalized;
   }
 
   function tasksForScene(sceneId) {
@@ -1319,7 +1323,7 @@
     settle: settleEconomy, addEnergy: addEnergy, setEnergy: setEnergy, addGold: addGold,
     // 场景 + 地图任务
     moveScene: moveScene,
-    deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask, clearDemoTasks: clearDemoTasks,
+    deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask, finalizeDemoTasks: finalizeDemoTasks,
     tasksForScene: tasksForScene, pendingCount: pendingCount,
     maybeOfferDailyMystic: maybeOfferDailyMystic, rerollDailyMystic: rerollDailyMystic,
     applyPizhu: applyPizhu,

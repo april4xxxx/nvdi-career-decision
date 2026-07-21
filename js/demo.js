@@ -73,7 +73,7 @@
 
   function stopDemo() {
     cancelFlag = true; running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
-    if (store.clearDemoTasks) store.clearDemoTasks();
+    if (store.finalizeDemoTasks) store.finalizeDemoTasks();
   }
 
   async function run(key) {
@@ -90,7 +90,7 @@
       else if (key === "treasury") await demoTreasury();
     } catch (e) { console.warn("[demo] interrupted", e); }
     running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
-    if (store.clearDemoTasks) store.clearDemoTasks();
+    if (store.finalizeDemoTasks) store.finalizeDemoTasks();
   }
   function guard() { if (cancelFlag) throw new Error("cancelled"); }
 

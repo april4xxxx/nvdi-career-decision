@@ -284,13 +284,19 @@ test("identical active tasks cannot bypass deduplication by changing scenes", ()
   assert.equal(store.get().mapTasks.length, 1);
 });
 
-test("explicit demo tasks are removed when the demo ends", () => {
+test("演示新生成的任务会留下，再次演示不会重复创建", () => {
   const { store } = createStore();
   store.deployTasks([{ title: "演示任务", cat: "daily", durationMinutes: 10, sourceKind: "demo" }]);
   store.deployTasks([{ title: "真实任务", cat: "daily", durationMinutes: 10, sourceKind: "decision" }]);
 
-  assert.equal(store.clearDemoTasks(), 1);
-  assert.deepEqual(Array.from(store.get().mapTasks, (task) => task.title), ["真实任务"]);
+  assert.equal(store.finalizeDemoTasks(), 1);
+  assert.deepEqual(Array.from(store.get().mapTasks, (task) => task.title), ["演示任务", "真实任务"]);
+  assert.equal(store.get().mapTasks[0].sourceKind, "demo-kept");
+
+  const repeated = store.deployTasks([{ title: "演示任务", cat: "daily", durationMinutes: 10, sourceKind: "demo" }]);
+  assert.equal(repeated.length, 0);
+  assert.equal(repeated.merged.length, 1);
+  assert.equal(store.get().mapTasks.length, 2);
 });
 
 test("task deduplication ignores planning verbs and particles", () => {
