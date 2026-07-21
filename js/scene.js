@@ -139,14 +139,14 @@
   }
 
   /* ---------- 导航 ---------- */
-  function goScene(id) {
+  function goScene(id, options) {
     // 关闭覆盖面板
     if (App.library) App.library.close();
     if (App.treasury) App.treasury.close();
     if (App.modes) App.modes.exitOverlays();
 
     // 藏书阁 / 珍宝阁 为独立面板
-    store.moveScene(id);
+    store.moveScene(id, options);
     if (id === "library") { if (App.library) App.library.open(); return; }
     if (id === "treasury") { if (App.treasury) App.treasury.open(); return; }
 

@@ -16,7 +16,7 @@ test("conversation thinking round awaits the async AI result", async () => {
   assert.match(source, /think\(function \(\) \{ return regenerate\(text\); \}\);/);
 });
 
-test("hardcoded decision templates stay inside explicit demo mode", async () => {
+test("普通对话不注入演示模板，但预言保留最初的固定推演", async () => {
   const [conversation, modes] = await Promise.all([
     readFile(new URL("../js/conversation.js", import.meta.url), "utf8"),
     readFile(new URL("../js/modes.js", import.meta.url), "utf8")
@@ -24,7 +24,8 @@ test("hardcoded decision templates stay inside explicit demo mode", async () => 
 
   assert.match(conversation, /App\.demo && App\.demo\.active === true/);
   assert.doesNotMatch(conversation, /else presentDecision\(data\.brain\.genericDecision/);
-  assert.doesNotMatch(modes, /data\.SCENARIOS\[0\]/);
+  assert.match(modes, /var d = \(data\.SCENARIOS\[0\] && data\.SCENARIOS\[0\]\.decision\) \|\| null;/);
+  assert.doesNotMatch(modes, /getPendingDecision/);
 });
 
 test("场景任务范例只是空态入口，不写入真实任务池", async () => {
@@ -58,6 +59,29 @@ test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
   assert.match(source, /readMedium:\s*2400/);
   assert.match(source, /readLong:\s*3200/);
   assert.match(source, /chapter:\s*1200/);
+});
+
+test("预言演示依次展示三种推演，且不会从全流程巡览中缺席", async () => {
+  const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
+  const prophecy = source.match(/async function demoProphecy\(\) \{([\s\S]*?)\n  \}\n\n  async function demoLibrary/);
+  const tour = source.match(/async function demoTour\(\) \{([\s\S]*?)\n  \}\n\n  function init/);
+
+  assert.ok(prophecy, "demoProphecy function should remain discoverable");
+  assert.match(prophecy[1], /\.forecast-card\.agree/);
+  assert.match(prophecy[1], /\.forecast-card\.again/);
+  assert.match(prophecy[1], /\.forecast-card\.bold/);
+  assert.ok(tour, "demoTour function should remain discoverable");
+  assert.ok(tour[1].indexOf("demoProphecy()") >= 0, "full tour should include prophecy");
+  assert.ok(tour[1].indexOf("demoProphecy()") < tour[1].indexOf("demoFlow()"), "prophecy should appear before flow mode");
+});
+
+test("演示切换场景不冒充用户到访，也不直接解锁到访成就", async () => {
+  const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
+  const sceneJumps = Array.from(source.matchAll(/App\.nav\.goScene\(([^\n]+)\)/g), (match) => match[1]);
+
+  assert.ok(sceneJumps.length > 0, "demo should still preview multiple scenes");
+  assert.ok(sceneJumps.every((call) => /recordVisit:\s*false/.test(call)), "every demo scene preview must opt out of visit tracking");
+  assert.doesNotMatch(source, /store\.unlock\("garden-stroll"\)|\[([^\]]*"garden-stroll"[^\]]*)\]\.forEach/);
 });
 
 test("藏书阁演示无论典籍上传结果都会收起弹窗", async () => {

@@ -46,7 +46,7 @@
     { key: "flow", label: "心流专注", desc: "进入心流模式并加速跑完一次 25 分钟专注" },
     { key: "prophecy", label: "预言推演", desc: "对一份奏折推演三种朱批的可能走向" },
     { key: "library", label: "藏书阁", desc: "浏览主线里程碑、起居注，并上传一卷典籍" },
-    { key: "treasury", label: "珍宝阁成就", desc: "解锁若干成就并展示 59 珍网格与详情" }
+    { key: "treasury", label: "珍宝阁成就", desc: "展示 59 珍网格与成就详情" }
   ];
 
   function openMenu() {
@@ -58,7 +58,7 @@
     ui.openModal(
       '<div style="padding:24px 28px">' +
       '<h3 style="font-size:21px;letter-spacing:.1em;margin-bottom:4px">演示模式</h3>' +
-      '<p class="muted" style="margin-bottom:16px;font-size:13px">选择一段自动演示，系统将替你操作。随时可点右上角或底部停止。</p>' +
+      '<p class="muted" style="margin-bottom:16px;font-size:13px">选择一段自动演示，系统将替你操作；演示操作不计入成就进度。随时可点右上角或底部停止。</p>' +
       '<div class="opt-list">' + list + '</div>' +
       '<div style="text-align:right;margin-top:16px">' +
       (running ? '<button class="btn btn-verm" id="demoStop">停止当前演示</button>' : '') +
@@ -111,7 +111,7 @@
   }
 
   async function demoDecision() {
-    App.nav.goScene("court"); await sleep(DEMO_PACE.scene); guard();
+    App.nav.goScene("court", { recordVisit: false }); await sleep(DEMO_PACE.scene); guard();
     if (App.conversation) App.conversation.expand(); await sleep(DEMO_PACE.window); guard();
     // 输入一个真实职场情景 → 触发追问 → 给决策 → 同意生成任务
     await typeAndSend("下周部门周会邀请我做一次行业分享，我有点犹豫"); await sleep(DEMO_PACE.readMedium); guard();
@@ -125,7 +125,7 @@
     if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
     await sleep(DEMO_PACE.readMedium); guard();
     // 前往朝堂看看生成的任务卡
-    App.nav.goScene("court"); await sleep(DEMO_PACE.scene);
+    App.nav.goScene("court", { recordVisit: false }); await sleep(DEMO_PACE.scene);
   }
 
   async function demoEnergy() {
@@ -144,7 +144,7 @@
     if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
     await sleep(DEMO_PACE.readMedium); guard();
     // 去钦天监完成它
-    App.nav.goScene("observatory"); await sleep(DEMO_PACE.scene); guard();
+    App.nav.goScene("observatory", { recordVisit: false }); await sleep(DEMO_PACE.scene); guard();
     var card = document.querySelector("#taskField .task-card:not(.done)");
     if (card) { flash(card); await sleep(DEMO_PACE.focus); card.click(); }
     await sleep(DEMO_PACE.window); guard();
@@ -166,15 +166,21 @@
   }
 
   async function demoProphecy() {
-    // 确保有一份决策奏折
+    // 预言保留最初的固定奏折；演示依次带读三种推演。
     App.modes.switchTo("prophecy"); App.topbar.render();
-    await sleep(DEMO_PACE.readLong); guard();
+    await sleep(DEMO_PACE.scene); guard();
+    var cards = [".forecast-card.agree", ".forecast-card.again", ".forecast-card.bold"];
+    for (var i = 0; i < cards.length; i++) {
+      var card = document.querySelector(cards[i]);
+      if (card) flash(card);
+      await sleep(DEMO_PACE.readShort); guard();
+    }
     var exit = ui.$("#prophExit"); if (exit) exit.click();
     await sleep(DEMO_PACE.window);
   }
 
   async function demoLibrary() {
-    App.nav.goScene("library");
+    App.nav.goScene("library", { recordVisit: false });
     // 藏书阁会记住用户上次停留的页签；演示必须始终从主线任务开始。
     var tabs = document.querySelectorAll("#libTabs .lib-tab");
     if (tabs[0]) tabs[0].click();
@@ -203,12 +209,8 @@
   }
 
   async function demoTreasury() {
-    // 先解锁一些成就以充实展示
-    ["first-vermilion-brush", "first-task-kiln-fire", "jade-first-restore-hundred", "first-gold", "garden-stroll", "prophecy-first"].forEach(function (id) {
-      store.unlock(id);
-    });
     await sleep(DEMO_PACE.window); guard();
-    App.nav.goScene("treasury"); await sleep(DEMO_PACE.scene); guard();
+    App.nav.goScene("treasury", { recordVisit: false }); await sleep(DEMO_PACE.scene); guard();
     // 切换筛选
     var chips = document.querySelectorAll(".tr-chip");
     if (chips[1]) { flash(chips[1]); chips[1].click(); }
@@ -232,6 +234,7 @@
     var send = ui.$("#convoSend");
     if (send && send.getAttribute("data-mode") === "stamp") { flash(send); await sleep(DEMO_PACE.focus); send.click(); }
     await sleep(DEMO_PACE.readMedium); guard();
+    await demoProphecy(); guard(); await sleep(DEMO_PACE.chapter);
     await demoFlow(); guard(); await sleep(DEMO_PACE.chapter);
     await demoLibrary(); guard(); await sleep(DEMO_PACE.chapter);
     await demoTreasury();

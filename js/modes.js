@@ -8,7 +8,7 @@
   var data = App.data, store = App.store, ui = App.ui;
 
   var flowVeil, prophVeil;
-  var timer = null, remain = 0, total = 25 * 60, demoSpeed = false;
+  var timer = null, remain = 0, total = 25 * 60, demoSpeed = false, flowStartedInDemo = false;
 
   /* ---------- 模式入口 ---------- */
   function switchTo(m) {
@@ -67,6 +67,7 @@
 
   function startTimer() {
     stopTimer();
+    flowStartedInDemo = !!(App.demo && App.demo.active === true);
     var btn = ui.$("#flowStart"); if (btn) { btn.textContent = "专注进行中…"; btn.disabled = true; }
     var tickMs = demoSpeed ? 60 : 1000;
     var decr = demoSpeed ? 25 : 1;   // 演示时加速
@@ -80,9 +81,15 @@
 
   function completeFlow() {
     stopTimer();
-    store.addFlowMinutes(25);
+    var countsForAchievements = !flowStartedInDemo;
+    store.addFlowMinutes(25, { countsForAchievements: countsForAchievements });
     var st = store.get();
-    store.addEnergy(-10, { id: "flow:" + st.dayKey + ":" + st.counters.flowMinutes, type: "flow", source: "flow" });
+    store.addEnergy(-10, {
+      id: flowStartedInDemo ? "demo-flow:" + Date.now() : "flow:" + st.dayKey + ":" + st.counters.flowMinutes,
+      type: "flow",
+      source: "flow",
+      countsForAchievements: countsForAchievements
+    });
     store.addJournal("心流专注", "一次 25 分钟的深度专注，心如止水，意随笔行。结算：精力 -10，心流不发金币。");
     var ss = flowVeil.querySelector(".flow-task");
     if (ss) ss.innerHTML = '<b style="color:#e7c985">✓ 专注圆满达成</b> · 已记入起居注';
@@ -94,7 +101,8 @@
   /* ================= 预言模式 ================= */
   // 推演一份「决策奏折」在三种朱批下的走向：同意(采纳推荐) / 再议(暂缓) / 大胆(另采备选)
   function openProphecy() {
-    var d = App.conversation && App.conversation.getPendingDecision ? App.conversation.getPendingDecision() : null;
+    // 保留最初的「预言」：无论当前是否有待批奏折，都展示固定的行业分享推演。
+    var d = (data.SCENARIOS[0] && data.SCENARIOS[0].decision) || null;
     prophVeil.style.backgroundImage = "url('" + data.ASSET_BASE + "场景/预言模式底图.png')";
     if (!d) {
       prophVeil.innerHTML =

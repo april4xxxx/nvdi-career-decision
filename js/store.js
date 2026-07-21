@@ -9,10 +9,19 @@
   window.App = window.App || {};
   var data = window.App.data;
   var STORAGE_KEY = "nvdi-full-v1";
-  var STATE_VERSION = 8;
+  var STATE_VERSION = 9;
   var ENERGY_CAP = 150;
   var DAILY_ENERGY_GAIN = 30;
   var MAX_DAILY_COUNTED_RESTORE = 60;
+
+  function achievementTrackingEnabled() {
+    return !(window.App.demo && window.App.demo.active === true);
+  }
+
+  function taskCountsForAchievements(task) {
+    var sourceKind = String((task && task.sourceKind) || "");
+    return achievementTrackingEnabled() && !/^demo(?:-|$)/.test(sourceKind);
+  }
 
   /* ---------- 事件总线 ---------- */
   var listeners = {};
@@ -293,6 +302,21 @@
             rewardGranted: false, rewardGrantedAt: null
           }, state.achievements[id] || {});
         });
+        // v9：旧演示与用户点击曾共用场景切换，无法可靠区分到访来源。
+        // 探索进度回到确定无误的朝堂，已发奖励保留且不会重复结算。
+        if (oldVersion < 9) {
+          state.visitedScenes = state.onboarded ? ["court"] : [];
+          state.counters.fogReturnPending = false;
+          ["first-explore-step", "garden-stroll", "explore-all-scenes"].forEach(function (id) {
+            var rec = state.achievements[id];
+            if (!rec) return;
+            rec.unlocked = false;
+            rec.cur = 0;
+            rec.date = null;
+            rec.unlockedAt = null;
+          });
+          state.titles = state.titles.filter(function (title) { return title !== "九重游者"; });
+        }
         state.knowledge = Object.assign({ documents: [] }, parsed.knowledge || {});
         if (!Array.isArray(state.knowledge.documents)) state.knowledge.documents = [];
         state.journals = (Array.isArray(parsed.journals) ? parsed.journals : []).map(cleanLegacyConversationJournal).filter(Boolean);
@@ -501,7 +525,7 @@
   }
 
   function evaluateGoldAchievements(delta, source, kind) {
-    if (delta <= 0) return;
+    if (delta <= 0 || !achievementTrackingEnabled()) return;
     if (kind === "task") {
       unlock("first-gold");
       if (source && state.counters.goldSources.indexOf(source) < 0) state.counters.goldSources.push(source);
@@ -536,8 +560,9 @@
     var actualEnergy = state.energy - energyBefore;
     var energyKind = String(transaction.energyKind || (requestedEnergy > 0 ? "recovery" : "spend"));
     var stats = currentDailyStats();
+    var countsForAchievements = transaction.countsForAchievements !== false && achievementTrackingEnabled();
 
-    if (energyKind === "recovery" && actualEnergy > 0) {
+    if (countsForAchievements && energyKind === "recovery" && actualEnergy > 0) {
       var countableRoom = Math.max(0, MAX_DAILY_COUNTED_RESTORE - stats.achievementRestored);
       var counted = Math.min(actualEnergy, countableRoom);
       state.totalActualRestored += actualEnergy;
@@ -545,19 +570,19 @@
       state.totalRestored = state.totalCountedRestored;
       stats.actualRestored += actualEnergy;
       stats.achievementRestored += counted;
-    } else if (energyKind === "passive" && actualEnergy > 0) {
+    } else if (countsForAchievements && energyKind === "passive" && actualEnergy > 0) {
       stats.passiveRestored += actualEnergy;
-    } else if (energyKind === "calibration") {
+    } else if (countsForAchievements && energyKind === "calibration") {
       stats.calibrated = true;
     }
-    if (state.energy === 0 && energyBefore > 0) stats.overdrawn = true;
-    recordEnergySnapshot();
+    if (countsForAchievements && state.energy === 0 && energyBefore > 0) stats.overdrawn = true;
+    if (countsForAchievements) recordEnergySnapshot();
 
     var requestedGold = Number(transaction.goldDelta) || 0;
     state.gold = Math.max(0, state.gold + requestedGold);
     var actualGold = state.gold - goldBefore;
     var goldKind = String(transaction.goldKind || "none");
-    if (actualGold > 0) {
+    if (countsForAchievements && actualGold > 0) {
       state.totalGold += actualGold;
       stats.goldEarned += actualGold;
     }
@@ -581,12 +606,13 @@
       goldRequested: requestedGold,
       goldActual: actualGold,
       goldKind: goldKind,
+      countsForAchievements: countsForAchievements,
       titleGranted: grantedTitle
     };
     state.settlementLedger[id] = receipt;
     save();
 
-    if (energyKind === "recovery" && actualEnergy > 0) {
+    if (countsForAchievements && energyKind === "recovery" && actualEnergy > 0) {
       if (state.energy >= 100) unlock("jade-first-restore-hundred");
       if (state.energy >= 150) unlock("jade-full-cap-150");
       setAchProgress("jade-accumulate-500", state.totalRestored);
@@ -594,10 +620,10 @@
       if (energyBefore <= 30 && state.energy >= 60) unlock("jade-single-day-rebound");
       updateGrandHarmony();
     }
-    if (energyKind === "passive" && state.energy >= 150) unlock("jade-full-cap-150");
-    if ((energyKind === "recovery" || energyKind === "passive") && state.gold >= 500 && state.energy >= 100) unlock("gold-and-energy-balance");
-    if (actualGold > 0) evaluateGoldAchievements(actualGold, transaction.source, goldKind);
-    if (actualGold < 0) unlock("first-spend");
+    if (countsForAchievements && energyKind === "passive" && state.energy >= 150) unlock("jade-full-cap-150");
+    if (countsForAchievements && (energyKind === "recovery" || energyKind === "passive") && state.gold >= 500 && state.energy >= 100) unlock("gold-and-energy-balance");
+    if (countsForAchievements && actualGold > 0) evaluateGoldAchievements(actualGold, transaction.source, goldKind);
+    if (countsForAchievements && actualGold < 0) unlock("first-spend");
 
     if ((energyKind === "spend" && actualEnergy < 0 && energyBefore > 60 && state.energy <= 60) ||
         (energyKind === "calibration" && state.energy <= 60)) {
@@ -630,12 +656,14 @@
 
   // 设置成就当前进度（取较大值），到达 target 则解锁
   function setAchProgress(id, cur) {
+    if (!achievementTrackingEnabled()) return;
     var def = data.achById[id]; if (!def) return;
     var rec = state.achievements[id] || (state.achievements[id] = { unlocked: false, cur: 0, date: null });
     if (cur > rec.cur) rec.cur = cur;
     if (!rec.unlocked && rec.cur >= def.target) unlock(id);
   }
   function updateGrandHarmony() {
+    if (!achievementTrackingEnabled()) return;
     var def = data.achById["jade-grand-harmony"];
     var rec = state.achievements["jade-grand-harmony"];
     if (!def || !rec) return;
@@ -643,12 +671,14 @@
     if (!rec.unlocked && rec.cur >= def.target && state.counters.noZeroStreak >= 30) unlock(def.id);
   }
   function bumpAch(id, by) {
+    if (!achievementTrackingEnabled()) return;
     var def = data.achById[id]; if (!def) return;
     var rec = state.achievements[id] || (state.achievements[id] = { unlocked: false, cur: 0, date: null });
     rec.cur += (by || 1);
     if (!rec.unlocked && rec.cur >= def.target) unlock(id);
   }
   function unlock(id) {
+    if (!achievementTrackingEnabled()) return false;
     var def = data.achById[id]; if (!def) return;
     var rec = state.achievements[id] || (state.achievements[id] = { unlocked: false, cur: 0, date: null, rewardGranted: false });
     if (rec.unlocked) {
@@ -752,7 +782,9 @@
     if ((state.visitedScenes || []).indexOf("garden") >= 0) unlock("garden-stroll");
     if ((state.visitedScenes || []).some(function (scene) { return ["ministry", "folk", "observatory", "library"].indexOf(scene) >= 0; })) unlock("first-explore-step");
     if (state.gold >= 500 && state.energy >= 100) unlock("gold-and-energy-balance");
-    var completed = (state.mapTasks || []).filter(function (task) { return task.done && !task.restore && task.cat !== "mystic"; });
+    var completed = (state.mapTasks || []).filter(function (task) {
+      return task.done && !task.restore && task.cat !== "mystic" && !/^demo(?:-|$)/.test(String(task.sourceKind || ""));
+    });
     if (completed.some(function (task) { return task.scene === "ministry"; })) unlock("first-daily-liubu");
     if (completed.some(function (task) { return task.scene === "garden"; })) unlock("first-explore-garden");
     if (completed.some(function (task) { return task.scene === "folk"; })) unlock("first-fog-minjian");
@@ -781,7 +813,8 @@
       type: options.type || "energy",
       source: options.source || "manual",
       energyDelta: delta,
-      energyKind: options.source === "passive" ? "passive" : (delta > 0 ? "recovery" : "spend")
+      energyKind: options.source === "passive" ? "passive" : (delta > 0 ? "recovery" : "spend"),
+      countsForAchievements: options.countsForAchievements
     });
     return receipt.energyActual;
   }
@@ -809,11 +842,13 @@
   }
 
   /* ---------- 场景 ---------- */
-  function moveScene(id) {
+  function moveScene(id, options) {
     var sc = data.sceneById(id); if (!sc) return;
-    if (state.scene === "folk" && id === "court") state.counters.fogReturnPending = true;
+    options = options || {};
+    var recordVisit = options.recordVisit !== false && achievementTrackingEnabled();
+    if (recordVisit && state.scene === "folk" && id === "court") state.counters.fogReturnPending = true;
     state.scene = id;
-    if (state.visitedScenes.indexOf(id) < 0) {
+    if (recordVisit && state.visitedScenes.indexOf(id) < 0) {
       state.visitedScenes.push(id);
       // 木器成就
       if (id === "garden") unlock("garden-stroll");
@@ -989,6 +1024,7 @@
     var previousBatch = achievementBatch;
     var unlockedHere = [];
     achievementBatch = unlockedHere;
+    var countsForAchievements = taskCountsForAchievements(t);
     // 结算：普通任务同时扣精力并发任务金币；恢复任务只恢复精力。
     var isRecovery = !!t.restore || t.cat === "mystic";
     var receipt = settleEconomy({
@@ -998,21 +1034,24 @@
       energyDelta: isRecovery ? t.restore : -Math.abs(t.energy || 0),
       energyKind: isRecovery ? "recovery" : "spend",
       goldDelta: isRecovery ? 0 : (t.gold || 0),
-      goldKind: isRecovery ? "none" : "task"
+      goldKind: isRecovery ? "none" : "task",
+      countsForAchievements: countsForAchievements
     });
-    if (!isRecovery && t.gold && t.sourceKind === "decision") {
+    if (countsForAchievements && !isRecovery && t.gold && t.sourceKind === "decision") {
       state.counters.approvalGold += t.gold;
       setAchProgress("approval-gold", state.counters.approvalGold);
     }
 
-    state.completedTasks.push(t.id);
+    if (countsForAchievements) state.completedTasks.push(t.id);
     var stats = currentDailyStats();
     if (isRecovery) {
-      stats.recoveryEvents++;
-      if (receipt.energyBefore <= 30 && receipt.energyActual > 0) unlock("jade-low-energy-deliver");
-      if (receipt.energyBefore <= 10 && receipt.energyActual > 0) unlock("jade-critical-complete");
+      if (countsForAchievements) {
+        stats.recoveryEvents++;
+        if (receipt.energyBefore <= 30 && receipt.energyActual > 0) unlock("jade-low-energy-deliver");
+        if (receipt.energyBefore <= 10 && receipt.energyActual > 0) unlock("jade-critical-complete");
+      }
       if (t.isDailyMystic && state.dailyMystic && state.dailyMystic.taskId === t.id) state.dailyMystic.status = "completed";
-    } else {
+    } else if (countsForAchievements) {
       stats.productiveTasks++;
       state.counters.tasksDone++;
       var n = state.counters.tasksDone;
@@ -1030,23 +1069,23 @@
     }
 
     // 场景/分类相关成就
-    if (!isRecovery && t.scene === "ministry") unlock("first-daily-liubu");
-    if (!isRecovery && t.scene === "garden") unlock("first-explore-garden");
-    if (!isRecovery && t.scene === "folk") unlock("first-fog-minjian");
-    if (!isRecovery && t.scene === "court" && (t.independent || t.cat === "main")) unlock("first-solo-delivery");
-    if (!isRecovery && t.energyTier === "HEAVY") unlock("single-big-reward");
-    if (!isRecovery && ((t.tags || []).indexOf("weekly_report") >= 0 || (t.tags || []).indexOf("sop") >= 0 || /周报|周奏|SOP|章程|流程/.test(t.title))) {
+    if (countsForAchievements && !isRecovery && t.scene === "ministry") unlock("first-daily-liubu");
+    if (countsForAchievements && !isRecovery && t.scene === "garden") unlock("first-explore-garden");
+    if (countsForAchievements && !isRecovery && t.scene === "folk") unlock("first-fog-minjian");
+    if (countsForAchievements && !isRecovery && t.scene === "court" && (t.independent || t.cat === "main")) unlock("first-solo-delivery");
+    if (countsForAchievements && !isRecovery && t.energyTier === "HEAVY") unlock("single-big-reward");
+    if (countsForAchievements && !isRecovery && ((t.tags || []).indexOf("weekly_report") >= 0 || (t.tags || []).indexOf("sop") >= 0 || /周报|周奏|SOP|章程|流程/.test(t.title))) {
       unlock("weekly-memorial-sop");
     }
-    if (!isRecovery && ((t.tags || []).indexOf("regularization_defense") >= 0 || /结业答辩|转正.*答辩|答辩.*转正/.test(t.title))) {
+    if (countsForAchievements && !isRecovery && ((t.tags || []).indexOf("regularization_defense") >= 0 || /结业答辩|转正.*答辩|答辩.*转正/.test(t.title))) {
       unlock("regularization-defense");
     }
-    if (t.scene === "observatory" && isRecovery && receipt.energyActual > 0) {
+    if (countsForAchievements && t.scene === "observatory" && isRecovery && receipt.energyActual > 0) {
       unlock("jade-astro-first-restore");
       state.counters.astroDone++;
       setAchProgress("jade-astro-ten-times", state.counters.astroDone);
     }
-    if (!isRecovery && t.scene === "ministry") {
+    if (countsForAchievements && !isRecovery && t.scene === "ministry") {
       var minCount = state.completedTasks.filter(function (id) {
         var tt = tasksForSceneAll(id); return tt && tt.scene === "ministry" && !tt.restore;
       }).length;
@@ -1082,14 +1121,14 @@
      agree 时传入 templates（将生成的任务），返回投放的任务。 */
   function applyPizhu(kind, decision, templates) {
     if (kind === "again") {
-      state.counters.pizhuAgain++;
+      if (achievementTrackingEnabled()) state.counters.pizhuAgain++;
       unlock("pizhu-zaiyi");
       addJournal((decision && decision.title) || "一桩决策", "朱批·再议：留中不发，容后补充信息再作定夺。");
       commit("task");
       return null;
     }
     if (kind === "bold") {
-      state.counters.pizhuBold++;
+      if (achievementTrackingEnabled()) state.counters.pizhuBold++;
       unlock("pizhu-dadan");
       addJournal((decision && decision.title) || "一桩决策", "朱批·大胆：陛下以为判断草率，命大臣重新补充信息。");
       commit("task");
@@ -1098,7 +1137,7 @@
     // agree
     unlock("first-vermilion-brush");
     unlock("first-audience-minister");
-    state.counters.approvals++;
+    if (achievementTrackingEnabled()) state.counters.approvals++;
     return deployTasks(templates);
   }
 
@@ -1118,16 +1157,19 @@
     return j;
   }
   function readArchive() {
-    state.counters.archiveReads++;
+    if (achievementTrackingEnabled()) state.counters.archiveReads++;
     unlock("archive-first-read");
     commit();
   }
   var bSeq = 100;
-  function addBook(book) {
+  function addBook(book, options) {
+    options = options || {};
     book.id = book.id || ("ub" + (bSeq++));
     state.books.unshift(book);
-    state.counters.uploads++;
-    unlock("archive-upload");
+    if (options.countsForAchievements !== false && achievementTrackingEnabled()) {
+      state.counters.uploads++;
+      unlock("archive-upload");
+    }
     commit("book");
     return book;
   }
@@ -1203,13 +1245,16 @@
 
   /* ---------- 模式 ---------- */
   function setMode(m) { state.mode = m; commit("mode"); }
-  function addFlowMinutes(mins) {
+  function addFlowMinutes(mins, options) {
+    options = options || {};
+    if (options.countsForAchievements === false || !achievementTrackingEnabled()) { commit(); return; }
     state.counters.flowMinutes += mins;
     setAchProgress("flow-focus-single", Math.min(25, mins));
     setAchProgress("flow-focus-master", state.counters.flowMinutes);
     commit();
   }
   function useProphecy(decisionId) {
+    if (!achievementTrackingEnabled()) { commit(); return; }
     state.counters.prophecyUses++;
     unlock("prophecy-first");
     var key = String(decisionId || "default");

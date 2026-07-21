@@ -29,7 +29,7 @@ function createStore(savedState) {
   for (const file of ["js/data.js", "js/economy.js", "js/store.js"]) {
     vm.runInContext(fs.readFileSync(new URL("../" + file, import.meta.url), "utf8"), context, { filename: file });
   }
-  return { store: context.window.App.store, data: context.window.App.data, memory };
+  return { store: context.window.App.store, data: context.window.App.data, app: context.window.App, memory };
 }
 
 test("ordinary task settlement is idempotent and uses the approved scale", () => {
@@ -101,7 +101,7 @@ test("v1 saves migrate to the current version without shrinking the 150 energy c
     mapTasks: []
   });
 
-  assert.equal(store.get().version, 8);
+  assert.equal(store.get().version, 9);
   assert.equal(store.get().energy, 140);
   assert.equal(store.get().energyCap, 150);
   assert.equal(store.get().gold, 100);
@@ -137,6 +137,30 @@ test("old saves remove seeded, copied and demo template tasks once", () => {
   });
 
   assert.deepEqual(Array.from(store.get().mapTasks, (task) => task.id), ["real-task"]);
+});
+
+test("v8 存档重新校准被演示污染的到访进度，但不重复发放旧奖励", () => {
+  const { store } = createStore({
+    version: 8,
+    onboarded: true,
+    scene: "library",
+    visitedScenes: ["court", "observatory", "library", "treasury"],
+    achievements: {
+      "first-explore-step": { unlocked: true, cur: 1, rewardGranted: true, rewardGrantedAt: "old" },
+      "garden-stroll": { unlocked: true, cur: 1, rewardGranted: true, rewardGrantedAt: "old" },
+      "explore-all-scenes": { unlocked: false, cur: 4, rewardGranted: false }
+    },
+    titles: ["九重游者"]
+  });
+
+  assert.equal(store.get().version, 9);
+  assert.deepEqual(Array.from(store.get().visitedScenes), ["court"]);
+  assert.equal(store.get().achievements["first-explore-step"].unlocked, false);
+  assert.equal(store.get().achievements["garden-stroll"].unlocked, false);
+  assert.equal(store.get().achievements["explore-all-scenes"].cur, 1);
+  assert.equal(store.get().achievements["first-explore-step"].rewardGranted, true);
+  assert.equal(store.get().gold, 0);
+  assert.equal(store.get().titles.includes("九重游者"), false);
 });
 
 test("day sync grants 30 energy once for the same date", () => {
@@ -297,6 +321,87 @@ test("演示新生成的任务会留下，再次演示不会重复创建", () =>
   assert.equal(repeated.length, 0);
   assert.equal(repeated.merged.length, 1);
   assert.equal(store.get().mapTasks.length, 2);
+});
+
+test("任务投递和程序预览不算到访，只有用户进入场景才推进探索成就", () => {
+  const { store } = createStore();
+
+  store.applyPizhu("agree", { title: "测试决策" }, [
+    { title: "整理部门材料", cat: "daily", durationMinutes: 30, sourceKind: "decision" }
+  ]);
+  assert.deepEqual(Array.from(store.get().visitedScenes), []);
+  assert.equal(store.get().achievements["first-explore-step"].unlocked, false);
+
+  store.moveScene("ministry", { recordVisit: false });
+  assert.deepEqual(Array.from(store.get().visitedScenes), []);
+  assert.equal(store.get().achievements["first-explore-step"].unlocked, false);
+  assert.equal(store.get().achievements["explore-all-scenes"].cur, 0);
+
+  store.moveScene("folk", { recordVisit: false });
+  store.moveScene("court", { recordVisit: false });
+  assert.equal(store.get().counters.fogReturnPending, false);
+
+  store.moveScene("ministry");
+  assert.deepEqual(Array.from(store.get().visitedScenes), ["ministry"]);
+  assert.equal(store.get().achievements["first-explore-step"].unlocked, true);
+  assert.equal(store.get().achievements["explore-all-scenes"].cur, 1);
+});
+
+test("演示期间的操作不解锁成就，也不留下可在刷新后补解锁的进度", () => {
+  const { store, app } = createStore();
+  app.demo = { active: true };
+
+  store.setEnergy(40);
+  store.applyPizhu("agree", { title: "演示决策" }, [
+    { title: "演示任务", cat: "daily", durationMinutes: 30, sourceKind: "demo" }
+  ]);
+  const task = store.get().mapTasks[0];
+  store.completeMapTask(task.id);
+  store.addFlowMinutes(25);
+  store.useProphecy("演示决策");
+  store.readArchive();
+  store.addBook({ title: "演示典籍" });
+  store.moveScene("garden");
+  store.unlock("first-gold");
+
+  assert.equal(Object.values(store.get().achievements).some((item) => item.unlocked), false);
+  assert.equal(store.get().counters.tasksDone, 0);
+  assert.equal(store.get().counters.approvals, 0);
+  assert.equal(store.get().counters.flowMinutes, 0);
+  assert.equal(store.get().counters.prophecyUses, 0);
+  assert.equal(store.get().counters.archiveReads, 0);
+  assert.equal(store.get().counters.uploads, 0);
+  assert.equal(store.get().totalGold, 0);
+  assert.equal(store.get().totalRestored, 0);
+  assert.deepEqual(Array.from(store.get().completedTasks), []);
+  assert.deepEqual(Array.from(store.get().visitedScenes), []);
+
+  const reloaded = createStore(JSON.parse(JSON.stringify(store.get()))).store;
+  assert.equal(Object.values(reloaded.get().achievements).some((item) => item.unlocked), false);
+});
+
+test("演示发起的延迟回调在演示结束后也不计入成就", () => {
+  const { store, app } = createStore();
+  app.demo = { active: false };
+
+  store.addFlowMinutes(25, { countsForAchievements: false });
+  store.addEnergy(-10, {
+    id: "demo-flow-late",
+    type: "flow",
+    source: "flow",
+    countsForAchievements: false
+  });
+  store.addBook({ title: "延迟完成的演示典籍" }, { countsForAchievements: false });
+  const task = store.deployTasks([
+    { title: "演示结束后才完成的任务", cat: "daily", durationMinutes: 30, sourceKind: "demo-kept" }
+  ])[0];
+  store.completeMapTask(task.id);
+
+  assert.equal(Object.values(store.get().achievements).some((item) => item.unlocked), false);
+  assert.equal(store.get().counters.flowMinutes, 0);
+  assert.equal(store.get().counters.uploads, 0);
+  assert.equal(store.get().counters.tasksDone, 0);
+  assert.equal(store.get().totalGold, 0);
 });
 
 test("task deduplication ignores planning verbs and particles", () => {
