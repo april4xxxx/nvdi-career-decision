@@ -95,14 +95,14 @@
     if (!template || !cat) { fieldEl.innerHTML = ""; return; }
     var bgIndex = data.CATEGORY_ORDER.indexOf(cat.key);
     fieldEl.innerHTML =
-      '<button class="task-template-card" type="button" style="--c:' + cat.color +
+      '<button class="task-template-card' + (template.featured ? ' task-example-case' : '') + '" type="button" style="--c:' + cat.color +
         ';background-image:url(\'' + ui.esc(data.brain.taskBg(bgIndex)) + '\')"' +
         ' aria-label="与大臣商议：' + ui.esc(template.title) + '">' +
         '<span class="tc-scrim"></span>' +
-        '<span class="tc-top"><span class="tc-cat">任务范例</span><span class="tc-flag">尚未生成</span></span>' +
+        '<span class="tc-top"><span class="tc-cat">' + ui.esc(template.label || "任务范例") + '</span><span class="tc-flag">' + ui.esc(template.flag || "尚未生成") + '</span></span>' +
         '<span class="tc-title">' + ui.esc(template.title) + '</span>' +
-        '<span class="tc-meta">' + ui.esc(template.hint) + '。AI 会根据你的实际内容分类并投放。</span>' +
-        '<span class="tc-cta">与大臣商议 ▸</span>' +
+        '<span class="tc-meta">' + ui.esc(template.meta || (template.hint + '。AI 会根据你的实际内容分类并投放。')) + '</span>' +
+        '<span class="tc-cta">' + ui.esc(template.cta || "与大臣商议") + ' ▸</span>' +
       '</button>';
     fieldEl.querySelector(".task-template-card").addEventListener("click", function () {
       if (App.conversation) App.conversation.expand();

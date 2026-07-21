@@ -188,6 +188,17 @@
 .task-card .tc-cta,
 .task-template-card .tc-cta { font-size: 12px; color: #ffe9b8; font-weight: 700; letter-spacing: .06em; margin-top: 6px; }
 .task-template-card { border-style: dashed; opacity: .9; }
+.task-template-card.task-example-case {
+  width: 248px; min-height: 164px; padding: 13px 15px 15px; flex: 0 0 248px;
+  border-style: solid; border-color: rgba(223,177,84,.78); opacity: 1;
+  box-shadow: 0 11px 30px rgba(32,22,10,.34), inset 0 0 0 1px rgba(255,232,177,.08);
+}
+.task-template-card.task-example-case .tc-scrim {
+  background: linear-gradient(180deg, rgba(24,20,14,.24), rgba(24,20,14,.88));
+}
+.task-template-card.task-example-case .tc-title { font-size: 18px; margin-top: 7px; }
+.task-template-card.task-example-case .tc-meta { color: rgba(255,245,219,.86); }
+.task-template-card.task-example-case .tc-cta { color: #ffe5a8; }
 .task-template-card:focus-visible { outline: 3px solid rgba(255,233,184,.78); outline-offset: 2px; }
 .task-card .tc-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .task-card .tc-reroll {
@@ -501,6 +512,15 @@
 @media (max-height: 400px) {
   .scene-head { display: none; }
   .task-field { margin-top: 8px; }
+  .task-field:has(.task-example-case) { flex: 0 0 118px; min-height: 118px; overflow: hidden; }
+  .task-example-case { min-height: 110px; padding: 8px 12px 10px; }
+  .task-template-card.task-example-case .tc-title { font-size: 15px; margin-top: 2px; }
+  .task-template-card.task-example-case .tc-meta {
+    display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    font-size: 10.5px; line-height: 1.35;
+  }
+  .task-template-card.task-example-case .tc-cta { margin-top: 2px; font-size: 11px; }
+  .stage:has(.convo.expanded) .task-field { display: none; }
   .convo { padding-bottom: 8px; }
   .convo-input { margin-top: 6px; }
   .gal-box .gal-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -34,6 +34,7 @@ test("场景任务范例只是空态入口，不写入真实任务池", async ()
   ]);
 
   assert.match(scene, /task-template-card/);
+  assert.match(scene, /task-example-case/);
   assert.match(scene, /App\.conversation\.expand\(\)/);
   assert.doesNotMatch(store, /SCENE_TASK_TEMPLATES/);
 });
