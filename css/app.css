@@ -271,12 +271,12 @@
 }
 /* 待批奏折态：底部对话输入栏保持可见，历史与长奏折分别在上方滚动。 */
 .convo.expanded.decision-pending {
-  position: absolute; inset: 8px 0 0; height: auto; max-height: none; min-height: 0; margin-top: 0;
+  height: 78%; max-height: 78%; min-height: 0;
 }
 .convo.expanded.decision-pending .convo-top,
 .convo.expanded.decision-pending .convo-input { flex: 0 0 auto; }
 .convo.expanded.decision-pending .convo-scroll {
-  flex: 0 0 48px; min-height: 0; max-height: 48px;
+  flex: 0 1 25%; min-height: 64px; max-height: 22vh;
 }
 .convo.expanded.decision-pending .gal-box {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
