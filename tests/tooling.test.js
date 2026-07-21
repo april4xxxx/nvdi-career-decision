@@ -81,10 +81,14 @@ test("藏书阁演示先预览主线任务，再浏览起居注和治国之策",
   assert.ok(milestone >= 0 && milestone < journal && journal < books, "library demo should preview tabs in product order");
 });
 
-test("演示追问区内部滚动，最底部输入对话框不被挤出舞台", async () => {
+test("普通对话恢复自适应高度，只有追问区扩展并保留底部输入框", async () => {
   const css = await readFile(new URL("../css/app.css", import.meta.url), "utf8");
+  const ordinaryExpanded = css.match(/\.convo\.expanded\s*\{([^}]*)\}/);
 
-  assert.match(css, /\.convo\.expanded\s*\{[^}]*height:\s*78%/s);
+  assert.ok(ordinaryExpanded, "ordinary expanded conversation rule should remain discoverable");
+  assert.match(css, /\.convo\.expanded\s*\{[^}]*max-height:\s*78%/s);
+  assert.doesNotMatch(ordinaryExpanded[1], /(?:^|;)\s*height:/s);
+  assert.match(css, /\.convo\.expanded:has\(\.reply-zone \.opt-btn\)\s*\{[^}]*height:\s*78%/s);
   assert.match(css, /\.convo\.expanded \.convo-input\s*\{[^}]*flex:\s*0 0 auto/s);
   assert.match(css, /\.convo\.expanded:not\(\.decision-pending\) \.gal-box\s*\{[^}]*flex:\s*0 0 auto[^}]*overflow-y:\s*auto/s);
 });
