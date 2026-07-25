@@ -43,27 +43,40 @@
   function renderTasks(sc, st) {
     if (!fieldEl) return;
     var tasks = store.tasksForScene(sc.id);
-    if (!tasks.length) { renderTaskTemplate(sc); return; }
+    if (!tasks.length) { renderTaskTemplate(sc, st); return; }
     var cat = data.catByScene(sc.id) || { color: "var(--gold)", label: "" };
     fieldEl.innerHTML = tasks.map(function (t, i) {
       var isDailyMystic = !!t.isDailyMystic;
       var canReroll = isDailyMystic && !t.done && st.dailyMystic && st.dailyMystic.taskId === t.id && st.dailyMystic.rerollsUsed < 1;
+      // 结算行（v5 定稿）：金币胶囊独立在前，精力/时长成组在后
+      var stats =
+        (t.restore ? '' : '<span class="tc-reward"><svg class="tc-ic"><use href="#ic-coin"/></svg>' + t.gold + '</span>') +
+        '<div class="tc-stats">' +
+        (t.restore
+          ? '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy-rest"/></svg>+' + t.restore + '</span>'
+          : '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy"/></svg>' + Math.abs(t.energy) + '</span>') +
+        '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-time"/></svg>' + (t.durationMinutes || 30) + '<span class="u">分</span></span>' +
+        '</div>';
+      // 竖向操作钮
+      var action = t.done
+        ? '<span class="tc-cta" aria-hidden="true">已办</span>'
+        : (canReroll
+            ? '<span class="tc-reroll" role="button" tabindex="0" aria-label="免费换一签">换一签</span>'
+            : '<span class="tc-cta">呈报</span>');
       return '<button class="task-card' + (t.done ? " done" : "") + (isDailyMystic ? " mystic-daily" : "") + '" data-task="' + t.id + '"' +
-        ' style="--c:' + cat.color + ';background-image:url(\'' + ui.esc(t.bg) + '\');animation-delay:' + (i * 70) + 'ms">' +
-        '<span class="tc-scrim"></span>' +
-        '<span class="tc-top"><span class="tc-cat">' + ui.esc(isDailyMystic ? "天象·微探索" : cat.label) + '</span>' +
-          (t.done ? '<span class="tc-done">已办 ✓</span>' : '<span class="tc-flag">待办</span>') + '</span>' +
-        (isDailyMystic ? '<span class="tc-mystic-name">' + ui.esc(t.mysticName || "今日天象") + '</span>' : '') +
-        '<span class="tc-title">' + ui.esc(t.title) + '</span>' +
-        (isDailyMystic && t.mysticSign ? '<span class="tc-sign">「' + ui.esc(t.mysticSign) + '」</span>' : '') +
-        '<span class="tc-meta">' +
-          (t.restore ? '恢复精力 +' + t.restore : '耗精力 ' + Math.abs(t.energy)) +
-          ' · 约 ' + (t.durationMinutes || 30) + ' 分钟 · ' +
-          (t.restore ? '无金币奖励' : '赏 ' + t.gold + ' 金') +
-          (t.from && !isDailyMystic ? ' · 源自决策「' + ui.esc(t.from) + '」' : '') +
-          (t.knowledgeRefs && t.knowledgeRefs.length ? ' · 参考「' + t.knowledgeRefs.map(ui.esc).join('、') + '」' : '') + '</span>' +
-        (t.done ? '' : '<span class="tc-actions"><span class="tc-cta">呈报完成 ▸</span>' +
-          (canReroll ? '<span class="tc-reroll" role="button" tabindex="0" aria-label="免费换一签">换一签</span>' : '') + '</span>') +
+        ' style="--c:' + cat.color + ';animation-delay:' + (i * 70) + 'ms">' +
+        '<span class="tc-img"><img src="' + ui.esc(t.bg) + '" alt="" onerror="this.style.display=\'none\'" /></span>' +
+        '<span class="tc-body">' +
+          '<span class="tc-titrow">' +
+            (isDailyMystic
+              ? '<span class="tc-mystic-name">' + ui.esc(t.mysticName || "今日天象") + '</span>'
+              : '<span class="tc-dot"></span>') +
+            '<span class="tc-title">' + ui.esc(t.title) + '</span>' +
+          '</span>' +
+          (isDailyMystic && t.mysticSign ? '<span class="tc-sign">「' + ui.esc(t.mysticSign) + '」</span>' : '') +
+          '<span class="tc-foot">' + stats + '</span>' +
+        '</span>' +
+        action +
       '</button>';
     }).join("");
     Array.prototype.forEach.call(fieldEl.querySelectorAll(".tc-reroll"), function (control) {
@@ -89,20 +102,78 @@
   }
 
   // 空场景仍给出任务范例；该卡不是真实待办，点击只展开 AI 议事。
-  function renderTaskTemplate(sc) {
+  var MYSTIC_PREVIEW_COUNT = 3;
+
+  function mysticPreviewCards(st) {
+    var cards = (data.MYSTIC_CARDS || []).slice();
+    var recent = (st.mysticRecentCards || []).slice(-3);
+    var fresh = cards.filter(function (card) { return recent.indexOf(card.id) < 0; });
+    if (fresh.length >= MYSTIC_PREVIEW_COUNT) cards = fresh;
+    var seedText = String(st.dayKey || st.day || "today");
+    var seed = 0;
+    for (var i = 0; i < seedText.length; i++) seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
+    var start = cards.length ? seed % cards.length : 0;
+    return cards.slice(start).concat(cards.slice(0, start)).slice(0, MYSTIC_PREVIEW_COUNT);
+  }
+
+  function renderMysticPreviews(sc, st) {
+    var cat = data.catByScene(sc.id);
+    var cards = mysticPreviewCards(st);
+    var canClaim = st.energy < st.energyCap && (!st.dailyMystic || st.dailyMystic.status === "idle");
+    fieldEl.innerHTML = cards.map(function (card, index) {
+      return '<button class="task-template-card task-example-case mystic-preview" type="button"' +
+        ' data-mystic-preview="' + ui.esc(card.id) + '" style="--c:' + cat.color + '"' +
+        (canClaim ? '' : ' disabled aria-disabled="true"') + '>' +
+        '<span class="tc-img"><img src="' + ui.esc(data.brain.taskBg(data.CATEGORY_ORDER.indexOf(cat.key) + index)) + '" alt="" onerror="this.style.display=\'none\'" /></span>' +
+        '<span class="tc-body">' +
+          '<span class="tc-titrow"><span class="tc-mystic-name">' + ui.esc(card.name) + '</span></span>' +
+          '<span class="tc-title">' + ui.esc(card.title) + '</span>' +
+          '<span class="tc-sign">「' + ui.esc(card.sign) + '」</span>' +
+          '<span class="tc-foot"><span class="tc-stats">' +
+            '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy-rest"/></svg>+10</span>' +
+            '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-time"/></svg>' + card.durationMinutes + '<span class="u">分</span></span>' +
+          '</span></span>' +
+        '</span>' +
+        '<span class="tc-cta' + (canClaim ? '' : ' is-disabled') + '">' + (canClaim ? '领取' : '精满') + '</span>' +
+      '</button>';
+    }).join("");
+    if (!canClaim) return;
+    Array.prototype.forEach.call(fieldEl.querySelectorAll("[data-mystic-preview]"), function (button) {
+      button.addEventListener("click", function () {
+        store.offerMysticCard(button.getAttribute("data-mystic-preview"), "observatory-choice");
+      });
+    });
+  }
+
+  function renderTaskTemplate(sc, st) {
+    if (sc.id === "observatory" && data.MYSTIC_CARDS && data.MYSTIC_CARDS.length) {
+      renderMysticPreviews(sc, st);
+      return;
+    }
     var template = data.SCENE_TASK_TEMPLATES && data.SCENE_TASK_TEMPLATES[sc.id];
     var cat = data.catByScene(sc.id);
     if (!template || !cat) { fieldEl.innerHTML = ""; return; }
     var bgIndex = data.CATEGORY_ORDER.indexOf(cat.key);
+    // 有结构化数值的范例卡（如主线新手卡）按 v5 定稿渲染：金币胶囊 + 精力 + 时长
+    var hasStats = template.gold != null || template.energy != null;
+    var foot = hasStats
+      ? '<span class="tc-foot">' +
+          '<span class="tc-reward"><svg class="tc-ic"><use href="#ic-coin"/></svg>' + (template.gold || 0) + '</span>' +
+          '<span class="tc-stats">' +
+            '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy"/></svg>' + Math.abs(template.energy || 0) + '</span>' +
+            '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-time"/></svg>' + (template.durationMinutes || 30) + '<span class="u">分</span></span>' +
+          '</span>' +
+        '</span>'
+      : '<span class="tc-meta">' + ui.esc(template.hint + '。AI 会根据你的实际内容分类并投放。') + '</span>';
     fieldEl.innerHTML =
-      '<button class="task-template-card' + (template.featured ? ' task-example-case' : '') + '" type="button" style="--c:' + cat.color +
-        ';background-image:url(\'' + ui.esc(data.brain.taskBg(bgIndex)) + '\')"' +
+      '<button class="task-template-card' + (template.featured ? ' task-example-case' : '') + '" type="button" style="--c:' + cat.color + '"' +
         ' aria-label="与大臣商议：' + ui.esc(template.title) + '">' +
-        '<span class="tc-scrim"></span>' +
-        '<span class="tc-top"><span class="tc-cat">' + ui.esc(template.label || "任务范例") + '</span><span class="tc-flag">' + ui.esc(template.flag || "尚未生成") + '</span></span>' +
-        '<span class="tc-title">' + ui.esc(template.title) + '</span>' +
-        '<span class="tc-meta">' + ui.esc(template.meta || (template.hint + '。AI 会根据你的实际内容分类并投放。')) + '</span>' +
-        '<span class="tc-cta">' + ui.esc(template.cta || "与大臣商议") + ' ▸</span>' +
+        '<span class="tc-img"><img src="' + ui.esc(data.brain.taskBg(bgIndex)) + '" alt="" onerror="this.style.display=\'none\'" /></span>' +
+        '<span class="tc-body">' +
+          '<span class="tc-titrow"><span class="tc-dot"></span><span class="tc-title">' + ui.esc(template.title) + '</span></span>' +
+          foot +
+        '</span>' +
+        '<span class="tc-cta">' + ui.esc(template.cta || "呈报") + '</span>' +
       '</button>';
     fieldEl.querySelector(".task-template-card").addEventListener("click", function () {
       if (App.conversation) App.conversation.expand();
@@ -127,7 +198,7 @@
       '<p class="tcf-note" id="taskConfirmNote">确认后将立即结算，并将任务标记为已办。</p>' +
       '<div class="tcf-btns">' +
         '<button class="btn btn-ghost" id="tcfCancel">稍后再报</button>' +
-        '<button class="btn btn-jade" id="tcfOk">呈报办结</button>' +
+        '<button class="btn btn-gold" id="tcfOk">呈报办结</button>' +
       '</div></div>'
     , "task-confirm-modal");
     ui.$("#tcfCancel").onclick = ui.closeModal;
@@ -140,16 +211,24 @@
 
   /* ---------- 导航 ---------- */
   function goScene(id, options) {
-    // 关闭覆盖面板
+    if (App.modes) App.modes.exitToNormal();
+
+    // 藏书阁 / 珍宝阁 / 凌烟阁 为独立面板
+    // 先让目标面板就位，再更新底层状态，避免切换时短暂露出场景层。
+    var overlay = id === "library" ? App.library : id === "treasury" ? App.treasury : id === "lingyan" ? App.lingyan : null;
+    if (overlay) {
+      overlay.open();
+      if (App.library && overlay !== App.library) App.library.close();
+      if (App.treasury && overlay !== App.treasury) App.treasury.close();
+      if (App.lingyan && overlay !== App.lingyan) App.lingyan.close();
+      store.moveScene(id, options);
+      return;
+    }
+
+    store.moveScene(id, options);
     if (App.library) App.library.close();
     if (App.treasury) App.treasury.close();
-    if (App.modes) App.modes.exitOverlays();
-
-    // 藏书阁 / 珍宝阁 为独立面板
-    store.moveScene(id, options);
-    if (id === "library") { if (App.library) App.library.open(); return; }
-    if (id === "treasury") { if (App.treasury) App.treasury.open(); return; }
-
+    if (App.lingyan) App.lingyan.close();
     render();
     // conversation 通过 store 的 scene 事件保存旧场景会话并恢复新场景，不在此重置。
   }

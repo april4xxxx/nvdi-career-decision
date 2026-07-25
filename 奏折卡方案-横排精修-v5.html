@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>奏折卡 · 横排精修 v5</title>
+<style>
+  :root{
+    --ink:#1f2830; --ink-soft:#3a4650; --ink-mute:#6b7580;
+    --paper:#f7f2e6; --paper-2:#efe7d3; --paper-3:#e6dabf;
+    --gold:#b98a3b; --gold-light:#e7c985; --gold-deep:#8a6323;
+    --jade:#487b70; --jade-light:#6fa89a; --verm:#a7473c; --verm-light:#c9695c;
+    --line:rgba(31,40,48,.14); --line-strong:rgba(31,40,48,.28);
+    --shadow-sm:0 2px 8px rgba(31,40,48,.10); --shadow-md:0 8px 26px rgba(31,40,48,.18);
+    --r-sm:8px; --r-md:14px;
+    --serif:"Songti SC","STSong",Georgia,serif;
+    --cat-bronze:#9c6b3f; --cat-porcelain:#4a6f8a; --cat-jade:#4f8a72; --cat-gold:#c39a3c; --cat-wood:#8a6a4a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:var(--serif); background:#20262d; color:var(--ink); padding:40px 32px 80px; }
+
+  .page-head{ max-width:1240px; margin:0 auto 30px; color:var(--paper); }
+  .page-head h1{ font-size:25px; letter-spacing:.08em; }
+  .page-head p{ font-size:13.5px; color:rgba(247,242,230,.62); margin-top:8px; line-height:1.75; max-width:880px; }
+
+  .scheme{ max-width:1240px; margin:0 auto 50px; }
+  .scheme-title{ display:flex; align-items:baseline; gap:12px; margin-bottom:6px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.14); }
+  .scheme-title .no{ width:30px; height:30px; flex:none; border-radius:50%; background:var(--gold); color:#3a2a08; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .scheme-title h2{ color:var(--paper); font-size:19px; letter-spacing:.06em; }
+  .scheme-title .desc{ color:rgba(247,242,230,.5); font-size:13px; }
+  .scheme-note{ color:rgba(247,242,230,.42); font-size:12px; margin:10px 0 20px; line-height:1.6; }
+
+  .field{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .sq{ overflow:hidden; background:var(--paper-3); flex:none; }
+  .sq img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .ic{ width:16px; height:16px; flex:none; vertical-align:-3px; }
+  .stat{ display:inline-flex; align-items:center; gap:5px; font-size:14px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .stat .u{ font-weight:400; font-size:12px; color:var(--ink-mute); }
+  .stats{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+
+  .catdot{ width:8px; height:8px; border-radius:50%; background:var(--c,var(--gold)); flex:none; }
+  .title{ font-weight:800; color:var(--ink); line-height:1.32; font-size:19px; }
+  .sign{ font-size:12.5px; color:var(--gold-deep); line-height:1.5; font-style:italic; }
+  .mystic-name{ font-size:12px; font-weight:800; letter-spacing:.14em; color:var(--gold-deep); }
+  .done-card{ filter:saturate(.55); opacity:.9; }
+  .done-card .title{ text-decoration:line-through; opacity:.8; }
+
+  /* 金币金胶囊 */
+  .reward{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 15px 6px 10px; border-radius:999px;
+    background:linear-gradient(135deg,#fbe6bd,#efc978 45%,#d6a24a); border:1px solid #b98a3b;
+    box-shadow:0 2px 6px rgba(155,111,34,.28), inset 0 1px 0 rgba(255,255,255,.55);
+    font-weight:800; font-size:18px; color:#5a3f10; font-variant-numeric:tabular-nums;
+  }
+  .reward .ic{ width:21px; height:21px; vertical-align:-4px; }
+
+  /* 竖向呈报按钮 */
+  .cta-v{
+    flex:none; align-self:stretch; writing-mode:vertical-rl; text-orientation:upright;
+    display:flex; align-items:center; justify-content:center; gap:2px;
+    padding:8px 9px; border-radius:10px; letter-spacing:.28em; font-weight:800; font-size:14px;
+    background:linear-gradient(160deg,var(--gold-light),var(--gold)); border:1px solid var(--gold-deep);
+    color:#4a340c; cursor:pointer; white-space:nowrap; box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+  }
+  .cta-v:hover{ filter:brightness(1.04); }
+  .reroll-v{
+    flex:none; align-self:stretch; writing-mode:vertical-rl; text-orientation:upright;
+    display:flex; align-items:center; justify-content:center;
+    padding:8px 9px; border-radius:10px; letter-spacing:.24em; font-weight:700; font-size:13px;
+    background:transparent; border:1px solid var(--gold); color:var(--gold-deep); cursor:pointer; white-space:nowrap;
+  }
+
+  /* ============ 纸黄卡：紧凑、无中缝空白 ============ */
+  .card{ display:inline-flex; gap:16px; align-items:stretch; padding:13px;
+    background:linear-gradient(135deg,#fffdf7,#f4ecd8); border:1px solid var(--line-strong);
+    border-left:5px solid var(--c,var(--gold)); border-radius:var(--r-md); box-shadow:var(--shadow-sm);
+    cursor:pointer; transition:transform .16s,box-shadow .2s; }
+  .card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+  .card .sq{ width:150px; height:112px; border-radius:var(--r-sm); }   /* 4:3 */
+  .card .body{ display:flex; flex-direction:column; justify-content:center; gap:11px; min-width:0; }
+  .card .titrow{ display:flex; align-items:center; gap:9px; }
+  /* 结算行：stats 与金币紧挨，不再撑满 */
+  .card .foot{ display:flex; align-items:center; gap:14px; }
+
+  /* O：呈报竖按钮贴右缘 */
+  /* P：天象签示例，用换一签竖按钮 */
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d79a"/><stop offset=".45" stop-color="#d9a94e"/><stop offset="1" stop-color="#9a6f22"/>
+    </linearGradient>
+    <linearGradient id="jadeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fc9b8"/><stop offset="1" stop-color="#3f7266"/>
+    </linearGradient>
+    <symbol id="ic-coin" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="url(#goldGrad)" stroke="#7d5716" stroke-width="1"/>
+      <circle cx="12" cy="12" r="7" fill="none" stroke="#fff2cf" stroke-width="1" opacity=".7"/>
+      <path d="M12 7.2v9.6M9.4 9.4h5.2M9.4 12h5.2" stroke="#7d5716" stroke-width="1.4" stroke-linecap="round" opacity=".85"/>
+    </symbol>
+    <symbol id="ic-energy" viewBox="0 0 24 24">
+      <path d="M13.5 2 5 13.2h5.2L9.2 22 19 9.6h-5.6z" fill="url(#goldGrad)" stroke="#7d5716" stroke-width="1" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ic-energy-rest" viewBox="0 0 24 24">
+      <path d="M13.5 2 5 13.2h5.2L9.2 22 19 9.6h-5.6z" fill="url(#jadeGrad)" stroke="#2f574d" stroke-width="1" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ic-time" viewBox="0 0 24 24">
+      <path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9" fill="none" stroke="url(#goldGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="page-head">
+  <h1>奏折卡 · 横排精修 v5</h1>
+  <p>定稿方向：纸黄底 + 分类色书脊，视觉素材 4:3。收掉中缝空白——卡宽随内容收紧、不再撑满，「呈报」由横按钮改成竖向印章式按钮贴在右缘。下面 O 是常规任务，P 是天象签（换一签也做成竖按钮）。</p>
+</div>
+
+<!-- O -->
+<section class="scheme O">
+  <div class="scheme-title"><span class="no">O</span><h2>常规任务 · 竖向呈报</h2><span class="desc">图 4:3 · 卡宽收紧 · 呈报竖按钮贴右缘</span></div>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-porcelain)">
+      <div class="sq"><img src="assets/任务底图/image_2 (12).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">更新项目进度看板</span></div>
+        <div class="foot">
+          <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>30</span>
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>6</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>20<span class="u">分</span></span>
+          </div>
+        </div>
+      </div>
+      <span class="cta-v">呈报</span>
+    </div>
+
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (27).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">牵头制定明年部门 OKR</span></div>
+        <div class="foot">
+          <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>150</span>
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>20</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>90<span class="u">分</span></span>
+          </div>
+        </div>
+      </div>
+      <span class="cta-v">呈报</span>
+    </div>
+  </div>
+</section>
+
+<!-- P -->
+<section class="scheme P">
+  <div class="scheme-title"><span class="no">P</span><h2>天象签 / 已办态</h2><span class="desc">恢复类任务用玉色精力 · 换一签竖按钮 · 已办置灰</span></div>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-gold)">
+      <div class="sq"><img src="assets/任务底图/image_1 (16).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="mystic-name">今日天象</span></div>
+        <div class="title">午后小憩二十分钟</div>
+        <div class="sign">「云开见月，宜静养待时」</div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy-rest"/></svg>+12</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>20<span class="u">分</span></span>
+          </div>
+        </div>
+      </div>
+      <span class="reroll-v">换一签</span>
+    </div>
+
+    <div class="card done-card" style="--c:var(--cat-wood)">
+      <div class="sq"><img src="assets/任务底图/image_3 (13).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">重启搁置三周的复盘文档</span></div>
+        <div class="foot">
+          <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>30</span>
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>10</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>25<span class="u">分</span></span>
+          </div>
+        </div>
+      </div>
+      <span class="cta-v" style="background:none;border:1px solid var(--jade);color:var(--jade)">已办</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

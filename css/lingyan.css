@@ -1,0 +1,157 @@
+/* =============================================================
+   lingyan.css —— 凌烟阁人物图鉴面板（覆盖舞台，复用 .panel-screen）
+   ============================================================= */
+
+/* 面板背景素材（用朝堂场景，与 library/treasury 同套路） */
+#lingyanPanel { background-image: url("../assets/场景/上朝.png"); }
+
+/* stance 语义色（关系推测 7 档） */
+#lingyanPanel {
+  --st-ally: #5aa892;  --st-friendly: #6fa89a; --st-neutral: #b98a3b;
+  --st-cold: #7d8894;  --st-rival: #c9695c;    --st-hostile: #a7473c;
+  --st-unknown: #6b7580;
+}
+
+/* 关系图例 */
+.ly-legend {
+  display: flex; flex-wrap: wrap; gap: 8px 16px;
+  padding: 12px 22px; background: rgba(20, 25, 32, .34);
+}
+.ly-legend .lg { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(247, 242, 230, .72); }
+.ly-legend .lg i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+/* 滚动主体 */
+.ly-body { flex: 1; overflow-y: auto; padding: 8px 22px 30px; }
+
+/* 分区标题 */
+.ly-sec { display: flex; align-items: baseline; gap: 12px; margin: 26px 0 14px; }
+.ly-sec .st {
+  font-size: 17px; color: var(--gold-light); letter-spacing: .14em;
+  border-left: 3px solid var(--gold); padding-left: 12px;
+}
+.ly-sec .sn { font-size: 12px; color: rgba(247, 242, 230, .5); letter-spacing: .04em; }
+.ly-sec .sc { font-size: 12px; color: var(--gold-light); margin-left: auto; }
+
+/* 卡片网格：一行四个 */
+.ly-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+
+/* NPC 卡 */
+.ly-grid .pc {
+  position: relative; border-radius: var(--r-lg, 22px); overflow: hidden;
+  background: linear-gradient(180deg, #2b343d, #1d252c);
+  border: 1px solid rgba(185, 138, 59, .3);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .3); display: flex; flex-direction: column;
+  transition: transform .22s cubic-bezier(.2, .9, .3, 1.1), box-shadow .22s, border-color .22s;
+}
+.ly-grid .pc:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0, 0, 0, .45); border-color: var(--gold); }
+
+/* 立绘区（竖向 4:5） */
+.ly-grid .pc-art {
+  position: relative; aspect-ratio: 4 / 5; overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #3a4650, #202932 70%);
+}
+.ly-grid .pc-art img {
+  position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+  width: 112%; max-width: none; height: auto; display: block;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .45));
+}
+.ly-grid .pc-art-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: rgba(247, 242, 230, .46); font-size: 12px; letter-spacing: .18em;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(231, 201, 133, .14), transparent 34%),
+    linear-gradient(180deg, rgba(58, 70, 80, .62), rgba(32, 41, 50, .92));
+}
+.ly-grid .pc-art-empty::before {
+  content: ""; position: absolute; width: 34%; aspect-ratio: 1; top: 24%; left: 33%;
+  border-radius: 50%; background: rgba(247, 242, 230, .1);
+  box-shadow: 0 76px 0 26px rgba(247, 242, 230, .08);
+}
+.ly-grid .pc-art-empty span { position: relative; z-index: 1; margin-top: 46%; }
+.ly-grid .pc-art::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 44%, rgba(20, 26, 32, .32) 64%, rgba(20, 26, 32, .9) 100%);
+}
+
+/* 关系推测徽标（右上，带 stance 色） */
+.ly-grid .pc-stance {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--paper);
+  background: rgba(20, 26, 32, .6); border: 1px solid var(--stance, var(--gold));
+  border-radius: 999px; padding: 4px 11px 4px 9px; backdrop-filter: blur(4px);
+}
+.ly-grid .pc-stance i { width: 7px; height: 7px; border-radius: 50%; background: var(--stance, var(--gold)); }
+
+/* 名字 + 身份 */
+.ly-grid .pc-info { position: relative; padding: 2px 16px 14px; margin-top: -44px; z-index: 2; }
+.ly-grid .pc-name { font-size: 24px; font-weight: 800; letter-spacing: .08em; color: var(--paper); text-shadow: 0 2px 10px rgba(0, 0, 0, .7); }
+.ly-grid .pc-title { font-size: 13px; color: var(--gold-light); letter-spacing: .06em; margin-top: 3px; }
+.ly-grid .pc-alias { font-size: 12px; color: rgba(247, 242, 230, .5); margin-top: 2px; }
+
+/* 关联待办：卡片底部整条按钮 */
+.ly-grid .pc-todo {
+  margin-top: auto; width: 100%; display: block; text-align: left; cursor: pointer;
+  border: 0; border-top: 1px solid rgba(185, 138, 59, .28);
+  background: rgba(185, 138, 59, .14); color: var(--gold-light);
+  padding: 11px 16px 12px; transition: background .18s;
+}
+.ly-grid .pc-todo:hover { background: rgba(185, 138, 59, .26); }
+.ly-grid .pc-todo .pt-lbl { display: flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .08em; color: var(--gold-light); }
+.ly-grid .pc-todo .pt-lbl b { color: var(--paper); }
+.ly-grid .pc-todo .pt-lbl .arw { margin-left: auto; color: var(--gold-light); }
+.ly-grid .pc-todo .pt-tt {
+  font-size: 13px; color: var(--paper); line-height: 1.45; margin-top: 4px;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ly-grid .pc-todo.empty { background: rgba(247, 242, 230, .05); color: rgba(247, 242, 230, .5); cursor: default; }
+.ly-grid .pc-todo.empty:hover { background: rgba(247, 242, 230, .05); }
+
+/* 待确认（ambiguous）态 */
+.ly-grid .pc.ambiguous { border-color: rgba(231, 201, 133, .6); }
+.ly-grid .pc-ask {
+  position: absolute; top: 12px; left: 14px; z-index: 3;
+  font-size: 10px; letter-spacing: .08em; color: #1f2830; font-weight: 700;
+  background: var(--gold-light); border-radius: 999px; padding: 3px 9px;
+}
+
+/* 未解锁 / 未遇见 占位 */
+.ly-grid .pc.locked .pc-art img { filter: brightness(0) drop-shadow(0 10px 22px rgba(0, 0, 0, .5)); opacity: .5; }
+.ly-grid .pc.locked .pc-art { background: radial-gradient(circle at 50% 34%, #333b44, #1a2129 72%); }
+.ly-grid .pc-lock {
+  position: absolute; z-index: 3; left: 50%; top: 42%; transform: translate(-50%, -50%);
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(20, 26, 32, .72); border: 1px solid rgba(231, 201, 133, .5);
+  color: var(--gold-light); box-shadow: 0 6px 20px rgba(0, 0, 0, .5);
+}
+.ly-grid .pc-lock svg { width: 24px; height: 24px; }
+.ly-grid .pc.locked .pc-name { color: #9aa2ab; text-shadow: none; letter-spacing: .3em; font-size: 20px; }
+.ly-grid .pc-cond {
+  margin-top: auto; font-size: 11px; letter-spacing: .04em; line-height: 1.6;
+  color: var(--gold-light); background: rgba(185, 138, 59, .1);
+  border-top: 1px dashed rgba(185, 138, 59, .4); padding: 10px 16px 12px;
+}
+
+/* 名臣异士 · 增益技能块（替代底部关联待办条） */
+.ly-grid .pc-skill {
+  margin-top: auto; padding: 11px 16px 13px;
+  border-top: 1px solid rgba(185, 138, 59, .28);
+  background: linear-gradient(180deg, rgba(185, 138, 59, .16), rgba(185, 138, 59, .06));
+}
+.ly-grid .pc-skill .ps-hd { display: flex; align-items: center; gap: 7px; }
+.ly-grid .pc-skill .ps-ic { width: 17px; height: 17px; flex: none; color: var(--tone, var(--gold-light)); }
+.ly-grid .pc-skill .ps-nm { font-size: 14px; font-weight: 700; letter-spacing: .06em; color: var(--paper); }
+.ly-grid .pc-skill .ps-tag {
+  margin-left: auto; font-size: 10px; letter-spacing: .1em; color: var(--tone, var(--gold-light));
+  border: 1px solid var(--tone, var(--gold)); border-radius: 999px; padding: 2px 8px;
+}
+.ly-grid .pc-skill .ps-desc { font-size: 12px; line-height: 1.55; color: rgba(247, 242, 230, .82); margin-top: 6px; }
+/* 技能色调 */
+.ly-grid .pc-skill.tone-gold { --tone: var(--gold-light); }
+.ly-grid .pc-skill.tone-jade { --tone: #8fc9b8; background: linear-gradient(180deg, rgba(63, 114, 102, .28), rgba(63, 114, 102, .08)); border-top-color: rgba(143, 201, 184, .34); }
+.ly-grid .pc-skill.tone-verm { --tone: #e79a86; background: linear-gradient(180deg, rgba(167, 71, 60, .26), rgba(167, 71, 60, .07)); border-top-color: rgba(201, 105, 92, .4); }
+
+/* 窄屏降列 */
+@media (max-width: 1080px) { .ly-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px)  { .ly-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

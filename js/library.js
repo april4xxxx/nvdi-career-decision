@@ -60,7 +60,7 @@
           ? '<span class="seal-mini">已 落 印</span>'
           : reached
             ? '<span class="tag">条件将成 · 进度 ' + a.cur + '/' + a.target + '</span>'
-            : '<span class="muted">尚未抵达（当前第 ' + st.day + ' 天）</span>') +
+            : '<span class="muted">尚未解锁（当前第 ' + st.day + ' 天）</span>') +
         '</div></div></div>';
     }).join("");
     return '<div class="timeline">' + nodes + '</div>';
@@ -90,7 +90,8 @@
         (b.remote ? '<div class="bk-status ready">AI 决策知识已就绪</div>' : '') +
         '</div></div>';
     }).join("");
-    var uploadCard = '<div class="book-card upload" id="bookUpload"><div class="plus">+</div><span>上传典籍</span></div>';
+    var uploadCard = '<div class="book-card upload" id="bookUpload"><div class="plus">+</div><span>上传典籍</span>' +
+      '<small class="upload-tip">呈入典籍，大臣议事时会取来参详，让决策更贴合陛下。</small></div>';
     return '<div class="book-toolbar"><h3>治国之策 · 藏书 ' + st.books.length + ' 卷</h3></div>' +
       '<div class="shelf">' + cards + uploadCard + '</div>';
   }
@@ -113,8 +114,8 @@
       (b.cover ? '<img src="' + ui.esc(b.cover) + '" style="width:80px;height:110px;object-fit:contain;border-radius:8px;background:var(--paper-3)" onerror="this.style.display=\'none\'"/>' : '') +
       '<div><div class="tag">治国之策</div><h3 style="font-size:22px;margin:6px 0">' + ui.esc(b.title) + '</h3>' +
       '<div class="muted">' + ui.esc(b.author || "佚名") + (b.fileName ? ' · ' + ui.esc(b.fileName) : '') + '</div></div></div>' +
-      '<p style="line-height:1.9;color:var(--ink-soft)">' + ui.esc(b.note || b.content || "此卷暂无摘要。") + '</p>' +
-      (b.remote ? '<p class="knowledge-note">此典籍文字已保存在当前浏览器。后续奏对会选取相关片段交给 DeepSeek-V4-Pro 参考。</p>' : '') +
+      '<p style="line-height:1.9;color:var(--ink-soft)">' + ui.esc(b.note || b.content || "一部来历不明的典籍，不知从何处得来，内文尚待陛下细读。") + '</p>' +
+      (b.remote ? '<p class="knowledge-note">此卷已存入藏书阁。往后大臣与陛下议事时，会翻阅其中相关章句，据此进言。</p>' : '') +
       '<div style="text-align:right;margin-top:18px"><button class="btn btn-gold" id="bkClose">合卷</button></div></div>'
     );
     ui.$("#bkClose").onclick = ui.closeModal;
@@ -155,9 +156,9 @@
         file = new File([rawNote], safeName + ".txt", { type: "text/plain;charset=utf-8" });
       }
       submit.disabled = true;
-      submit.textContent = "正在提取典籍…";
+      submit.textContent = "翰林院正在抄录典籍…";
       statusEl.className = "upload-status loading";
-      statusEl.textContent = "正在提取可用于 AI 决策的文字，请稍候。";
+      statusEl.textContent = "翰林正誊录卷中文字，以备日后大臣参详，请陛下稍候。";
       try {
         if (!App.api || !App.api.uploadKnowledge) throw new Error("知识库服务未载入");
         var result = await App.api.uploadKnowledge(file, title);
@@ -168,7 +169,7 @@
           cover: covers[store.get().books.length % 3],
           remote: true, fileName: result.book.fileName, status: result.book.status
         }, { countsForAchievements: countsForAchievements });
-        store.addJournal("藏经纳典", "陛下亲纳《" + title + "》入 AI 决策知识。后续奏对可参考此典。" );
+        store.addJournal("藏经纳典", "陛下亲纳《" + title + "》入藏书阁。往后大臣议事，便可翻阅此典参详。" );
         ui.closeModal();
         if (tab === "books") renderBody();
       } catch (error) {

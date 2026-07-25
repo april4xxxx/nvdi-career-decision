@@ -93,3 +93,57 @@ test("keeps the minister role from speaking as the empress", () => {
   assert.equal(dialogue.message, "臣理解，明日当以龙体为重；若需安排，臣可为你谋划。");
   assert.equal(question.question.q, "臣先问一句：明日可以请假吗？");
 });
+
+test("normalizes NPC detection and keeps only links to final task cards", () => {
+  const result = normalizeDecisionResponse({
+    type: "decision",
+    topic: "需求范围冲突",
+    message: "",
+    question: null,
+    decision: {
+      category: "daily",
+      title: "确认上线范围",
+      summary: "先和产品确认 MVP 边界",
+      mirror: {},
+      recommend: {
+        label: "先书面确认",
+        text: "列出边界和风险",
+        tasks: [{ title: "给 Alice 发送需求边界确认", cat: "daily", durationMinutes: 20 }]
+      },
+      alt: null,
+      sources: [],
+      npcDetection: {
+        hasRelevantPeople: true,
+        candidates: [{
+          existingNpcId: "",
+          displayName: "Alice",
+          title: "产品经理",
+          aliases: ["产品 Alice"],
+          role: "product",
+          identityStatus: "auto_created",
+          identityConfidence: 1.4,
+          relationship: {
+            stance: "rival",
+            stanceConfidence: 0.72,
+            inferenceReason: "排期和需求边界存在冲突",
+            trust: 0,
+            influence: 70,
+            alignment: -20,
+            conflict: 45,
+            familiarity: 35
+          },
+          taskLinks: [
+            { path: "recommend", taskIndex: 0, relation: "recipient", reason: "待办行动对象是 Alice", confidence: 0.9 },
+            { path: "recommend", taskIndex: 3, relation: "mentioned", reason: "无效索引", confidence: 0.5 }
+          ]
+        }]
+      }
+    }
+  });
+
+  assert.equal(result.decision.npcDetection.hasRelevantPeople, true);
+  assert.equal(result.decision.npcDetection.candidates.length, 1);
+  assert.equal(result.decision.npcDetection.candidates[0].identityConfidence, 1);
+  assert.equal(result.decision.npcDetection.candidates[0].taskLinks.length, 1);
+  assert.equal(result.decision.npcDetection.candidates[0].taskLinks[0].taskIndex, 0);
+});

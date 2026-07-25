@@ -40,15 +40,13 @@
 
   /* ---------- 演示条目 ---------- */
   var ITEMS = [
-    { key: "guide", label: "新手引导", desc: "重新体验：认识辅臣→提出问题→看懂奏折→朱批→生成行动" },
     { key: "tour", label: "全流程巡览", desc: "自动走一遍：朝堂决策→模式→藏书→珍宝，一气呵成" },
     { key: "decision", label: "决策与朱批", desc: "在朝堂发布奏折，演示同意/再议/大胆三种朱批" },
     { key: "energy", label: "精力与金币", desc: "校准精力、赴钦天监恢复精力、金币入库" },
     { key: "flow", label: "心流专注", desc: "进入心流模式并加速跑完一次 25 分钟专注" },
-    { key: "prophecy", label: "预言推演", desc: "查看未来七天天象与长期功绩史卷" },
+    { key: "prophecy", label: "预言推演", desc: "对一份奏折推演三种朱批的可能走向" },
     { key: "library", label: "藏书阁", desc: "浏览主线里程碑、起居注，并上传一卷典籍" },
-    { key: "treasury", label: "珍宝阁成就", desc: "看看你的每一次决策与坚持，如何化作一件件可收藏的珍宝" },
-    { key: "lingyan", label: "凌烟阁人物", desc: "浏览演示人物、关系推测与关联待办" }
+    { key: "treasury", label: "珍宝阁成就", desc: "看看你的每一次决策与坚持，如何化作一件件可收藏的珍宝" }
   ];
 
   function openMenu() {
@@ -79,11 +77,6 @@
   }
 
   async function run(key) {
-    if (key === "guide") {
-      if (running) stopDemo();
-      if (App.guide) App.guide.start(true);
-      return;
-    }
     if (running) { cancelFlag = true; await sleep(300); }
     cancelFlag = false; running = true; App.demo.active = true;
     setBadge(true, "演示：" + ((ITEMS.filter(function (i) { return i.key === key; })[0] || {}).label || ""));
@@ -95,7 +88,6 @@
       else if (key === "prophecy") await demoProphecy();
       else if (key === "library") await demoLibrary();
       else if (key === "treasury") await demoTreasury();
-      else if (key === "lingyan") await demoLingyan();
     } catch (e) { console.warn("[demo] interrupted", e); }
     running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
     if (store.finalizeDemoTasks) store.finalizeDemoTasks();
@@ -174,20 +166,15 @@
   }
 
   async function demoProphecy() {
-    // 依次带读七日任务、星轨冲突与长期功绩史卷。
+    // 预言保留最初的固定奏折；演示依次带读三种推演。
     App.modes.switchTo("prophecy"); App.topbar.render();
     await sleep(DEMO_PACE.scene); guard();
-    var cards = Array.prototype.slice.call(document.querySelectorAll(".prophecy-day-card"), 0, 3);
+    var cards = [".forecast-card.agree", ".forecast-card.again", ".forecast-card.bold"];
     for (var i = 0; i < cards.length; i++) {
-      var card = cards[i];
+      var card = document.querySelector(cards[i]);
       if (card) flash(card);
       await sleep(DEMO_PACE.readShort); guard();
     }
-    var chronicleTab = ui.$('[data-prophecy-view="chronicle"]');
-    if (chronicleTab) { flash(chronicleTab); chronicleTab.click(); }
-    await sleep(DEMO_PACE.readLong); guard();
-    var scroll = ui.$(".prophecy-scroll-sheet"); if (scroll) flash(scroll);
-    await sleep(DEMO_PACE.readMedium); guard();
     var exit = ui.$("#prophExit"); if (exit) exit.click();
     await sleep(DEMO_PACE.window);
   }
@@ -235,14 +222,6 @@
     await sleep(DEMO_PACE.readLong); guard();
     ui.closeModal();
     await sleep(DEMO_PACE.window);
-  }
-
-  async function demoLingyan() {
-    App.nav.goScene("lingyan", { recordVisit: false });
-    await sleep(DEMO_PACE.scene); guard();
-    var firstCard = document.querySelector("#lingyanPanel .pc:not(.locked)");
-    if (firstCard) flash(firstCard);
-    await sleep(DEMO_PACE.readLong);
   }
 
   async function demoTour() {

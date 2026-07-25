@@ -9,18 +9,45 @@
 
   var flowVeil, prophVeil;
   var timer = null, remain = 0, total = 25 * 60, demoSpeed = false, flowStartedInDemo = false;
+  var VALID_MODES = ["normal", "flow", "prophecy"];
 
   /* ---------- 模式入口 ---------- */
   function switchTo(m) {
-    store.setMode(m);
+    if (VALID_MODES.indexOf(m) < 0) m = "normal";
+    var current = store.get().mode;
+    var targetIsVisible =
+      (m === "flow" && flowVeil && flowVeil.classList.contains("active")) ||
+      (m === "prophecy" && prophVeil && prophVeil.classList.contains("active"));
+
+    // 顶部 Tab 是模式选择器：重复点击当前已显示的模式不刷新、不重置。
+    if (current === m && ((m === "normal" && !isOverlayActive()) || targetIsVisible)) return false;
+
     exitOverlays();
+    if (current !== m) store.setMode(m);
     if (m === "flow") openFlow();
     else if (m === "prophecy") openProphecy();
+    return true;
   }
+
+  // 只负责清理模式 UI；供模式之间切换时复用，不单独修改 store.mode。
   function exitOverlays() {
     stopTimer();
-    flowVeil.classList.remove("active");
-    prophVeil.classList.remove("active");
+    if (flowVeil) flowVeil.classList.remove("active");
+    if (prophVeil) prophVeil.classList.remove("active");
+    if (App.prophecy && prophVeil) App.prophecy.close(prophVeil);
+  }
+
+  // 地图导航、独立面板等离开模式的入口必须同时归位视觉层和顶部状态。
+  function exitToNormal() {
+    exitOverlays();
+    if (store.get().mode !== "normal") store.setMode("normal");
+  }
+
+  function isOverlayActive() {
+    return !!(
+      (flowVeil && flowVeil.classList.contains("active")) ||
+      (prophVeil && prophVeil.classList.contains("active"))
+    );
   }
 
   /* ================= 心流模式 ================= */
@@ -48,12 +75,12 @@
       '</div>' +
       '<div class="flow-task">当前专注：' + ui.esc(taskName) + '</div>' +
       '<div class="flow-ctrl">' +
-        '<button class="btn btn-jade" id="flowStart">开始专注</button>' +
+        '<button class="btn btn-gold" id="flowStart">开始专注</button>' +
         '<button class="btn btn-ghost" id="flowExit" style="color:#f7f2e6;border-color:rgba(255,255,255,.4)">退出</button>' +
       '</div>';
     flowVeil.classList.add("active");
     ui.$("#flowStart").onclick = startTimer;
-    ui.$("#flowExit").onclick = function () { switchTo("normal"); App.topbar.render(); };
+    ui.$("#flowExit").onclick = function () { switchTo("normal"); };
   }
 
   function updateFlow() {
@@ -95,69 +122,39 @@
     if (ss) ss.innerHTML = '<b style="color:#e7c985">✓ 专注圆满达成</b> · 已记入起居注';
     var ctrl = flowVeil.querySelector(".flow-ctrl");
     if (ctrl) ctrl.innerHTML = '<button class="btn btn-gold" id="flowDone">功成身退 ▸</button>';
-    var d = ui.$("#flowDone"); if (d) d.onclick = function () { switchTo("normal"); App.topbar.render(); };
+    var d = ui.$("#flowDone"); if (d) d.onclick = function () { switchTo("normal"); };
   }
 
   /* ================= 预言模式 ================= */
-  // 推演一份「决策奏折」在三种朱批下的走向：同意(采纳推荐) / 再议(暂缓) / 大胆(另采备选)
   function openProphecy() {
-    // 保留最初的「预言」：无论当前是否有待批奏折，都展示固定的行业分享推演。
-    var d = (data.SCENARIOS[0] && data.SCENARIOS[0].decision) || null;
-    prophVeil.style.backgroundImage = "url('" + data.ASSET_BASE + "场景/预言模式底图.png')";
-    if (!d) {
+    if (!App.prophecy) {
+      prophVeil.style.backgroundImage = "url('" + data.ASSET_BASE + "场景/钦天监.png')";
       prophVeil.innerHTML =
         '<div class="prophecy-inner"><h2>预 言 天 机</h2>' +
-        '<div class="sub">暂无可推演的决策</div>' +
+        '<div class="sub">预言模块尚未载入，请刷新后再试</div>' +
         '<div class="prophecy-foot"><button class="btn btn-gold" id="prophExit">退出预言 ▸</button></div></div>';
       prophVeil.classList.add("active");
-      ui.$("#prophExit").onclick = function () { switchTo("normal"); App.topbar.render(); };
+      ui.$("#prophExit").onclick = function () { switchTo("normal"); };
       return;
     }
-    store.useProphecy(d.id || d.title || "default");
-    var recGold = (d.recommend.tasks || []).reduce(function (sum, task) {
-      return sum + App.economy.calculate(task, task.cat || d.category).gold;
-    }, 0);
-    var altGold = ((d.alt && d.alt.tasks) || []).reduce(function (sum, task) {
-      return sum + App.economy.calculate(task, task.cat || d.category).gold;
-    }, 0);
-    var cards = [
-      forecastCard("agree", "同意", "采纳推荐：" + d.recommend.label, d.recommend.text, recGold, (d.recommend.tasks || []).length),
-      forecastCard("again", "再议", "留中不发，补充信息后重拟", "暂不落定，记入起居注，待信息更全再作决断。", 0, 0),
-      forecastCard("bold", "大胆", (d.alt ? "改采备选：" + d.alt.label : "推翻重来"), (d.alt ? d.alt.text : "大臣重新补充信息，另拟一策。"), altGold, d.alt ? (d.alt.tasks || []).length : 0)
-    ].join("");
-    prophVeil.innerHTML =
-      '<div class="prophecy-inner">' +
-      '<h2>预 言 天 机</h2>' +
-      '<div class="sub">推演决策「' + ui.esc(d.title) + '」三种朱批之可能</div>' +
-      '<div class="forecast-grid">' + cards + '</div>' +
-      '<div class="prophecy-foot">' +
-        '<button class="btn btn-gold" id="prophGo">回对话落笔朱批 ▸</button> ' +
-        '<button class="btn btn-ghost" id="prophExit" style="color:#f7f2e6;border-color:rgba(255,255,255,.4)">退出</button>' +
-      '</div></div>';
-    prophVeil.classList.add("active");
-    ui.$("#prophExit").onclick = function () { switchTo("normal"); App.topbar.render(); };
-    ui.$("#prophGo").onclick = function () {
-      switchTo("normal"); App.topbar.render();
-      if (App.conversation) App.conversation.expand();
-    };
-  }
 
-  function forecastCard(kind, label, head, body, gold, taskN) {
-    var risk = kind === "agree" ? "稳健" : kind === "again" ? "保守" : "进取";
-    return '<div class="forecast-card ' + kind + '">' +
-      '<h4>' + label + ' <span class="pill">' + risk + '</span></h4>' +
-      '<p><b>' + ui.esc(head) + '</b><br/>' + ui.esc(body) + '</p>' +
-      '<div class="stat"><span>预计赏金 +' + gold + '</span><span>' + (taskN ? "生成 " + taskN + " 项任务" : "不生成任务") + '</span></div>' +
-      '</div>';
+    var model = App.prophecy.open(prophVeil, {
+      onExit: function () { switchTo("normal"); }
+    });
+    prophVeil.classList.add("active");
+    store.useProphecy(model.sourceKey);
   }
 
   function init() {
     flowVeil = ui.$("#flowVeil");
     prophVeil = ui.$("#prophecyVeil");
+    // 心流计时与预言遮罩均不跨刷新恢复，避免存档 mode 与实际画面错位。
+    if (store.get().mode !== "normal") store.setMode("normal");
   }
 
   App.modes = {
-    init: init, switchTo: switchTo, exitOverlays: exitOverlays,
+    init: init, switchTo: switchTo, exitOverlays: exitOverlays, exitToNormal: exitToNormal,
+    isOverlayActive: isOverlayActive,
     openFlow: openFlow, openProphecy: openProphecy,
     setDemoSpeed: function (v) { demoSpeed = v; },
     _startTimer: startTimer

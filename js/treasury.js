@@ -41,7 +41,7 @@
     panel.innerHTML =
       '<div class="panel-head">' +
         '<img class="picon" src="' + ui.esc(sc.icon) + '" alt="" onerror="this.style.display=\'none\'" />' +
-        '<div><h2>珍宝阁</h2><div class="psub">五材质 · 五十九珍 · 铭刻功业</div></div>' +
+        '<div><h2>珍宝阁</h2><div class="psub">五库百珍 · 铭刻功业</div></div>' +
         '<div class="spacer"></div>' +
         '<button class="panel-close" id="trClose">×</button>' +
       '</div>' +

@@ -1,6 +1,9 @@
 import { calculateTaskEconomy } from "./economy.js";
 
 export const CATEGORIES = ["main", "daily", "explore", "delay", "mystic"];
+export const NPC_ROLES = ["leader", "coworker", "product", "customer", "mentor", "subordinate", "ally", "rival", "unknown"];
+export const NPC_STANCES = ["unknown", "ally", "friendly", "neutral", "cold", "rival", "hostile"];
+export const NPC_TASK_RELATIONS = ["owner", "stakeholder", "approver", "blocker", "recipient", "mentioned"];
 
 const taskSchema = {
   type: "object",
@@ -22,6 +25,63 @@ const pathSchema = {
     tasks: { type: "array", items: taskSchema }
   },
   required: ["label", "text", "tasks"]
+};
+
+const npcTaskLinkSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    path: { type: "string", enum: ["recommend", "alt"] },
+    taskIndex: { type: "number" },
+    relation: { type: "string", enum: NPC_TASK_RELATIONS },
+    reason: { type: "string" },
+    confidence: { type: "number" }
+  },
+  required: ["path", "taskIndex", "relation", "reason", "confidence"]
+};
+
+const npcCandidateSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    existingNpcId: { type: "string" },
+    displayName: { type: "string" },
+    title: { type: "string" },
+    aliases: { type: "array", items: { type: "string" } },
+    role: { type: "string", enum: NPC_ROLES },
+    identityStatus: { type: "string", enum: ["auto_created", "confirmed", "ambiguous"] },
+    identityConfidence: { type: "number" },
+    relationship: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        stance: { type: "string", enum: NPC_STANCES },
+        stanceConfidence: { type: "number" },
+        inferenceReason: { type: "string" },
+        trust: { type: "number" },
+        influence: { type: "number" },
+        alignment: { type: "number" },
+        conflict: { type: "number" },
+        familiarity: { type: "number" }
+      },
+      required: ["stance", "stanceConfidence", "inferenceReason", "trust", "influence", "alignment", "conflict", "familiarity"]
+    },
+    taskLinks: { type: "array", items: npcTaskLinkSchema }
+  },
+  required: [
+    "existingNpcId", "displayName", "title", "aliases", "role", "identityStatus",
+    "identityConfidence", "relationship", "taskLinks"
+  ]
+};
+
+const npcDetectionSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    hasRelevantPeople: { type: "boolean" },
+    candidates: { type: "array", items: npcCandidateSchema }
+  },
+  required: ["hasRelevantPeople", "candidates"]
 };
 
 export const decisionResponseSchema = {
@@ -72,9 +132,10 @@ export const decisionResponseSchema = {
             },
             recommend: pathSchema,
             alt: { anyOf: [pathSchema, { type: "null" }] },
-            sources: { type: "array", items: { type: "string" } }
+            sources: { type: "array", items: { type: "string" } },
+            npcDetection: npcDetectionSchema
           },
-          required: ["category", "title", "summary", "mirror", "recommend", "alt", "sources"]
+          required: ["category", "title", "summary", "mirror", "recommend", "alt", "sources", "npcDetection"]
         },
         { type: "null" }
       ]
@@ -120,6 +181,72 @@ function cleanPath(path, category) {
   };
 }
 
+function clampNumber(value, min, max, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : fallback;
+}
+
+function cleanNpcDetection(value, paths) {
+  const seen = new Set();
+  const candidates = (Array.isArray(value?.candidates) ? value.candidates : []).slice(0, 8).map((candidate) => {
+    const displayName = cleanText(candidate?.displayName, 60);
+    if (!displayName) return null;
+    const key = displayName.toLowerCase().replace(/\s+/g, "");
+    if (seen.has(key)) return null;
+    seen.add(key);
+
+    const role = NPC_ROLES.includes(candidate?.role) ? candidate.role : "unknown";
+    const identityStatus = ["auto_created", "confirmed", "ambiguous"].includes(candidate?.identityStatus)
+      ? candidate.identityStatus
+      : (candidate?.existingNpcId ? "confirmed" : "auto_created");
+    const relationship = candidate?.relationship || {};
+    const stance = NPC_STANCES.includes(relationship.stance) ? relationship.stance : "unknown";
+    const aliases = (Array.isArray(candidate?.aliases) ? candidate.aliases : [])
+      .slice(0, 8)
+      .map((alias) => cleanText(alias, 60))
+      .filter((alias) => alias && alias !== displayName);
+    const taskLinks = (Array.isArray(candidate?.taskLinks) ? candidate.taskLinks : []).slice(0, 8).map((link) => {
+      const path = link?.path === "alt" ? "alt" : "recommend";
+      const tasks = Array.isArray(paths?.[path]?.tasks) ? paths[path].tasks : [];
+      const taskIndex = Math.floor(Number(link?.taskIndex));
+      if (!Number.isFinite(taskIndex) || taskIndex < 0 || taskIndex >= tasks.length) return null;
+      return {
+        path,
+        taskIndex,
+        relation: NPC_TASK_RELATIONS.includes(link?.relation) ? link.relation : "mentioned",
+        reason: cleanText(link?.reason, 240),
+        confidence: clampNumber(link?.confidence, 0, 1, 0.5)
+      };
+    }).filter(Boolean);
+    if (!taskLinks.length) return null;
+
+    return {
+      existingNpcId: cleanText(candidate?.existingNpcId, 80),
+      displayName,
+      title: cleanText(candidate?.title, 80),
+      aliases,
+      role,
+      identityStatus,
+      identityConfidence: clampNumber(candidate?.identityConfidence, 0, 1, 0.5),
+      relationship: {
+        stance,
+        stanceConfidence: clampNumber(relationship.stanceConfidence, 0, 1, stance === "unknown" ? 0.2 : 0.45),
+        inferenceReason: cleanText(relationship.inferenceReason, 240),
+        trust: clampNumber(relationship.trust, -100, 100),
+        influence: clampNumber(relationship.influence, 0, 100),
+        alignment: clampNumber(relationship.alignment, -100, 100),
+        conflict: clampNumber(relationship.conflict, 0, 100),
+        familiarity: clampNumber(relationship.familiarity, 0, 100)
+      },
+      taskLinks
+    };
+  }).filter(Boolean);
+  return {
+    hasRelevantPeople: candidates.length > 0,
+    candidates
+  };
+}
+
 export function normalizeDecisionResponse(value) {
   const type = ["dialogue", "question", "decision"].includes(value?.type) ? value.type : "dialogue";
   const result = {
@@ -149,11 +276,16 @@ export function normalizeDecisionResponse(value) {
       },
       recommend: cleanPath(value?.decision?.recommend, category),
       alt: value?.decision?.alt ? cleanPath(value.decision.alt, category) : null,
-      sources: (Array.isArray(value?.decision?.sources) ? value.decision.sources : []).slice(0, 5).map((s) => cleanText(s, 100)).filter(Boolean)
+      sources: (Array.isArray(value?.decision?.sources) ? value.decision.sources : []).slice(0, 5).map((s) => cleanText(s, 100)).filter(Boolean),
+      npcDetection: { hasRelevantPeople: false, candidates: [] }
     };
     if (!result.decision.recommend.tasks.length) {
       result.decision.recommend.tasks.push(cleanTask({}, category));
     }
+    result.decision.npcDetection = cleanNpcDetection(value?.decision?.npcDetection, {
+      recommend: result.decision.recommend,
+      alt: result.decision.alt
+    });
   }
   return result;
 }

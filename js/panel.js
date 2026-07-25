@@ -49,9 +49,6 @@
   function render() {
     var st = store.get();
     var t = st.empressType ? data.EMPRESS_TYPES[st.empressType] : null;
-    var p = store.progress();
-    var mainPct = p.mainTotal ? Math.round(p.mainDone / p.mainTotal * 100) : 0;
-    var subPct = p.subTotal ? Math.round(p.subDone / p.subTotal * 100) : 0;
 
     sidebar.innerHTML =
       '<button class="sb-toggle" id="sbToggle" title="' + (st.sidebarCollapsed ? "展开侧栏" : "收起侧栏") +
@@ -60,15 +57,11 @@
       '<div class="sb-inner">' +
         '<div class="sb-avatar">' +
           '<img src="' + ui.esc(t ? t.portrait : data.ASSET_BASE + "人物/女皇1.png") + '" alt="" onerror="this.style.display=\'none\'" />' +
-          '<div class="nick">' + ui.esc(st.profile.nickname || "陛下") + '</div>' +
-          '<div class="type">' + ui.esc(t ? t.title : "") + '</div>' +
+          '<div class="sb-id">' +
+            '<div class="nick">' + ui.esc(st.profile.nickname || "陛下") + '</div>' +
+            '<div class="type">' + ui.esc(t ? t.title : "") + '</div>' +
+          '</div>' +
         '</div>' +
-
-        '<div class="sb-section-t">功业进度</div>' +
-        '<div class="sb-progress main"><div class="lbl"><span>主线 · 青铜</span><span>' + p.mainDone + '/' + p.mainTotal + '</span></div>' +
-          '<div class="bar"><div class="fill" style="width:' + mainPct + '%"></div></div></div>' +
-        '<div class="sb-progress sub"><div class="lbl"><span>副线 · 其它</span><span>' + p.subDone + '/' + p.subTotal + '</span></div>' +
-          '<div class="bar"><div class="fill" style="width:' + subPct + '%"></div></div></div>' +
 
         '<div class="sb-section-t">宫廷地图</div>' +
         '<div class="sb-map">' + mapItems() + '</div>' +

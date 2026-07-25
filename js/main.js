@@ -21,12 +21,14 @@
     App.modes.init();
     App.library.init();
     App.treasury.init();
+    if (App.lingyan) App.lingyan.init();
     App.demo.init();
 
-    // 若刷新时停留在藏书阁/珍宝阁，恢复面板
+    // 若刷新时停留在独立面板，恢复对应内容
     var sc = store.get().scene;
     if (sc === "library") App.library.open();
     else if (sc === "treasury") App.treasury.open();
+    else if (sc === "lingyan" && App.lingyan) App.lingyan.open();
   }
 
   // 成就解锁 → 轻量通知（全局，任何屏幕都生效）
@@ -43,6 +45,7 @@
     if (ov.classList.contains("active")) { ui.closeModal(); return; }
     var dr = ui.$("#drawer");
     if (dr && dr.classList.contains("open")) { App.drawer.close(); return; }
+    if (App.modes && App.modes.isOverlayActive()) { App.modes.switchTo("normal"); return; }
     if (App.conversation && App.conversation.getState().expanded) App.conversation.collapse();
   });
 

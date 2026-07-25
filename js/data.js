@@ -41,79 +41,66 @@
     }
   };
 
-  /* ---------- 御前推演：6 题 ----------
-     每题选项 weight 指向某种女帝类型 */
+  /* ---------- 御前推演：3 题 ----------
+     每题选项 weight 指向某种女帝类型。
+     stem = 宫廷主问（沉浸），sub = 职场小字（点破与你、与工作的关系）。
+     三题分别落在：接手新事 / 当众受质 / 资源紧张下的取舍，各覆盖铁腕/仁厚/谋略/革新四向。 */
   var QUIZ = [
     {
-      id: "q1", stem: "新官上任，第一件差事千头万绪，你先做什么？",
+      id: "q1", stem: "初接差事",
+      sub: "刚接到一件目标还不太清楚的新任务，你通常会先怎么做？",
       npc: "史官", portrait: A + "人物/史官.png",
       options: [
-        { text: "立刻定下目标，分派任务，即刻开工", w: "铁腕" },
-        { text: "先召集众臣，听听大家的想法", w: "仁厚" },
-        { text: "花半日理清全局，画出整盘计划", w: "谋略" },
-        { text: "试几个新法子，看看哪条路走得通", w: "革新" }
+        { text: "先确认目标、截止时间和完成标准", w: "铁腕" },
+        { text: "先找带教或同事了解背景与常见坑", w: "仁厚" },
+        { text: "先搜集资料，把全貌和风险理清", w: "谋略" },
+        { text: "先做一个小版本，再用反馈修正", w: "革新" }
       ]
     },
     {
-      id: "q2", stem: "一位老臣当众质疑你的决策，你如何应对？",
+      id: "q2", stem: "面折廷争",
+      sub: "有人当众质疑你的做法时，你更倾向于怎么回应？",
       npc: "直臣", portrait: A + "人物/直臣.png",
       options: [
-        { text: "当场驳回，维护决策的权威", w: "铁腕" },
-        { text: "耐心听完，肯定他的用心再解释", w: "仁厚" },
-        { text: "请他细陈理由，据此评估是否调整", w: "谋略" },
-        { text: "干脆借他的质疑，抛出一个新方案", w: "革新" }
+        { text: "先守住自己的判断，把理由讲清楚", w: "铁腕" },
+        { text: "先听完对方，认可用心再解释", w: "仁厚" },
+        { text: "请对方摆出依据，据此评估要不要调整", w: "谋略" },
+        { text: "顺着这个质疑，试试另一个方案", w: "革新" }
       ]
     },
     {
-      id: "q3", stem: "国库吃紧，一项要事却缺钱推进，你怎么办？",
+      id: "q3", stem: "度支有度",
+      sub: "手头资源（时间/预算/人手）不够，一件要紧事却得推进，你会？",
       npc: "顺臣", portrait: A + "人物/顺臣.png",
       options: [
-        { text: "砍掉次要开支，集中资源办大事", w: "铁腕" },
-        { text: "与各部商量，共度时艰、分摊压力", w: "仁厚" },
-        { text: "细算投入产出，排出优先次序", w: "谋略" },
-        { text: "另辟财源，想个前所未有的法子", w: "革新" }
+        { text: "砍掉次要的，把资源压到最关键处", w: "铁腕" },
+        { text: "和相关的人商量，一起分摊压力", w: "仁厚" },
+        { text: "算清投入产出，排出优先次序", w: "谋略" },
+        { text: "另找一条省资源的新路子", w: "革新" }
       ]
     },
     {
-      id: "q4", stem: "面对一件从未处理过的棘手政务，你的第一反应是？",
-      npc: "翰林", portrait: A + "人物/翰林.png",
+      // 偏好题：不参与女帝画像判定（w 为大臣 key，非四类型），
+      // 仅用于确定进入主界面后的默认议事大臣。
+      id: "q4", stem: "愿听何谏", pref: "minister",
+      sub: "当你拿不准时，希望大臣怎样与你商议？",
+      npc: "卦师", portrait: A + "人物/卦师.png",
       options: [
-        { text: "先干起来，边做边改", w: "铁腕" },
-        { text: "找有经验的人请教一番", w: "仁厚" },
-        { text: "查遍典籍旧例，谋定而后动", w: "谋略" },
-        { text: "把它当成试验，大胆闯一闯", w: "革新" }
+        { text: "先告诉我最重要的结论，再说明理由", w: "直臣" },
+        { text: "先听懂我的处境，再温和地给出建议", w: "顺臣" },
+        { text: "帮我跳出原有选项，寻找一条可尝试的新路", w: "卦师" }
       ]
     },
-    {
-      id: "q5", stem: "深夜批阅奏折，精力将尽，尚有要务未了，你会？",
-      npc: "宫女", portrait: A + "人物/宫女.png",
-      options: [
-        { text: "咬牙撑住，务必今夜办完", w: "铁腕" },
-        { text: "留一半给可信的人分担", w: "仁厚" },
-        { text: "先挑最要紧的批完，余者明日再议", w: "谋略" },
-        { text: "换个新法子提提神，接着干", w: "革新" }
-      ]
-    },
-    {
-      id: "q6", stem: "一年之后，你最希望史书如何评价你？",
-      npc: "卦师", portrait: A + "人物/卦师onboarding.png",
-      options: [
-        { text: "雷厉风行，功业卓著", w: "铁腕" },
-        { text: "仁德爱人，四海归心", w: "仁厚" },
-        { text: "深谋远虑，运筹帷幄", w: "谋略" },
-        { text: "锐意革新，开一代新风", w: "革新" }
-      ]
-    }
   ];
 
   /* ---------- 场景（左侧地图 8 处） ---------- */
   var SCENES = [
     {
-      id: "residence", name: "起居殿", role: "日常起居", type: "base",
+      id: "residence", name: "起居殿", role: "召见·议事", type: "base",
       bg: A + "场景/起居殿.png", icon: A + "svg图标/起居殿.svg",
-      desc: "女帝起居休整之所，可查看今日概览、稍作休憩。",
+      desc: "女帝召见大臣、梳理心事之所。把眼下的难题说与大臣，一同理出决策。",
       npc: "宫女", portrait: A + "人物/宫女.png",
-      opening: "陛下醒了。今日风和日丽，可要先用早膳，再理朝政？"
+      opening: "陛下今日临朝之前，可有什么烦心的差事？说与臣听，臣陪您一件件理清。"
     },
     {
       id: "court", name: "朝堂", role: "主线·决策", type: "main",
@@ -130,18 +117,18 @@
       opening: "陛下驾临六部，今日份的日常政务已整理成册，请陛下过目。"
     },
     {
-      id: "garden", name: "御花园", role: "探索·休闲", type: "explore",
+      id: "garden", name: "御花园", role: "探索·养性", type: "explore",
       bg: A + "场景/御花园.png", icon: A + "svg图标/御花园.svg",
-      desc: "曲径通幽，忙里偷闲。探索任务与意外之喜藏于此处。",
+      desc: "重要而不紧急之事的归处。侍女相伴赏花，让陛下松一口气，也养一养心性。",
       npc: "翰林", portrait: A + "人物/翰林.png",
-      opening: "御花园中百花正盛，陛下不妨信步一游，说不定另有一番收获。"
+      opening: "御花园中百花正盛，臣女陪陛下信步赏花、松散心神，那些值得一试的新机会，也在这里静静候着。"
     },
     {
-      id: "folk", name: "民间", role: "拖延迷雾", type: "fog",
+      id: "folk", name: "民间", role: "散佚之事", type: "fog",
       bg: A + "场景/民间.png", icon: A + "svg图标/民间.svg",
-      desc: "市井烟火，也是拖延迷雾聚集之地。搁置的旧事在此等待重启。",
+      desc: "那些被搁置、渐渐石沉大海的旧事，流落到了民间。唯有循着市井线索，才能把它们重新拾起。",
       npc: "直臣", portrait: A + "人物/直臣.png",
-      opening: "微服民间，雾气缭绕。那些被搁置的差事，正在雾中等陛下拨云见日。"
+      opening: "有些宫中旧事，已悄悄流传到民间。陛下可愿微服一探，把那些搁置已久的差事重新拾起？"
     },
     {
       id: "observatory", name: "钦天监", role: "神秘·恢复精力", type: "mystic",
@@ -163,14 +150,22 @@
       desc: "陈列历次功业所得珍宝，共五材质五十九珍。",
       npc: "史官", portrait: A + "人物/史官.png",
       opening: "珍宝阁灯火通明，陛下的每一件功业，都在此化作一件珍宝。"
+    },
+    {
+      id: "lingyan", name: "凌烟阁", role: "群臣关系与待办", type: "roster",
+      bg: A + "场景/上朝.png", icon: A + "svg图标/六部.svg",
+      desc: "记录已经遇见的群臣、人物关系与关联待办。",
+      npc: "史官", portrait: A + "人物/史官.png",
+      opening: "凌烟阁中群像俨然，朝野人物与相关事务皆录于此。",
+      trackVisit: false
     }
   ];
 
   /* ---------- 主线里程碑（30/60/90 天） ---------- */
   var MILESTONES = [
-    { id: "m30", day: 30, name: "初立之主·满月", desc: "熟悉阶段：走遍六部、完成首份交付，站稳脚跟。", achId: "thirty-day-foothold" },
-    { id: "m60", day: 60, name: "中兴之主·整顿", desc: "成长阶段：确立章程、整顿内政，独当一面。", achId: "sixty-day-reform" },
-    { id: "m90", day: 90, name: "正统女帝·加冕", desc: "转正阶段：御前答辩通过，举行加冕大典。", achId: "ninety-day-coronation" }
+    { id: "m30", day: 30, name: "初立之主·满月", desc: "熟悉阶段。新朝初立，百事待认：走遍六部、认全关键的人、摸清流程，赶在满月之前完成第一份交付，先站稳脚跟。根基未稳，容不得半点松懈。", achId: "thirty-day-foothold" },
+    { id: "m60", day: 60, name: "中兴之主·整顿", desc: "成长阶段。立足之后，暗流渐显：确立自己的章程、整顿手头的事务，独立扛起一块，用一份拿得出手的成果证明自己已能独当一面。", achId: "sixty-day-reform" },
+    { id: "m90", day: 90, name: "正统女帝·加冕", desc: "转正阶段。九十日砺练至此，御前答辩通过、举行加冕大典，名正言顺地坐稳这一朝。往后的江山，愿陛下走得更远、更从容。", achId: "ninety-day-coronation" }
   ];
 
   /* ---------- 默认藏书（治国之策 tab 初始书籍） ---------- */
@@ -182,7 +177,7 @@
 
   /* ---------- 起居注初始条目（journals） ---------- */
   var JOURNALS_SEED = [
-    { id: "j1", day: 1, title: "登基第一日", text: "朕于今日登基，百废待兴。批下首份朱批，朝政自此始。" }
+    { id: "j1", day: 1, title: "登基第一日", text: "今日入朝，接过这一摊千头万绪的差事。人还没认全，事已压上肩头。批下第一份朱批，就从这里开始吧。" }
   ];
 
   /* =============================================================
@@ -221,11 +216,11 @@
   /* ---------- 任务分类 → 地图场景 ----------
      主线→朝堂 日常→六部 探索→御花园 拖延→民间迷雾 神秘/恢复→钦天监 */
   var CATEGORIES = {
-    main:    { key: "main",    label: "主线", scene: "court",       color: "var(--cat-bronze)",    icon: A + "svg图标/朝堂.svg",   note: "关乎前程的大事，投放朝堂" },
-    daily:   { key: "daily",   label: "日常", scene: "ministry",    color: "var(--cat-porcelain)", icon: A + "svg图标/六部.svg",   note: "例行庶务，投放六部" },
-    explore: { key: "explore", label: "探索", scene: "garden",      color: "var(--cat-jade)",      icon: A + "svg图标/御花园.svg", note: "值得一试的新机会，投放御花园" },
-    delay:   { key: "delay",   label: "拖延", scene: "folk",         color: "var(--cat-wood)",      icon: A + "svg图标/民间.svg",   note: "搁置已久的旧事，投放民间迷雾" },
-    mystic:  { key: "mystic",  label: "神秘", scene: "observatory",  color: "var(--cat-gold)",      icon: A + "svg图标/钦天监.svg", note: "调养身心、恢复精力，投放钦天监" }
+    main:    { key: "main",    label: "主线", scene: "court",       color: "var(--cat-bronze)",    icon: A + "svg图标/朝堂.svg",   note: "关乎前程的大事，投往朝堂。陛下每次临朝，都是在推进自己的主线。" },
+    daily:   { key: "daily",   label: "日常", scene: "ministry",    color: "var(--cat-porcelain)", icon: A + "svg图标/六部.svg",   note: "例行庶务，投往六部。六部会替陛下盯着，督促您一件件办结。" },
+    explore: { key: "explore", label: "探索", scene: "garden",      color: "var(--cat-jade)",      icon: A + "svg图标/御花园.svg", note: "值得一试的新机会，投往御花园。宫女已领旨，在园中恭候陛下。" },
+    delay:   { key: "delay",   label: "拖延", scene: "folk",         color: "var(--cat-wood)",      icon: A + "svg图标/民间.svg",   note: "搁置已久、渐渐石沉大海的旧事，唯有民间尚存线索，可循迹重启。" },
+    mystic:  { key: "mystic",  label: "神秘", scene: "observatory",  color: "var(--cat-gold)",      icon: A + "svg图标/钦天监.svg", note: "调养身心、恢复精力之事。钦天监传此举大有益处，请陛下亲临。" }
   };
   var CATEGORY_ORDER = ["main", "daily", "explore", "delay", "mystic"];
 
@@ -234,15 +229,24 @@
   var SCENE_TASK_TEMPLATES = {
     court: {
       title: "完成入职培训的结业答辩",
-      label: "主线案例",
-      flag: "仅供参考",
-      meta: "耗精力 20 · 约 90 分钟 · 赏 20 金 · 案例「入职清单」 · 参考「女帝职场决策原则」",
-      cta: "以此为例，与大臣商议",
+      // 结构化数值：与正常任务卡（v5）一致地渲染金币胶囊 + 精力 + 时长
+      gold: 20, energy: 20, durationMinutes: 90,
+      cta: "呈报",
       featured: true
     },
     ministry: { title: "例行协作与日常事务", hint: "说说你正在推进的日常待办" },
-    garden: { title: "低风险试探与新机会", hint: "讲讲你想尝试、又有些犹豫的事" },
-    folk: { title: "搁置已久的待启事项", hint: "说出一件想重新启动的事" },
+    garden: {
+      title: "约行业前辈喝一次咖啡",
+      gold: 10, energy: 10, durationMinutes: 30,
+      cta: "议事",
+      featured: true
+    },
+    folk: {
+      title: "重启搁置三周的复盘文档",
+      gold: 10, energy: 10, durationMinutes: 25,
+      cta: "议事",
+      featured: true
+    },
     observatory: { title: "身心节奏与状态调整", hint: "说说你当下的精力和节奏" }
   };
 
@@ -263,6 +267,64 @@
     { title: "约同组前辈喝杯咖啡认识一下", cat: "explore", durationMinutes: 20, from: "融入团队" }
   ];
   var SEED_MAP_TASKS = [];
+
+  /* ---------- 预言模式 · 新入职七日演示样本 ----------
+     只在真实任务池没有未完成任务时作为 prophecy 的只读 Adapter；
+     不写入 mapTasks，不参与结算，也不冒充用户事实。 */
+  var PROPHECY_DEMO_TASKS = [
+    {
+      id: "prophecy-demo-sat-review", weekday: 6,
+      title: "复盘本周卡点并列下周三件事", cat: "delay", durationMinutes: 25,
+      deadlineText: "周日 21:00 前", outcome: "让下周方向更早可见",
+      conflict: "容易被休息计划挤掉"
+    },
+    {
+      id: "prophecy-demo-sun-rest", weekday: 0,
+      title: "彻底休息 30 分钟", cat: "mystic", durationMinutes: 30,
+      deadlineText: "周日完成", outcome: "为下周保留判断力",
+      conflict: "没有金币回报，容易被忽略"
+    },
+    {
+      id: "prophecy-demo-mon-priority", weekday: 1,
+      title: "确认第一周优先级", cat: "main", durationMinutes: 30,
+      deadlineText: "周二 16:00 前", outcome: "让验收标准更清楚",
+      conflict: "与入职培训吸收争夺注意力"
+    },
+    {
+      id: "prophecy-demo-tue-metric", weekday: 2,
+      title: "问清数据口径", cat: "daily", durationMinutes: 20,
+      deadlineText: "周三 12:00 前", outcome: "减少后续返工",
+      conflict: "需要主动开口提问"
+    },
+    {
+      id: "prophecy-demo-wed-mentor", weekday: 3,
+      title: "约 mentor coffee chat", cat: "explore", durationMinutes: 30,
+      deadlineText: "本周内", outcome: "建立一条求教路径",
+      conflict: "答辩前夜会占用社交精力",
+      tags: ["mentor", "relationship"]
+    },
+    {
+      id: "prophecy-demo-thu-defense", weekday: 4,
+      title: "准备入职培训结业答辩", cat: "main", durationMinutes: 60,
+      deadlineText: "周四晚完成", outcome: "降低答辩不确定性",
+      conflict: "与 coffee chat 相邻，连续消耗精力",
+      tags: ["regularization_defense"]
+    },
+    {
+      id: "prophecy-demo-fri-defense", weekday: 5,
+      title: "完成入职培训结业答辩", cat: "main", durationMinutes: 90,
+      deadlineText: "周五 17:00 前", outcome: "完成第一项可验收的关键交付",
+      conflict: "与周报同日收口，是本周高压点",
+      tags: ["regularization_defense"]
+    },
+    {
+      id: "prophecy-demo-fri-report", weekday: 5,
+      title: "整理并发出本周周报", cat: "daily", durationMinutes: 20,
+      deadlineText: "周五下班前", outcome: "留下可追踪的工作记录",
+      conflict: "与答辩同日，容易被推迟到下班前赶工",
+      tags: ["weekly_report"]
+    }
+  ];
 
   /* ---------- 每日天象·微探索 ----------
      只提供无门槛、无需文字回顾的小探索；数值由 store 固定为恢复 10 精力、0 金币。 */
@@ -301,7 +363,7 @@
         summary: "部门周会邀你做一次行业分享。你担心准备不足，又不想错过这次露脸的机会。",
         mirror: { invest: "1～2 个晚上备稿", reward: "主线露脸 · 攒信任", cost: "占用两晚个人时间" },
         recommend: {
-          label: "做一个 90 分钟的「足够好」版本",
+          label: "折中之策：做一个 90 分钟的「足够好」版本",
           text: "别追求完美。挑一个你最熟的小切口，只准备 90 分钟能讲完的内容，讲清楚一件事即可。",
           tasks: [
             { title: "定选题 + 列一页大纲", cat: "main", durationMinutes: 15 },
@@ -636,6 +698,7 @@
     SCENE_TASK_TEMPLATES: SCENE_TASK_TEMPLATES,
     TASK_BGS: TASK_BGS,
     SEED_MAP_TASKS: SEED_MAP_TASKS,
+    PROPHECY_DEMO_TASKS: PROPHECY_DEMO_TASKS,
     isLegacySeedTask: isLegacySeedTask,
     MYSTIC_CARDS: MYSTIC_CARDS,
     cleanTaskTitle: cleanTaskTitle,

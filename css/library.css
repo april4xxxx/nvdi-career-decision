@@ -15,7 +15,7 @@
   backdrop-filter: blur(2px);
 }
 .panel-screen > * { position: relative; z-index: 1; }
-.panel-screen.active { display: flex; animation: fadeIn .35s ease; }
+.panel-screen.active { display: flex; }
 /* 各面板对应的场景素材 */
 #libraryPanel { background-image: url("../assets/场景/藏书阁.png"); }
 #treasuryPanel { background-image: url("../assets/场景/珍宝阁.png"); }
@@ -25,7 +25,10 @@
   background: linear-gradient(180deg, rgba(20,25,32,.72), rgba(20,25,32,.5));
   border-bottom: 1px solid var(--gold); color: var(--paper); backdrop-filter: blur(6px);
 }
-.panel-head .picon { width: 34px; height: 34px; object-fit: contain; }
+.panel-head .picon {
+  width: 34px; height: 34px; object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(86%) sepia(18%) saturate(818%) hue-rotate(352deg) brightness(92%) contrast(96%);
+}
 .panel-head h2 { font-size: 22px; letter-spacing: .12em; color: var(--paper); }
 .panel-head .psub { font-size: 13px; color: var(--gold-light); }
 .panel-head .spacer { flex: 1; }
@@ -82,6 +85,7 @@
 .book-card.upload { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 2px dashed var(--gold); color: var(--gold-deep); min-height: 200px; background: var(--paper-2); }
 .book-card.upload .plus { font-size: 40px; line-height: 1; }
 .book-card.upload span { font-size: 13px; letter-spacing: .1em; }
+.book-card.upload .upload-tip { font-size: 10px; font-weight: 400; letter-spacing: 0; color: var(--ink-soft, #8a8172); line-height: 1.5; text-align: center; padding: 0 12px; }
 
 /* 上传弹层 */
 .upload-form { padding: 26px 30px; }

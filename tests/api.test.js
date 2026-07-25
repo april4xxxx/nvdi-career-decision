@@ -15,8 +15,11 @@ test("chat function sends a JSON DeepSeek-V4-Pro request with knowledge", async 
     assert.equal(body.response_format.type, "json_object");
     assert.equal(body.thinking.type, "disabled");
     assert.match(body.messages[0].content, /已有待办只用于查重/);
+    assert.match(body.messages[0].content, /decision\.npcDetection/);
+    assert.match(body.messages[0].content, /立绘不由模型生成/);
     assert.match(body.messages.at(-1).content, /我的复盘/);
     assert.match(body.messages.at(-1).content, /DAY_31_60/);
+    assert.match(body.messages.at(-1).content, /npc-alice/);
     return new Response(JSON.stringify({
       id: "chatcmpl_test",
       model: "deepseek-v4-pro",
@@ -32,7 +35,10 @@ test("chat function sends a JSON DeepSeek-V4-Pro request with knowledge", async 
       body: JSON.stringify({
         message: "今天有点累",
         minister: "顺臣",
-        state: { day: 45 },
+        state: {
+          day: 45,
+          knownNpcs: [{ id: "npc-alice", displayName: "Alice", aliases: ["产品 Alice"], role: "product", title: "产品经理" }]
+        },
         knowledge: [{ title: "我的复盘", content: "每周五先总结阻塞，再约负责人对齐。", journeyStages: ["DAY_31_60"] }]
       })
     }));

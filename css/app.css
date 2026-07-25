@@ -32,7 +32,8 @@
 /* 资源显示 */
 .res-group { display: flex; align-items: center; gap: 16px; }
 .res-item { display: flex; align-items: center; gap: 7px; font-size: 14px; }
-.res-item img { width: 22px; height: 22px; }
+/* 顶栏深色底上的图标统一浅金色 (#e7c985) */
+.res-item img { width: 22px; height: 22px; filter: brightness(0) saturate(100%) invert(86%) sepia(18%) saturate(818%) hue-rotate(352deg) brightness(92%) contrast(96%); }
 .res-item .val { font-weight: 700; font-variant-numeric: tabular-nums; }
 .energy-bar-wrap { cursor: pointer; }
 .energy-bar {
@@ -70,23 +71,17 @@
 }
 .sb-collapsed .sb-inner { padding: 52px 6px 16px; }
 
-/* 头像卡 */
-.sb-avatar { text-align: center; margin-bottom: 14px; }
-.sb-avatar img { width: 96px; height: 96px; object-fit: contain; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: var(--shadow-sm); }
-.sb-avatar .nick { font-size: 18px; font-weight: 800; margin-top: 8px; letter-spacing: .06em; }
-.sb-avatar .type { font-size: 13px; color: var(--verm); letter-spacing: .1em; }
+/* 头像卡：头像与「昵称-类型」左右并列 */
+.sb-avatar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.sb-avatar img { width: 60px; height: 60px; flex: none; object-fit: contain; border-radius: 50%; background: #fff; border: 3px solid var(--gold); box-shadow: var(--shadow-sm); }
+.sb-avatar .sb-id { min-width: 0; }
+.sb-avatar .nick { font-size: 18px; font-weight: 800; letter-spacing: .06em; }
+.sb-avatar .type { font-size: 13px; color: var(--verm); letter-spacing: .1em; margin-top: 3px; }
+.sb-collapsed .sb-avatar { justify-content: center; }
 .sb-collapsed .sb-avatar img { width: 40px; height: 40px; border-width: 2px; }
-.sb-collapsed .sb-avatar .nick, .sb-collapsed .sb-avatar .type, .sb-collapsed .sb-section-t, .sb-collapsed .sb-progress, .sb-collapsed .sb-map-label, .sb-collapsed .sb-foot { display: none; }
+.sb-collapsed .sb-avatar .sb-id, .sb-collapsed .sb-section-t, .sb-collapsed .sb-map-label, .sb-collapsed .sb-foot { display: none; }
 
 .sb-section-t { font-size: 12px; letter-spacing: .2em; color: var(--gold-deep); margin: 16px 4px 8px; font-weight: 700; }
-
-/* 进度条 */
-.sb-progress { margin-bottom: 8px; }
-.sb-progress .lbl { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
-.sb-progress .bar { height: 8px; border-radius: 999px; background: var(--paper-3); overflow: hidden; }
-.sb-progress .bar .fill { height: 100%; border-radius: 999px; transition: width .5s; }
-.sb-progress.main .bar .fill { background: linear-gradient(90deg, var(--cat-bronze), var(--gold)); }
-.sb-progress.sub .bar .fill { background: linear-gradient(90deg, var(--jade), var(--jade-light)); }
 
 /* 地图导航 */
 .sb-map { display: flex; flex-direction: column; gap: 5px; }
@@ -95,7 +90,8 @@
   display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm);
   transition: all .16s; border: 1px solid transparent; text-align: left; width: 100%;
 }
-.sb-map-item img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+/* 侧栏浅底上的场景图标统一纯黑 */
+.sb-map-item img { width: 26px; height: 26px; object-fit: contain; flex: none; filter: brightness(0); }
 .sb-map-item .mt { font-size: 14px; font-weight: 600; }
 .sb-map-item .mr { font-size: 11px; color: var(--ink-mute); }
 .sb-map-item:hover { background: var(--paper); border-color: var(--line-strong); }
@@ -145,72 +141,135 @@
   border-radius: var(--r-md); padding: 10px 16px; backdrop-filter: blur(6px);
   border: 1px solid rgba(255,255,255,.12); align-self: flex-start; max-width: calc(100% - 32px);
 }
-.scene-head img { width: 30px; height: 30px; }
+.scene-head img { width: 30px; height: 30px;
+  /* 黑色 SVG 经 <img> 载入无法改 fill，用 filter 染成淡金 #e7c985 */
+  filter: brightness(0) invert(86%) sepia(28%) saturate(560%) hue-rotate(335deg) brightness(96%) contrast(90%);
+}
 .scene-head .sn { font-size: 17px; font-weight: 800; letter-spacing: .08em; }
 .scene-head .sr { font-size: 12px; color: var(--gold-light); letter-spacing: .1em; }
 
-/* ===== 场景任务卡（生成任务投放到地图，铺任务底图） ===== */
+/* ===== 场景任务卡（纸黄底 + 分类色书脊 + 4:3 视觉 + 竖向呈报） ===== */
 .task-field {
   position: relative; z-index: 3; margin: 14px 16px 0;
   display: flex; gap: 14px; flex-wrap: wrap; align-content: flex-start;
-  max-width: min(760px, calc(100% - 40px));
+  max-width: min(820px, calc(100% - 40px));
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   overscroll-behavior: contain; scrollbar-gutter: stable;
 }
+
+/* 卡片：宽度随内容收紧，不撑满 */
 .task-card,
 .task-template-card {
-  position: relative; width: 224px; min-height: 118px; border-radius: var(--r-md);
-  overflow: hidden; text-align: left; color: #fff; padding: 12px 14px 14px;
-  display: flex; flex-direction: column; gap: 4px;
-  background-size: cover; background-position: center;
-  border: 1px solid rgba(255,255,255,.35); box-shadow: var(--shadow-md);
-  transition: transform .16s, box-shadow .2s; animation: riseIn .45s ease backwards;
+  position: relative; display: inline-flex; gap: 16px; align-items: stretch;
+  padding: 13px; border-radius: var(--r-md);
+  background: linear-gradient(135deg, #fffdf7, #f4ecd8);
+  border: 1px solid var(--line-strong); border-left: 5px solid var(--c, var(--gold));
+  box-shadow: var(--shadow-sm); text-align: left; color: var(--ink);
+  cursor: pointer; transition: transform .16s, box-shadow .2s; animation: riseIn .45s ease backwards;
 }
 .task-card:hover,
-.task-template-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-.task-card .tc-scrim,
-.task-template-card .tc-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(24,20,14,.28), rgba(24,20,14,.82)); z-index: 0; }
-.task-card > *:not(.tc-scrim),
-.task-template-card > *:not(.tc-scrim) { position: relative; z-index: 1; }
-.task-card .tc-top,
-.task-template-card .tc-top { display: flex; align-items: center; justify-content: space-between; }
-.task-card .tc-cat,
-.task-template-card .tc-cat { font-size: 11px; letter-spacing: .12em; padding: 2px 9px; border-radius: 999px; background: var(--c, var(--gold)); color: #fff; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-.task-card .tc-flag,
-.task-template-card .tc-flag { font-size: 11px; color: #ffe9b8; letter-spacing: .1em; }
-.task-card .tc-done { font-size: 11px; color: #bfe6cf; letter-spacing: .1em; }
+.task-template-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* 视觉素材 4:3 */
+.task-card .tc-img,
+.task-template-card .tc-img {
+  width: 150px; height: 112px; flex: none; border-radius: var(--r-sm);
+  overflow: hidden; background: var(--paper-3);
+}
+.task-card .tc-img img,
+.task-template-card .tc-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 文字主体：垂直居中 */
+.task-card .tc-body,
+.task-template-card .tc-body {
+  display: flex; flex-direction: column; justify-content: center; gap: 11px; min-width: 0;
+}
+
+/* 标题行：分类色圆点 + 标题 */
+.task-card .tc-titrow,
+.task-template-card .tc-titrow { display: flex; align-items: center; gap: 9px; }
+.task-card .tc-dot,
+.task-template-card .tc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--gold)); flex: none; }
 .task-card .tc-title,
-.task-template-card .tc-title { font-size: 16px; font-weight: 800; line-height: 1.4; letter-spacing: .02em; text-shadow: 0 1px 6px rgba(0,0,0,.55); margin-top: 2px; }
-.task-card .tc-mystic-name { color: #ffe9b8; font-size: 12px; font-weight: 800; letter-spacing: .16em; margin-top: 3px; }
-.task-card .tc-sign { color: rgba(255,246,220,.88); font-size: 11.5px; line-height: 1.55; font-family: var(--font-serif); }
-.task-card .tc-meta,
-.task-template-card .tc-meta { font-size: 11.5px; color: rgba(255,255,255,.82); line-height: 1.5; margin-top: auto; }
-.task-card .tc-cta,
-.task-template-card .tc-cta { font-size: 12px; color: #ffe9b8; font-weight: 700; letter-spacing: .06em; margin-top: 6px; }
-.task-template-card { border-style: dashed; opacity: .9; }
-.task-template-card.task-example-case {
-  width: 248px; min-height: 164px; padding: 13px 15px 15px; flex: 0 0 248px;
-  border-style: solid; border-color: rgba(223,177,84,.78); opacity: 1;
-  box-shadow: 0 11px 30px rgba(32,22,10,.34), inset 0 0 0 1px rgba(255,232,177,.08);
+.task-template-card .tc-title { font-size: 19px; font-weight: 800; line-height: 1.32; color: var(--ink); }
+
+.task-card .tc-mystic-name,
+.task-template-card .tc-mystic-name { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--gold-deep); }
+.task-card .tc-sign,
+.task-template-card .tc-sign { font-size: 12.5px; color: var(--gold-deep); line-height: 1.5; font-style: italic; font-family: var(--serif); }
+
+/* 结算行：金币在前，精力/时长在后，紧挨不撑满 */
+.task-card .tc-foot,
+.task-template-card .tc-foot { display: flex; align-items: center; gap: 14px; }
+.task-card .tc-stats,
+.task-template-card .tc-stats { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.task-card .tc-stat,
+.task-template-card .tc-stat {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
 }
-.task-template-card.task-example-case .tc-scrim {
-  background: linear-gradient(180deg, rgba(24,20,14,.24), rgba(24,20,14,.88));
+.task-card .tc-stat .u,
+.task-template-card .tc-stat .u { font-weight: 400; font-size: 12px; color: var(--ink-mute); }
+.task-card .tc-ic,
+.task-template-card .tc-ic { width: 16px; height: 16px; flex: none; vertical-align: -3px; }
+
+/* 金币金胶囊 */
+.task-card .tc-reward,
+.task-template-card .tc-reward {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 15px 6px 10px; border-radius: 999px;
+  background: linear-gradient(135deg, #fbe6bd, #efc978 45%, #d6a24a); border: 1.5px solid var(--gold-light);
+  box-shadow: 0 2px 6px rgba(155,111,34,.28), inset 0 1px 0 rgba(255,255,255,.55);
+  font-weight: 800; font-size: 18px; color: #5a3f10; font-variant-numeric: tabular-nums;
 }
-.task-template-card.task-example-case .tc-title { font-size: 18px; margin-top: 7px; }
-.task-template-card.task-example-case .tc-meta { color: rgba(255,245,219,.86); }
-.task-template-card.task-example-case .tc-cta { color: #ffe5a8; }
-.task-template-card:focus-visible { outline: 3px solid rgba(255,233,184,.78); outline-offset: 2px; }
-.task-card .tc-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.task-card .tc-reward .tc-ic,
+.task-template-card .tc-reward .tc-ic { width: 21px; height: 21px; vertical-align: -4px; }
+
+/* 竖向呈报按钮（印章式，贴右缘） */
+.task-card .tc-cta {
+  flex: none; align-self: stretch; writing-mode: vertical-rl; text-orientation: upright;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 9px; border-radius: 10px; letter-spacing: .28em; font-weight: 800; font-size: 14px;
+  background: linear-gradient(160deg, var(--gold-light), var(--gold)); border: 1px solid var(--gold-deep);
+  color: #4a340c; cursor: pointer; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+.task-card .tc-cta:hover { filter: brightness(1.04); }
 .task-card .tc-reroll {
-  margin-top: 6px; padding: 2px 8px; border: 1px solid rgba(255,233,184,.7); border-radius: 999px;
-  color: #fff3d6; font-size: 11px; line-height: 1.5; cursor: pointer; background: rgba(38,29,18,.32);
+  flex: none; align-self: stretch; writing-mode: vertical-rl; text-orientation: upright;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 9px; border-radius: 10px; letter-spacing: .24em; font-weight: 700; font-size: 13px;
+  background: transparent; border: 1px solid var(--gold); color: var(--gold-deep); cursor: pointer; white-space: nowrap;
 }
-.task-card .tc-reroll:hover, .task-card .tc-reroll:focus-visible { background: rgba(255,233,184,.2); outline: none; }
-.task-card.mystic-daily { border-color: rgba(245,208,128,.72); box-shadow: 0 8px 28px rgba(77,53,21,.28), inset 0 0 22px rgba(255,226,159,.08); }
-.mystic-inline-label { display: inline-block; margin-right: 7px; color: var(--gold-deep); font-size: 11px; letter-spacing: .08em; }
-.task-card.done { filter: saturate(.5); }
-.task-card.done .tc-scrim { background: linear-gradient(180deg, rgba(24,20,14,.5), rgba(24,20,14,.9)); }
-.task-card.done .tc-title { text-decoration: line-through; opacity: .85; }
+.task-card .tc-reroll:hover, .task-card .tc-reroll:focus-visible { background: rgba(184,138,59,.12); outline: none; }
+
+.task-card.mystic-daily { border-color: rgba(245,208,128,.9); box-shadow: 0 6px 22px rgba(77,53,21,.16); }
+.task-card.done { filter: saturate(.55); opacity: .9; }
+.task-card.done .tc-title { text-decoration: line-through; opacity: .8; }
+.task-card.done .tc-cta { background: none; border: 1px solid var(--jade); color: var(--jade); }
+
+/* 空场景范例卡：虚线描边区分“非真实待办” */
+.task-template-card { border-style: dashed; border-left-style: solid; opacity: .94; }
+.task-template-card.task-example-case { border-style: solid; opacity: 1; box-shadow: var(--shadow-md); }
+.task-template-card .tc-cta {
+  flex: none; align-self: stretch; writing-mode: vertical-rl; text-orientation: upright;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 9px; border-radius: 10px; letter-spacing: .22em; font-weight: 700; font-size: 13px;
+  background: transparent; border: 1px solid var(--gold); color: var(--gold-deep); white-space: nowrap;
+}
+/* featured 主线新手卡：与正常 v5 任务卡完全一致——实心边框 + 金色印章式呈报按钮 */
+.task-template-card.task-example-case { border-style: solid; border-left-style: solid; }
+.task-template-card.task-example-case .tc-cta {
+  letter-spacing: .28em; font-weight: 800; font-size: 14px;
+  background: linear-gradient(160deg, var(--gold-light), var(--gold)); border: 1px solid var(--gold-deep);
+  color: #4a340c; box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+.task-template-card .tc-meta { font-size: 12px; color: var(--ink-mute); line-height: 1.55; }
+.task-template-card:focus-visible { outline: 3px solid rgba(184,138,59,.6); outline-offset: 2px; }
+.task-template-card.mystic-preview { border-color: rgba(195,154,60,.72); }
+.task-template-card.mystic-preview:disabled { cursor: default; opacity: .82; }
+.task-template-card.mystic-preview:disabled:hover { transform: none; box-shadow: var(--shadow-md); }
+.task-template-card.mystic-preview .tc-cta.is-disabled {
+  background: transparent; border-color: var(--line-strong); color: var(--ink-mute); box-shadow: none;
+}
 
 /* 任务办结确认弹层 */
 .task-confirm-modal { max-width: 430px; }
@@ -256,12 +315,22 @@
 }
 /* 折叠态：只显示底部 GAL 框 + 输入区；完整态：显示顶条 + 滚动区 */
 .convo-top, .convo-scroll { display: none; }
-.convo.expanded { max-height: 78%; min-height: 0; }
+/* 完整态：整个对话区收拢为「一框」——顶条 / 历史 / 追问·奏折 / 输入同处一张纸卡内 */
+.convo.expanded {
+  max-height: 78%; min-height: 0;
+  margin: auto 18px 16px; padding: 12px 14px;
+  background: linear-gradient(180deg, rgba(247,242,230,.97), rgba(240,231,211,.95));
+  border: 1px solid var(--gold); border-radius: var(--r-md);
+  box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+}
 .convo.expanded .convo-top { display: flex; flex: 0 0 auto; }
 .convo.expanded .convo-scroll {
   display: flex; flex: 0 1 auto; min-height: 64px; max-height: 40vh;
 }
-.convo.expanded .convo-input { flex: 0 0 auto; }
+.convo.expanded .convo-input {
+  flex: 0 0 auto; margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid rgba(185,138,59,.28);
+}
 /* 只有出现追问选项时才扩展高度，避免普通对话长期遮住大半场景。 */
 .convo.expanded:has(.reply-zone .opt-btn) {
   height: 78%; max-height: 78%; min-height: 0;
@@ -283,12 +352,11 @@
   overscroll-behavior: contain; scrollbar-gutter: stable;
 }
 
-/* 顶部条：当前大臣 + 主题 + 查看奏折 + 关闭（金色封皮书页样式） */
+/* 顶部条：当前大臣 + 主题 + 查看奏折 + 关闭；作为一框内的页眉，去掉自身边框底色，仅留分隔线 */
 .convo-top {
-  align-items: center; gap: 12px; margin: 0 2px 8px;
-  background: linear-gradient(180deg, rgba(247,242,230,.96), rgba(240,231,211,.94));
-  border: 1px solid var(--gold); border-radius: var(--r-md);
-  min-height: 54px; padding: 9px 14px; box-shadow: var(--shadow-sm); backdrop-filter: blur(4px);
+  align-items: center; gap: 12px; margin: 0 0 8px;
+  border-bottom: 1px solid rgba(185,138,59,.3);
+  min-height: 46px; padding: 2px 2px 10px;
 }
 .ct-minister { font-size: 15px; font-weight: 800; color: var(--ink); letter-spacing: .04em; }
 .ct-minister .caret { color: var(--gold-deep); font-size: 12px; margin-left: 2px; }
@@ -302,6 +370,7 @@
 }
 .ct-petition b { font-variant-numeric: tabular-nums; }
 .ct-petition:hover { filter: brightness(1.06); }
+.ct-petition-hint { font-size: 10px; letter-spacing: .04em; opacity: .82; margin-left: 4px; padding-left: 6px; border-left: 1px solid rgba(255,255,255,.4); }
 .ct-new {
   min-height: 34px; padding: 6px 12px; border-radius: 999px; font-size: 13px;
   color: var(--jade); border: 1px solid rgba(72,123,112,.38); background: rgba(255,255,255,.62);
@@ -316,12 +385,10 @@
 .ct-close b { font-size: 16px; line-height: 1; transform: translateY(-1px); }
 .ct-close:hover { background: rgba(167,71,60,.14); color: var(--verm); }
 
-/* 完整对话滚动区 */
+/* 完整对话滚动区：一框内的历史消息，背景交给外层纸卡 */
 .convo-scroll {
-  flex-direction: column; gap: 12px; overflow-y: auto; padding: 10px 4px; margin-bottom: 8px;
+  flex-direction: column; gap: 12px; overflow-y: auto; padding: 4px 2px; margin-bottom: 0;
   max-height: 40vh;
-  background: linear-gradient(180deg, rgba(247,242,230,0), rgba(247,242,230,.72) 12%, rgba(247,242,230,.72));
-  border-radius: var(--r-md);
 }
 .msg { display: flex; gap: 10px; max-width: 82%; animation: riseIn .3s ease; }
 .msg .mwrap { display: flex; flex-direction: column; }
@@ -330,7 +397,7 @@
 .msg.npc { align-self: flex-start; }
 .msg.npc .bubble { background: rgba(255,255,255,.96); border: 1px solid var(--line); border-top-left-radius: 4px; }
 .msg.me { align-self: flex-end; flex-direction: row-reverse; }
-.msg.me .bubble { background: linear-gradient(135deg, var(--jade), var(--jade-light)); color: #fff; border-top-right-radius: 4px; }
+.msg.me .bubble { background: linear-gradient(135deg, #2c333a, #1b2129); color: #fff; border-top-right-radius: 4px; }
 .msg.sys { align-self: center; max-width: 94%; }
 .msg.sys .bubble { background: rgba(230,218,191,.9); color: var(--ink-soft); font-size: 13px; border-radius: 999px; box-shadow: none; }
 /* 思考中省略号 */
@@ -525,15 +592,13 @@
 /* 浏览器高倍放大后，优先保留对话与输入入口。 */
 @media (max-height: 400px) {
   .scene-head { display: none; }
-  .task-field { margin-top: 8px; }
-  .task-field:has(.task-example-case) { flex: 0 0 118px; min-height: 118px; overflow: hidden; }
-  .task-example-case { min-height: 110px; padding: 8px 12px 10px; }
-  .task-template-card.task-example-case .tc-title { font-size: 15px; margin-top: 2px; }
-  .task-template-card.task-example-case .tc-meta {
+  .task-field { margin-top: 8px; flex: 0 0 auto; overflow-y: auto; }
+  .task-card .tc-img, .task-template-card .tc-img { width: 118px; height: 88px; }
+  .task-card .tc-title, .task-template-card .tc-title { font-size: 16px; }
+  .task-template-card .tc-meta {
     display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    font-size: 10.5px; line-height: 1.35;
+    font-size: 11px; line-height: 1.4;
   }
-  .task-template-card.task-example-case .tc-cta { margin-top: 2px; font-size: 11px; }
   .stage:has(.convo.expanded) .task-field { display: none; }
   .convo { padding-bottom: 8px; }
   .convo-input { margin-top: 6px; }
@@ -545,7 +610,7 @@
 }
 
 @media (max-width: 900px) {
-  .convo-top { gap: 7px; padding: 8px 10px; }
+  .convo-top { gap: 7px; padding: 2px 2px 8px; }
   .ct-topic { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ct-petition { padding: 6px 9px; }
   .ct-new { padding: 6px 9px; }
@@ -556,7 +621,7 @@
 /* ================= 模式：心流 / 预言 ================= */
 /* 心流专注遮罩 */
 .flow-veil {
-  position: absolute; inset: 0; z-index: 50; display: none;
+  position: absolute; inset: 0; z-index: 70; display: none;
   background: radial-gradient(circle at 50% 40%, rgba(40,60,56,.82), rgba(18,22,27,.96));
   backdrop-filter: blur(4px); color: var(--paper);
   flex-direction: column; align-items: center; justify-content: center; gap: 20px;
@@ -575,7 +640,7 @@
 
 /* 预言模式 */
 .prophecy-veil {
-  position: absolute; inset: 0; z-index: 50; display: none;
+  position: absolute; inset: 0; z-index: 70; display: none;
   background-size: cover; background-position: center; color: var(--paper);
 }
 .prophecy-veil.active { display: block; animation: fadeIn .5s ease; }
@@ -583,16 +648,4 @@
 .prophecy-inner { position: relative; z-index: 2; height: 100%; overflow-y: auto; padding: 30px 8%; }
 .prophecy-inner h2 { text-align: center; letter-spacing: .3em; font-size: 26px; margin-bottom: 4px; color: var(--gold-light); }
 .prophecy-inner .sub { text-align: center; color: rgba(247,242,230,.7); font-size: 14px; margin-bottom: 26px; }
-.forecast-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
-.forecast-card {
-  background: rgba(31,40,48,.7); border: 1px solid var(--gold); border-radius: var(--r-md);
-  padding: 18px; backdrop-filter: blur(6px); animation: riseIn .5s ease backwards;
-}
-.forecast-card h4 { font-size: 17px; letter-spacing: .1em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-.forecast-card .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-.forecast-card.agree .pill { background: var(--jade); }
-.forecast-card.again .pill { background: var(--gold-deep); }
-.forecast-card.bold .pill { background: var(--verm); }
-.forecast-card p { font-size: 13px; line-height: 1.8; color: rgba(247,242,230,.86); margin-bottom: 10px; }
-.forecast-card .stat { display: flex; justify-content: space-between; font-size: 12px; color: var(--gold-light); border-top: 1px dashed rgba(255,255,255,.2); padding-top: 8px; }
 .prophecy-foot { text-align: center; margin-top: 24px; }

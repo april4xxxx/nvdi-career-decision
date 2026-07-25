@@ -16,16 +16,20 @@ test("conversation thinking round awaits the async AI result", async () => {
   assert.match(source, /think\(function \(\) \{ return regenerate\(text\); \}\);/);
 });
 
-test("普通对话不注入演示模板，但预言保留最初的固定推演", async () => {
-  const [conversation, modes] = await Promise.all([
+test("普通对话不注入演示模板，预言由独立模块接管", async () => {
+  const [conversation, modes, prophecy] = await Promise.all([
     readFile(new URL("../js/conversation.js", import.meta.url), "utf8"),
-    readFile(new URL("../js/modes.js", import.meta.url), "utf8")
+    readFile(new URL("../js/modes.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/prophecy.js", import.meta.url), "utf8")
   ]);
 
   assert.match(conversation, /App\.demo && App\.demo\.active === true/);
   assert.doesNotMatch(conversation, /else presentDecision\(data\.brain\.genericDecision/);
-  assert.match(modes, /var d = \(data\.SCENARIOS\[0\] && data\.SCENARIOS\[0\]\.decision\) \|\| null;/);
+  assert.match(modes, /App\.prophecy\.open\(prophVeil/);
+  assert.doesNotMatch(modes, /data\.SCENARIOS\[0\]/);
   assert.doesNotMatch(modes, /getPendingDecision/);
+  assert.match(prophecy, /data\.PROPHECY_DEMO_TASKS/);
+  assert.match(prophecy, /state\.mapTasks/);
 });
 
 test("场景任务范例只是空态入口，不写入真实任务池", async () => {
@@ -38,6 +42,19 @@ test("场景任务范例只是空态入口，不写入真实任务池", async ()
   assert.match(scene, /task-example-case/);
   assert.match(scene, /App\.conversation\.expand\(\)/);
   assert.doesNotMatch(store, /SCENE_TASK_TEMPLATES/);
+});
+
+test("钦天监空态展示三张符合定稿卡样式的天象候选", async () => {
+  const [scene, css] = await Promise.all([
+    readFile(new URL("../js/scene.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/app.css", import.meta.url), "utf8")
+  ]);
+
+  assert.match(scene, /MYSTIC_PREVIEW_COUNT\s*=\s*3/);
+  assert.match(scene, /task-template-card task-example-case mystic-preview/);
+  assert.match(scene, /ic-energy-rest/);
+  assert.match(scene, /store\.offerMysticCard/);
+  assert.match(css, /\.task-template-card\.mystic-preview/);
 });
 
 test("前端不使用标题关键词篡改 AI 任务分类", async () => {
@@ -61,15 +78,15 @@ test("演示模式保留宁静的窗口跳转与阅读时间", async () => {
   assert.match(source, /chapter:\s*1200/);
 });
 
-test("预言演示依次展示三种推演，且不会从全流程巡览中缺席", async () => {
+test("预言演示带读七日天象与功绩史卷，且不会从全流程巡览中缺席", async () => {
   const source = await readFile(new URL("../js/demo.js", import.meta.url), "utf8");
   const prophecy = source.match(/async function demoProphecy\(\) \{([\s\S]*?)\n  \}\n\n  async function demoLibrary/);
   const tour = source.match(/async function demoTour\(\) \{([\s\S]*?)\n  \}\n\n  function init/);
 
   assert.ok(prophecy, "demoProphecy function should remain discoverable");
-  assert.match(prophecy[1], /\.forecast-card\.agree/);
-  assert.match(prophecy[1], /\.forecast-card\.again/);
-  assert.match(prophecy[1], /\.forecast-card\.bold/);
+  assert.match(prophecy[1], /\.prophecy-day-card/);
+  assert.match(prophecy[1], /data-prophecy-view="chronicle"/);
+  assert.match(prophecy[1], /\.prophecy-scroll-sheet/);
   assert.ok(tour, "demoTour function should remain discoverable");
   assert.ok(tour[1].indexOf("demoProphecy()") >= 0, "full tour should include prophecy");
   assert.ok(tour[1].indexOf("demoProphecy()") < tour[1].indexOf("demoFlow()"), "prophecy should appear before flow mode");
@@ -82,6 +99,36 @@ test("演示切换场景不冒充用户到访，也不直接解锁到访成就",
   assert.ok(sceneJumps.length > 0, "demo should still preview multiple scenes");
   assert.ok(sceneJumps.every((call) => /recordVisit:\s*false/.test(call)), "every demo scene preview must opt out of visit tracking");
   assert.doesNotMatch(source, /store\.unlock\("garden-stroll"\)|\[([^\]]*"garden-stroll"[^\]]*)\]\.forEach/);
+});
+
+test("三个独立阁楼切换无闪跳，凌烟阁可保持选中态", async () => {
+  const [data, panel, scene, store, library, css] = await Promise.all([
+    readFile(new URL("../js/data.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/panel.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/scene.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/store.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/library.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/library.css", import.meta.url), "utf8")
+  ]);
+
+  assert.match(data, /id:\s*"lingyan"[\s\S]*?trackVisit:\s*false/);
+  assert.match(panel, /st\.scene === s\.id \? " active" : ""/);
+  assert.match(store, /sc\.trackVisit !== false/);
+  assert.ok(scene.indexOf("overlay.open();") < scene.indexOf("store.moveScene(id, options);"), "目标面板应先显示，再更新底层场景状态");
+  assert.match(css, /\.panel-screen\.active\s*\{\s*display:\s*flex;\s*\}/);
+  assert.doesNotMatch(css, /\.panel-screen\.active\s*\{[^}]*animation:/s);
+  assert.doesNotMatch(library, /这里收着陛下的进阶之路/);
+  assert.match(css, /\.panel-head \.picon\s*\{[^}]*filter:/s);
+});
+
+test("侧栏不再展示功业进度区块", async () => {
+  const [panel, css] = await Promise.all([
+    readFile(new URL("../js/panel.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/app.css", import.meta.url), "utf8")
+  ]);
+
+  assert.doesNotMatch(panel, /功业进度|sb-progress|mainPct|subPct/);
+  assert.doesNotMatch(css, /\.sb-progress/);
 });
 
 test("藏书阁演示无论典籍上传结果都会收起弹窗", async () => {

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>奏折卡方案 · 图文分离（方形图）</title>
+<style>
+  :root{
+    --ink:#1f2830; --ink-soft:#3a4650; --ink-mute:#6b7580;
+    --paper:#f7f2e6; --paper-2:#efe7d3; --paper-3:#e6dabf;
+    --gold:#b98a3b; --gold-light:#e7c985; --gold-deep:#8a6323;
+    --jade:#487b70; --jade-light:#6fa89a; --verm:#a7473c; --verm-light:#c9695c;
+    --line:rgba(31,40,48,.14); --line-strong:rgba(31,40,48,.28);
+    --shadow-sm:0 2px 8px rgba(31,40,48,.10); --shadow-md:0 8px 26px rgba(31,40,48,.18); --shadow-lg:0 20px 60px rgba(31,40,48,.30);
+    --r-sm:8px; --r-md:14px; --r-lg:22px;
+    --serif:"Songti SC","STSong",Georgia,serif;
+    /* 分类色 */
+    --cat-bronze:#9c6b3f; --cat-porcelain:#4a6f8a; --cat-jade:#4f8a72; --cat-gold:#c39a3c; --cat-wood:#8a6a4a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:var(--serif); background:#20262d; color:var(--ink); padding:40px 32px 80px; }
+
+  .page-head{ max-width:1180px; margin:0 auto 30px; color:var(--paper); }
+  .page-head h1{ font-size:25px; letter-spacing:.08em; }
+  .page-head p{ font-size:13.5px; color:rgba(247,242,230,.62); margin-top:8px; line-height:1.75; max-width:820px; }
+  .page-head .legend{ margin-top:13px; display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--gold-light); }
+
+  .scheme{ max-width:1180px; margin:0 auto 50px; }
+  .scheme-title{ display:flex; align-items:baseline; gap:12px; margin-bottom:6px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.14); }
+  .scheme-title .no{ width:30px; height:30px; flex:none; border-radius:50%; background:var(--gold); color:#3a2a08; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .scheme-title h2{ color:var(--paper); font-size:19px; letter-spacing:.06em; }
+  .scheme-title .desc{ color:rgba(247,242,230,.5); font-size:13px; }
+  .scheme-note{ color:rgba(247,242,230,.42); font-size:12px; margin:10px 0 20px; line-height:1.6; }
+
+  .field{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+
+  /* 方形图通用 */
+  .sq{ aspect-ratio:1/1; overflow:hidden; background:var(--paper-3); flex:none; }
+  .sq img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* 分类小标签 */
+  .cat{ font-size:11px; letter-spacing:.12em; padding:2px 9px; border-radius:999px; background:var(--c,var(--gold)); color:#fff; font-weight:700; }
+  .flag{ font-size:11px; letter-spacing:.1em; color:var(--gold-deep); }
+  .flag.wait{ color:var(--gold-deep); }
+  .flag.done{ color:var(--jade); }
+  .metaline{ font-size:11.5px; color:var(--ink-mute); line-height:1.55; }
+  .metaline b{ color:var(--ink-soft); font-weight:700; }
+  .from{ font-size:11px; color:var(--ink-mute); font-style:italic; }
+  .cta{ font-size:12.5px; color:var(--gold-deep); font-weight:700; letter-spacing:.04em; }
+
+  /* ============ 方案 A：竖排纸卡（方图在上 · 白纸文字区在下） ============ */
+  .A .card{ width:220px; background:#fff; border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .16s,box-shadow .2s; display:flex; flex-direction:column; }
+  .A .card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+  .A .sq{ width:100%; }
+  .A .body{ padding:12px 13px 14px; display:flex; flex-direction:column; gap:7px; flex:1; }
+  .A .top{ display:flex; align-items:center; justify-content:space-between; }
+  .A .title{ font-size:16px; font-weight:800; color:var(--ink); line-height:1.4; }
+  .A .metaline{ margin-top:auto; }
+  .A .foot{ display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:1px solid var(--line); }
+
+  /* ============ 方案 B：横排纸卡（左方图 · 右文字，密度高） ============ */
+  .B .card{ width:340px; display:flex; gap:13px; background:#fff; border:1px solid var(--line); border-radius:var(--r-md); padding:12px; box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .16s,box-shadow .2s; }
+  .B .card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+  .B .sq{ width:92px; border-radius:var(--r-sm); }
+  .B .body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .B .top{ display:flex; align-items:center; gap:8px; }
+  .B .title{ font-size:15.5px; font-weight:800; color:var(--ink); line-height:1.35; }
+  .B .metaline{ margin-top:auto; }
+  .B .foot{ display:flex; align-items:center; justify-content:space-between; }
+
+  /* ============ 方案 C：方图 + 深色说明条（图纯净不遮挡，文字在下方深色带） ============ */
+  .C .card{ width:210px; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-md); border:1px solid rgba(255,255,255,.14); cursor:pointer; transition:transform .16s,box-shadow .2s; }
+  .C .card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+  .C .sq{ width:100%; position:relative; }
+  .C .sq .cat{ position:absolute; top:9px; left:9px; box-shadow:0 1px 4px rgba(0,0,0,.35); }
+  .C .cap{ background:linear-gradient(180deg,#2c343c,#1b222a); color:var(--paper); padding:11px 13px 13px; display:flex; flex-direction:column; gap:6px; }
+  .C .title{ font-size:15px; font-weight:800; letter-spacing:.02em; line-height:1.4; }
+  .C .metaline{ color:rgba(247,242,230,.72); }
+  .C .metaline b{ color:#fff; }
+  .C .cta{ color:var(--gold-light); }
+  .C .foot{ display:flex; align-items:center; justify-content:space-between; padding-top:7px; border-top:1px solid rgba(255,255,255,.12); }
+  .C .flag.wait{ color:var(--gold-light); }
+  .C .flag.done{ color:var(--jade-light); }
+
+  /* ============ 方案 D：卷轴条（窄横条，左小方图章 · 右文字，最像“奏折” ） ============ */
+  .D .field{ flex-direction:column; gap:12px; }
+  .D .card{ width:520px; max-width:100%; display:flex; gap:14px; align-items:stretch; background:linear-gradient(135deg,#fbf6ea,#f1e8d2); border:1px solid var(--line-strong); border-left:5px solid var(--c,var(--gold)); border-radius:var(--r-sm); padding:12px 16px 12px 13px; box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .16s,box-shadow .2s; }
+  .D .card:hover{ transform:translateX(3px); box-shadow:var(--shadow-md); }
+  .D .sq{ width:70px; border-radius:6px; align-self:center; }
+  .D .body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+  .D .top{ display:flex; align-items:center; gap:9px; }
+  .D .title{ font-size:16px; font-weight:800; color:var(--ink); }
+  .D .aside{ flex:none; width:120px; border-left:1px dashed var(--line-strong); padding-left:14px; display:flex; flex-direction:column; justify-content:center; gap:4px; text-align:left; }
+  .D .aside .cta{ margin-top:4px; }
+
+  /* 神秘天象签 */
+  .sign{ font-size:11.5px; color:var(--gold-deep); line-height:1.55; font-style:italic; }
+  .C .sign{ color:var(--gold-light); }
+  .mystic-name{ font-size:11px; font-weight:800; letter-spacing:.14em; color:var(--gold-deep); }
+  .C .mystic-name{ color:var(--gold-light); }
+
+  /* 换一签小按钮 */
+  .reroll{ font-size:11px; padding:2px 9px; border-radius:999px; border:1px solid var(--gold); color:var(--gold-deep); background:transparent; cursor:pointer; }
+  .C .reroll{ border-color:rgba(255,233,184,.6); color:#fff3d6; }
+
+  /* 已办态 */
+  .done-card{ filter:saturate(.55); opacity:.9; }
+  .done-card .title{ text-decoration:line-through; opacity:.8; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>奏折卡方案 · 图文分离（方形图）</h1>
+  <p>现在的奏折卡是「整图铺满做背景 + 一层暗化遮罩 + 文字压在图上」，图和字互相干扰。下面 4 个方案都改成图归图、字归字：图片统一方形（1:1），文字作为独立区块排在旁边或下方。字段全部按真实数据排布——分类标（主线/日常/探索/拖延/神秘）、标题、精力·时长·金币、来源决策、CTA、待办/已办，以及神秘任务的天象签与"换一签"。</p>
+  <div class="legend">
+    <span>◆ 素材：assets/任务底图</span>
+    <span>◆ 分类色沿用 --cat-bronze/porcelain/jade/gold/wood</span>
+  </div>
+</div>
+
+<!-- 方案 A -->
+<section class="scheme A">
+  <div class="scheme-title"><span class="no">A</span><h2>竖排纸卡</h2><span class="desc">方图在上 · 白纸文字区在下，与场景底图对比清晰</span></div>
+  <p class="scheme-note">最稳。方图是干净缩略，下方白纸承载全部文字，可读性最好。分类标压在图右上角或放文字区都行，这里放文字区。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (11).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">主线</span><span class="flag wait">待办</span></div>
+        <div class="title">向董事会陈述 Q3 增长方案</div>
+        <div class="metaline">耗精力 <b>18</b> · 约 <b>45</b> 分钟 · 赏 <b>120</b> 金</div>
+        <div class="foot"><span class="from">源自决策「争取立项」</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-porcelain)">
+      <div class="sq"><img src="assets/任务底图/image_1 (15).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">日常</span><span class="flag wait">待办</span></div>
+        <div class="title">回复积压的 12 封邮件</div>
+        <div class="metaline">耗精力 <b>8</b> · 约 <b>30</b> 分钟 · 赏 <b>40</b> 金</div>
+        <div class="foot"><span class="from">六部督办</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-jade)">
+      <div class="sq"><img src="assets/任务底图/image_2 (10).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">探索</span><span class="flag wait">待办</span></div>
+        <div class="title">试听一节行业分享课</div>
+        <div class="metaline">耗精力 <b>6</b> · 约 <b>60</b> 分钟 · 赏 <b>50</b> 金</div>
+        <div class="foot"><span class="from">御花园新机会</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card done-card" style="--c:var(--cat-wood)">
+      <div class="sq"><img src="assets/任务底图/image_3 (13).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">拖延</span><span class="flag done">已办 ✓</span></div>
+        <div class="title">重启搁置三周的复盘文档</div>
+        <div class="metaline">耗精力 <b>10</b> · 约 <b>25</b> 分钟 · 赏 <b>30</b> 金</div>
+        <div class="foot"><span class="from">民间线索</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 方案 B -->
+<section class="scheme B">
+  <div class="scheme-title"><span class="no">B</span><h2>横排纸卡</h2><span class="desc">左方图 · 右文字，一屏能塞更多、适合长标题</span></div>
+  <p class="scheme-note">信息密度最高。方图缩到左侧小块，右侧纵向堆分类标+标题+元数据+CTA。任务多时列表更省空间。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (27).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">主线</span><span class="flag wait">待办</span></div>
+        <div class="title">牵头制定明年部门 OKR</div>
+        <div class="metaline">耗精力 <b>20</b> · 约 <b>90</b> 分钟 · 赏 <b>150</b> 金 · 参考「目标拆解法」</div>
+        <div class="foot"><span class="from">源自决策「主动请缨」</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-gold)">
+      <div class="sq"><img src="assets/任务底图/image_1 (16).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">神秘</span><span class="mystic-name">今日天象</span></div>
+        <div class="title">午后小憩二十分钟</div>
+        <div class="sign">「云开见月，宜静养待时」</div>
+        <div class="metaline">恢复精力 <b>+12</b> · 约 <b>20</b> 分钟 · 无金币奖励</div>
+        <div class="foot"><span class="reroll">换一签</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-porcelain)">
+      <div class="sq"><img src="assets/任务底图/image_2 (11).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">日常</span><span class="flag wait">待办</span></div>
+        <div class="title">整理本周报销单据并提交</div>
+        <div class="metaline">耗精力 <b>5</b> · 约 <b>15</b> 分钟 · 赏 <b>20</b> 金</div>
+        <div class="foot"><span class="from">六部督办</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-jade)">
+      <div class="sq"><img src="assets/任务底图/image_3 (13).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">探索</span><span class="flag wait">待办</span></div>
+        <div class="title">约行业前辈喝一次咖啡</div>
+        <div class="metaline">耗精力 <b>7</b> · 约 <b>60</b> 分钟 · 赏 <b>60</b> 金</div>
+        <div class="foot"><span class="from">御花园新机会</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 方案 C -->
+<section class="scheme C">
+  <div class="scheme-title"><span class="no">C</span><h2>方图 + 深色说明条</h2><span class="desc">图完全不加遮罩 · 分类标浮在图角 · 文字落在下方深色带</span></div>
+  <p class="scheme-note">最接近现在的深色气质，但图不再被文字盖住。分类标以小胶囊压在图左上角，标题和元数据在下方独立深色条里，金字点缀，卡牌感强。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><span class="cat">主线</span><img src="assets/任务底图/image_0 (36).png" alt=""></div>
+      <div class="cap">
+        <div class="title">准备晋升答辩材料</div>
+        <div class="metaline">耗精力 <b>16</b> · 约 <b>50</b> 分钟 · 赏 <b>130</b> 金</div>
+        <div class="foot"><span class="flag wait">待办</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-gold)">
+      <div class="sq"><span class="cat">神秘</span><img src="assets/任务底图/image_1 (18).png" alt=""></div>
+      <div class="cap">
+        <div class="mystic-name">今日天象</div>
+        <div class="title">出门散步晒十分钟太阳</div>
+        <div class="sign">「日照东墙，宜舒展筋骨」</div>
+        <div class="metaline">恢复精力 <b>+8</b> · 约 <b>10</b> 分钟 · 无金币</div>
+        <div class="foot"><span class="reroll">换一签</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-porcelain)">
+      <div class="sq"><span class="cat">日常</span><img src="assets/任务底图/image_2 (12).png" alt=""></div>
+      <div class="cap">
+        <div class="title">更新项目进度看板</div>
+        <div class="metaline">耗精力 <b>6</b> · 约 <b>20</b> 分钟 · 赏 <b>30</b> 金</div>
+        <div class="foot"><span class="flag wait">待办</span><span class="cta">呈报完成 ▸</span></div>
+      </div>
+    </div>
+    <div class="card done-card" style="--c:var(--cat-wood)">
+      <div class="sq"><span class="cat">拖延</span><img src="assets/任务底图/image_0 (38).png" alt=""></div>
+      <div class="cap">
+        <div class="title">删掉拖了很久的旧订阅</div>
+        <div class="metaline">耗精力 <b>3</b> · 约 <b>10</b> 分钟 · 赏 <b>15</b> 金</div>
+        <div class="foot"><span class="flag done">已办 ✓</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 方案 D -->
+<section class="scheme D">
+  <div class="scheme-title"><span class="no">D</span><h2>奏折卷条</h2><span class="desc">窄横条 · 纸黄底 · 左方图章 · 右文字 · 竖分隔线出结算</span></div>
+  <p class="scheme-note">最有"奏折"叙事感。纸黄底 + 左侧分类色书脊，小方图当印章，中间文字，右侧竖虚线隔出结算与 CTA。适合当作待办清单式陈列。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (11).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">主线</span><span class="flag wait">待办</span></div>
+        <div class="title">向董事会陈述 Q3 增长方案</div>
+        <div class="from">源自决策「争取立项」· 参考「金字塔表达」</div>
+      </div>
+      <div class="aside">
+        <div class="metaline">耗精力 <b>18</b></div>
+        <div class="metaline">约 <b>45</b> 分钟 · 赏 <b>120</b> 金</div>
+        <div class="cta">呈报完成 ▸</div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-gold)">
+      <div class="sq"><img src="assets/任务底图/image_1 (16).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">神秘</span><span class="mystic-name">今日天象</span></div>
+        <div class="title">午后小憩二十分钟</div>
+        <div class="sign">「云开见月，宜静养待时」</div>
+      </div>
+      <div class="aside">
+        <div class="metaline">恢复精力 <b>+12</b></div>
+        <div class="metaline">约 <b>20</b> 分钟 · 无金币</div>
+        <div class="cta"><span class="reroll">换一签</span> 呈报 ▸</div>
+      </div>
+    </div>
+    <div class="card done-card" style="--c:var(--cat-wood)">
+      <div class="sq"><img src="assets/任务底图/image_3 (13).png" alt=""></div>
+      <div class="body">
+        <div class="top"><span class="cat">拖延</span><span class="flag done">已办 ✓</span></div>
+        <div class="title">重启搁置三周的复盘文档</div>
+        <div class="from">民间线索</div>
+      </div>
+      <div class="aside">
+        <div class="metaline">耗精力 <b>10</b></div>
+        <div class="metaline">约 <b>25</b> 分钟 · 赏 <b>30</b> 金</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

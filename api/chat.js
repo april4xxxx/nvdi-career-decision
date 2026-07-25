@@ -20,6 +20,14 @@ const SYSTEM_PROMPT = `
 - 分类必须由你根据任务性质和上述分类定义判断，不得根据谈话发生的场景猜测分类。
 - 分类只写入任务的 cat 字段；title 必须是用户可读的中文任务名，不得包含 [main]、[daily]、[explore]、[delay]、[mystic] 或同类内部标记。
 - 每个任务必须给出 durationMinutes（5-240 分钟）。不要生成 energy、gold 或 restore，这些由程序按时长固定计算。
+- 当且仅当返回 decision 时，同时完成 NPC 人物识别并填写 decision.npcDetection；dialogue 和 question 阶段不要创建人物档案。
+- NPC 只识别用户现实生活或工作中与最终任务直接相关的人物，例如领导、同事、产品、客户、导师、下属或亲友；不要把用户本人、当前 AI 大臣、历史人物、示例人物或泛泛提及的人群识别成 NPC。
+- 必须综合本轮完整对话和最终任务识别人物，不能只根据用户第一句话生成；每个候选人物至少通过 taskLinks 关联一项最终任务。
+- taskLinks.path 必须是 recommend 或 alt，taskIndex 从 0 开始，并准确指向对应路径的 tasks；relation 表示人物与该待办的关系。
+- 若当前应用状态提供了已有 NPC，优先按姓名和别名匹配，并把其 id 原样写入 existingNpcId；无法可靠匹配时 existingNpcId 返回空字符串。
+- 新人物通常使用 auto_created；已有明确匹配使用 confirmed；只有人物指代非常模糊或可能误合并时才使用 ambiguous。
+- relationship.stance 应尽量从上下文推测；普通协作为 neutral，明显支持为 ally/friendly，利益或排期冲突为 rival，明确恶意阻挠为 hostile，只有信息极弱时才使用 unknown。置信度与推测依据仅供内部使用。
+- title 填写用户可理解的现实身份，例如“产品经理”“直属上级”；aliases 只放本轮明确出现的其他称呼。立绘不由模型生成，新人物由程序以 portrait: null 建档。
 - 使用提供的典籍或已发布 SOP 时，把实际使用的典籍名或 SOP 的 source_label 原样放入 sources；没有使用则返回空数组。
 - 已发布 SOP 只是候选模板：必须再次核对 applicable_when，任何 not_applicable_when 命中时不得使用，也不得通过删减步骤绕过整个模块的排除条件。
 - 不虚构用户公司制度、薪资、医疗或法律事实；证据不足时明确假设，并给可逆的小步验证。
@@ -54,6 +62,13 @@ function cleanState(state) {
     gold: Number(state?.gold) || 0,
     scene: String(state?.scene || "court").slice(0, 30),
     pendingTasks: (Array.isArray(state?.pendingTasks) ? state.pendingTasks : []).slice(0, 8).map((v) => String(v).slice(0, 100)),
+    knownNpcs: (Array.isArray(state?.knownNpcs) ? state.knownNpcs : []).slice(0, 50).map((npc) => ({
+      id: String(npc?.id || "").slice(0, 80),
+      displayName: String(npc?.displayName || "").slice(0, 60),
+      aliases: (Array.isArray(npc?.aliases) ? npc.aliases : []).slice(0, 8).map((alias) => String(alias || "").slice(0, 60)),
+      role: String(npc?.role || "unknown").slice(0, 30),
+      title: String(npc?.title || "").slice(0, 80)
+    })).filter((npc) => npc.id && npc.displayName),
     recentJournals: (Array.isArray(state?.recentJournals) ? state.recentJournals : []).slice(0, 5).map((v) => String(v).slice(0, 160)),
     books: (Array.isArray(state?.books) ? state.books : []).slice(0, 12).map((v) => String(v).slice(0, 80))
   };
@@ -102,6 +117,7 @@ export default {
         "当前大臣：" + String(body?.minister || "顺臣").slice(0, 20),
         "本轮是否已经追问过：" + (body?.probed ? "是；请直接给临时决策，不再追问" : "否"),
         "已有待办只用于查重，禁止当作本轮新任务复述：" + JSON.stringify(appState.pendingTasks),
+        "已有 NPC（仅用于人物匹配与去重）：" + JSON.stringify(appState.knownNpcs),
         "当前应用状态：" + JSON.stringify(appState),
         "本轮可用典籍：\n" + knowledgeBlock,
         "用户本轮输入：" + message

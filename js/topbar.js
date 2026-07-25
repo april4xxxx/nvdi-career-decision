@@ -67,7 +67,7 @@
       '<div class="note">精力越低，大臣越倾向稳妥；精力越高，越敢放手一搏。</div>' +
       '<div style="display:flex;gap:10px;justify-content:center">' +
       '<button class="btn" id="calibCancel">取消</button>' +
-      '<button class="btn btn-jade" id="calibOk">校准完毕</button></div></div>'
+      '<button class="btn btn-gold" id="calibOk">校准完毕</button></div></div>'
     );
     var range = ui.$("#calibRange"), val = ui.$("#calibVal");
     range.addEventListener("input", function () { val.textContent = range.value; });

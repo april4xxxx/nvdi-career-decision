@@ -55,7 +55,7 @@
         (t.knowledgeRefs && t.knowledgeRefs.length ? '<div class="muted" style="font-size:12px">参考「' + t.knowledgeRefs.map(ui.esc).join('、') + '」</div>' : '') +
         '<div class="pi-btns" style="margin-top:8px;display:flex;gap:8px">' +
           '<button class="btn go" data-scene="' + t.scene + '" style="padding:6px 12px">前往场景 ▸</button>' +
-          '<button class="btn btn-jade done" data-task="' + t.id + '" style="padding:6px 12px">呈报办结 ✓</button>' +
+          '<button class="btn btn-gold done" data-task="' + t.id + '" style="padding:6px 12px">呈报办结 ✓</button>' +
         '</div></div>';
     }).join("");
     Array.prototype.forEach.call(body.querySelectorAll(".go"), function (b) {

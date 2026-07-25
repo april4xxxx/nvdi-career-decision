@@ -103,11 +103,11 @@
     els.send.classList.toggle("stamp", mode === "stamp" && expanded && !hasDraft);
     if (expanded) {
       if (mode === "stamp") els.send.textContent = hasDraft ? "重新拟策" : "同意";
-      else els.send.textContent = "探讨国事";
+      else els.send.textContent = "与众卿探讨";
     }
     else if (hasDraft) els.send.textContent = "发送";
     else if (pendingDecision) els.send.textContent = "继续批阅";
-    else els.send.textContent = "探讨国事";
+    else els.send.textContent = "与众卿探讨";
   }
 
   // 折叠态：只有一句大臣招呼 + 输入框
@@ -261,7 +261,7 @@
     return function presentRegeneratedResponse() {
       if (r.type === "decision") presentDecision(r.decision);
       else if (r.type === "question") askQuestion(r.question);
-      else pushMsg("npc", minister().role, "臣记下了。陛下可再多说一句，臣好为您拟策。");
+      else pushMsg("npc", minister().role, "臣记下了。请陛下不吝赐教，再多说一句，臣好为您拟策。");
     };
   }
 
@@ -277,6 +277,15 @@
       gold: st.gold,
       scene: st.scene,
       pendingTasks: (st.mapTasks || []).filter(function (t) { return !t.done; }).slice(0, 8).map(function (t) { return t.title; }),
+      knownNpcs: (st.npcs || []).slice(0, 50).map(function (npc) {
+        return {
+          id: npc.id,
+          displayName: npc.displayName,
+          aliases: Array.isArray(npc.aliases) ? npc.aliases.slice(0, 8) : [],
+          role: npc.role,
+          title: npc.title || ""
+        };
+      }),
       recentJournals: (st.journals || []).slice(0, 5).map(function (j) { return j.title + "：" + j.text; }),
       books: (st.books || []).slice(0, 12).map(function (b) { return b.title; })
     };
@@ -484,7 +493,7 @@
       var chosenPath = decision[pathKey] || decision.recommend;
       var templates = data.brain.tasksFromPath(decision, pathKey);
       pushMsg("me", store.get().profile.nickname || "陛下", "朱批 · 同意：" + chosenPath.label);
-      var created = store.applyPizhu("agree", decision, templates);
+      var created = store.applyPizhu("agree", decision, templates, { pathKey: pathKey });
       pendingDecision = null;
       els.convo.classList.remove("decision-pending");
       els.reply.innerHTML = "";
@@ -527,6 +536,7 @@
 
   function announceDeploy(created) {
     var merged = created && created.merged ? created.merged : [];
+    var recognizedNpcs = created && created.npcs ? created.npcs : [];
     if ((!created || !created.length) && !merged.length) { pushMsg("sys", "", "已采纳。"); return; }
     if (merged.length) {
       pushMsg("sys", "", "检测到 " + merged.length + " 项与现有待办重合，已关联原奏折，未重复创建。");
@@ -547,6 +557,9 @@
         (t.restore ? "恢复精力 +" + t.restore + " · 无金币奖励" :
           "耗精力 " + Math.abs(t.energy) + " · 赏 " + t.gold + " 金") + "）");
     });
+    if (recognizedNpcs.length) {
+      pushMsg("sys", "", "已识别相关人物：" + recognizedNpcs.map(function (npc) { return npc.displayName; }).join("、") + "，并收入凌烟阁。");
+    }
     // 通知场景刷新地图任务卡
     if (App.scene) App.scene.render();
   }
@@ -566,8 +579,12 @@
 
   /* ---------- 进入某场景时的开场（对话区） ---------- */
   function defaultMinisterFor(sceneId) {
+    // 场景专属大臣仍按其归属（钦天监→卦师、朝堂/民间→直臣）
     if (sceneId === "observatory") return "卦师";
     if (sceneId === "folk" || sceneId === "court") return "直臣";
+    // 其余场景采用陛下在御前推演里选定的偏好大臣，未选则回退顺臣
+    var pref = store.get().profile && store.get().profile.preferredMinister;
+    if (pref && data.MINISTERS[pref]) return pref;
     return "顺臣";
   }
 

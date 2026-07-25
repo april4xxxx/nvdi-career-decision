@@ -101,7 +101,7 @@ test("v1 saves migrate to the current version without shrinking the 150 energy c
     mapTasks: []
   });
 
-  assert.equal(store.get().version, 9);
+  assert.equal(store.get().version, 10);
   assert.equal(store.get().energy, 140);
   assert.equal(store.get().energyCap, 150);
   assert.equal(store.get().gold, 100);
@@ -119,6 +119,24 @@ test("onboarding does not auto-create fabricated career tasks", () => {
   assert.equal(Object.keys(data.SCENE_TASK_TEMPLATES).length, 5);
   assert.equal(data.SCENE_TASK_TEMPLATES.court.title, "完成入职培训的结业答辩");
   assert.equal(data.SCENE_TASK_TEMPLATES.court.featured, true);
+  assert.deepEqual(
+    {
+      title: data.SCENE_TASK_TEMPLATES.garden.title,
+      gold: data.SCENE_TASK_TEMPLATES.garden.gold,
+      energy: data.SCENE_TASK_TEMPLATES.garden.energy,
+      durationMinutes: data.SCENE_TASK_TEMPLATES.garden.durationMinutes
+    },
+    { title: "约行业前辈喝一次咖啡", gold: 10, energy: 10, durationMinutes: 30 }
+  );
+  assert.deepEqual(
+    {
+      title: data.SCENE_TASK_TEMPLATES.folk.title,
+      gold: data.SCENE_TASK_TEMPLATES.folk.gold,
+      energy: data.SCENE_TASK_TEMPLATES.folk.energy,
+      durationMinutes: data.SCENE_TASK_TEMPLATES.folk.durationMinutes
+    },
+    { title: "重启搁置三周的复盘文档", gold: 10, energy: 10, durationMinutes: 25 }
+  );
 });
 
 test("old saves remove seeded, copied and demo template tasks once", () => {
@@ -153,7 +171,7 @@ test("v8 存档重新校准被演示污染的到访进度，但不重复发放�
     titles: ["九重游者"]
   });
 
-  assert.equal(store.get().version, 9);
+  assert.equal(store.get().version, 10);
   assert.deepEqual(Array.from(store.get().visitedScenes), ["court"]);
   assert.equal(store.get().achievements["first-explore-step"].unlocked, false);
   assert.equal(store.get().achievements["garden-stroll"].unlocked, false);
@@ -197,6 +215,32 @@ test("daily celestial exploration appears once when spending crosses 60 energy",
 
   store.maybeOfferDailyMystic("duplicate-check");
   assert.equal(store.get().mapTasks.filter((task) => task.isDailyMystic && !task.expired).length, 1);
+});
+
+test("observatory preset may be claimed once and becomes a real recovery task", () => {
+  const { store, data } = createStore();
+  const selected = data.MYSTIC_CARDS[3];
+
+  const task = store.offerMysticCard(selected.id, "observatory-choice");
+  const duplicate = store.offerMysticCard(data.MYSTIC_CARDS[4].id, "observatory-choice");
+
+  assert.ok(task);
+  assert.equal(task.mysticCardId, selected.id);
+  assert.equal(task.scene, "observatory");
+  assert.equal(task.restore, 10);
+  assert.equal(task.gold, 0);
+  assert.equal(task.isDailyMystic, true);
+  assert.equal(duplicate.id, task.id);
+  assert.equal(store.tasksForScene("observatory").filter((item) => !item.expired).length, 1);
+});
+
+test("observatory presets remain visible but cannot be claimed at full energy", () => {
+  const { store, data } = createStore();
+  store.setEnergy(150);
+
+  assert.equal(store.offerMysticCard(data.MYSTIC_CARDS[0].id, "observatory-choice"), null);
+  assert.equal(store.tasksForScene("observatory").length, 0);
+  assert.equal(store.get().dailyMystic.status, "idle");
 });
 
 test("daily celestial exploration supports one reroll and completes through unified settlement", () => {
@@ -306,6 +350,73 @@ test("identical active tasks cannot bypass deduplication by changing scenes", ()
   assert.equal(second.length, 0);
   assert.equal(second.merged.length, 1);
   assert.equal(store.get().mapTasks.length, 1);
+});
+
+test("NPC is created only after approval and links to the final task card with an empty portrait", () => {
+  const { store } = createStore();
+  const decision = {
+    title: "确认上线范围",
+    npcDetection: {
+      hasRelevantPeople: true,
+      candidates: [{
+        existingNpcId: "",
+        displayName: "Alice",
+        title: "产品经理",
+        aliases: ["产品 Alice"],
+        role: "product",
+        identityStatus: "auto_created",
+        identityConfidence: 0.92,
+        relationship: {
+          stance: "rival",
+          stanceConfidence: 0.72,
+          inferenceReason: "排期和范围存在冲突",
+          trust: 0,
+          influence: 70,
+          alignment: -20,
+          conflict: 45,
+          familiarity: 35
+        },
+        taskLinks: [{
+          path: "recommend",
+          taskIndex: 0,
+          relation: "recipient",
+          reason: "该待办需要发送给 Alice",
+          confidence: 0.94
+        }]
+      }]
+    }
+  };
+  const templates = [{ title: "给 Alice 发送需求边界确认", cat: "daily", durationMinutes: 20, from: decision.title }];
+
+  store.applyPizhu("again", decision);
+  assert.equal(store.get().npcs.length, 0);
+
+  const created = store.applyPizhu("agree", decision, templates, { pathKey: "recommend" });
+  assert.equal(created.length, 1);
+  assert.equal(store.get().npcs.length, 1);
+  assert.equal(store.get().npcs[0].displayName, "Alice");
+  assert.equal(store.get().npcs[0].portrait, null);
+  assert.equal(store.get().npcInteractions.length, 1);
+  assert.equal(store.get().npcInteractions[0].title, "给 Alice 发送需求边界确认");
+  assert.deepEqual(Array.from(store.get().npcInteractions[0].taskCardIds), [created[0].id]);
+  assert.equal(store.get().npcTaskCardLinks[0].taskCardId, created[0].id);
+  assert.equal(store.get().npcTaskCardLinks[0].relation, "recipient");
+
+  const updated = store.setNpcPortrait(store.get().npcs[0].id, {
+    provider: "external_service",
+    imageUrl: "https://example.com/alice.png"
+  });
+  assert.equal(updated.portrait.provider, "external_service");
+  assert.equal(updated.portrait.imageUrl, "https://example.com/alice.png");
+
+  const followupDecision = JSON.parse(JSON.stringify(decision));
+  followupDecision.title = "同步风险";
+  followupDecision.npcDetection.candidates[0].existingNpcId = store.get().npcs[0].id;
+  store.applyPizhu("agree", followupDecision, [
+    { title: "向 Alice 同步延期风险", cat: "daily", durationMinutes: 15, from: followupDecision.title }
+  ], { pathKey: "recommend" });
+  assert.equal(store.get().npcs.length, 1);
+  assert.equal(store.get().npcInteractions.length, 2);
 });
 
 test("演示新生成的任务会留下，再次演示不会重复创建", () => {

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>凌烟阁 · 样式预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1f2830; --ink-soft:#3a4650; --ink-mute:#6b7580;
+    --paper:#f7f2e6; --paper-2:#efe7d3; --paper-3:#e6dabf;
+    --gold:#b98a3b; --gold-light:#e7c985; --gold-deep:#8a6323;
+    --jade:#487b70; --jade-light:#6fa89a; --verm:#a7473c; --verm-light:#c9695c;
+    --line:rgba(31,40,48,.14); --line-strong:rgba(31,40,48,.28);
+    --shadow-md:0 8px 26px rgba(31,40,48,.18); --shadow-lg:0 20px 60px rgba(31,40,48,.30);
+    --r-sm:8px; --r-md:14px; --r-lg:22px;
+    --serif:"Noto Serif SC","Songti SC","STSong",serif;
+    --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+
+    /* stance 语义色（关系推测 7 档） */
+    --st-ally:#5aa892;   --st-friendly:#6fa89a; --st-neutral:#b98a3b;
+    --st-cold:#7d8894;   --st-rival:#c9695c;    --st-hostile:#a7473c;
+    --st-unknown:#6b7580;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--serif); color:var(--paper);
+    background:
+      radial-gradient(circle at 20% 15%, rgba(185,138,59,.14), transparent 42%),
+      radial-gradient(circle at 82% 78%, rgba(72,123,112,.12), transparent 46%),
+      linear-gradient(160deg,#232c34,#1a2229 60%,#151b21);
+    min-height:100vh; padding:40px 32px 72px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:9px}
+
+  /* 页头 */
+  .rk-head{max-width:1240px;margin:0 auto 8px;display:flex;align-items:flex-end;gap:16px}
+  .rk-head .seal{
+    width:52px;height:52px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;
+    background:var(--verm);color:#fff;font-size:26px;font-weight:700;letter-spacing:.08em;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);
+  }
+  .rk-head h1{font-size:28px;letter-spacing:.14em;color:var(--paper)}
+  .rk-head .sub{font-size:13px;color:var(--gold-light);letter-spacing:.1em;margin-top:4px}
+  .rk-head .spacer{flex:1}
+  .rk-count{font-size:14px;color:var(--gold-light);letter-spacing:.08em;
+    border:1px solid var(--gold);border-radius:999px;padding:7px 18px;background:rgba(185,138,59,.12)}
+  .rk-count b{color:var(--paper);font-size:17px}
+
+  .rk-note{max-width:1240px;margin:14px auto 26px;font-size:12px;color:var(--ink-mute);letter-spacing:.06em;line-height:1.7}
+
+  /* 关系图例 */
+  .rk-legend{max-width:1240px;margin:0 auto 4px;display:flex;flex-wrap:wrap;gap:8px 16px}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:11px;color:var(--ink-mute)}
+  .lg i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+  /* 分区标题 */
+  .sec{max-width:1240px;margin:34px auto 14px;display:flex;align-items:baseline;gap:12px}
+  .sec .st{font-size:17px;color:var(--gold-light);letter-spacing:.14em;
+    border-left:3px solid var(--gold);padding-left:12px}
+  .sec .sn{font-family:var(--sans);font-size:12px;color:var(--ink-mute);letter-spacing:.04em}
+  .sec .sc{font-family:var(--sans);font-size:12px;color:var(--gold-light);margin-left:auto}
+
+  /* 卡片网格：一行四个 */
+  .rk-grid{
+    max-width:1240px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;
+  }
+
+  /* NPC 卡 */
+  .pc{
+    position:relative;border-radius:var(--r-lg);overflow:hidden;
+    background:linear-gradient(180deg,#2b343d,#1d252c);
+    border:1px solid rgba(185,138,59,.3);
+    box-shadow:var(--shadow-md);display:flex;flex-direction:column;
+    transition:transform .22s cubic-bezier(.2,.9,.3,1.1), box-shadow .22s, border-color .22s;
+  }
+  .pc:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--gold)}
+
+  /* 立绘区（竖向 4:5） */
+  .pc-art{
+    position:relative;aspect-ratio:4/5;overflow:hidden;
+    background:radial-gradient(circle at 50% 30%, #3a4650, #202932 70%);
+  }
+  .pc-art img{
+    position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+    width:112%;max-width:none;height:auto;display:block;
+    filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
+  }
+  .pc-art::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,transparent 44%,rgba(20,26,32,.32) 64%,rgba(20,26,32,.9) 100%);
+  }
+  /* 关系推测徽标（右上，带 stance 色） */
+  .pc-stance{
+    position:absolute;top:12px;right:12px;z-index:2;
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--paper);
+    background:rgba(20,26,32,.6);border:1px solid var(--stance,var(--gold));
+    border-radius:999px;padding:4px 11px 4px 9px;backdrop-filter:blur(4px);
+  }
+  .pc-stance i{width:7px;height:7px;border-radius:50%;background:var(--stance,var(--gold))}
+
+  /* 名字 + 身份 */
+  .pc-info{position:relative;padding:2px 16px 14px;margin-top:-44px;z-index:2}
+  .pc-name{font-size:24px;font-weight:800;letter-spacing:.08em;color:var(--paper);
+    text-shadow:0 2px 10px rgba(0,0,0,.7)}
+  .pc-title{font-family:var(--sans);font-size:13px;color:var(--gold-light);letter-spacing:.06em;margin-top:3px}
+  .pc-alias{font-family:var(--sans);font-size:12px;color:var(--ink-mute);margin-top:2px}
+
+  /* 关联待办：卡片底部整条按钮（红框位置） */
+  .pc-todo{
+    margin-top:auto;width:100%;display:block;text-align:left;cursor:pointer;
+    font-family:var(--sans);border:0;border-top:1px solid rgba(185,138,59,.28);
+    background:rgba(185,138,59,.14);color:var(--gold-light);
+    padding:11px 16px 12px;transition:background .18s;
+  }
+  .pc-todo:hover{background:rgba(185,138,59,.26)}
+  .pc-todo .pt-lbl{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.08em;color:var(--gold-light)}
+  .pc-todo .pt-lbl b{color:var(--paper)}
+  .pc-todo .pt-lbl .arw{margin-left:auto;color:var(--gold-light)}
+  .pc-todo .pt-tt{font-size:13px;color:var(--paper);line-height:1.45;margin-top:4px;
+    display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .pc-todo.empty{background:rgba(247,242,230,.05);color:var(--ink-mute);cursor:default}
+  .pc-todo.empty:hover{background:rgba(247,242,230,.05)}
+
+  /* 待确认（ambiguous）态：金色描边提示 */
+  .pc.ambiguous{border-color:rgba(231,201,133,.6)}
+  .pc-ask{
+    position:absolute;top:12px;left:14px;z-index:3;
+    font-family:var(--sans);font-size:10px;letter-spacing:.08em;color:#1f2830;font-weight:700;
+    background:var(--gold-light);border-radius:999px;padding:3px 9px;
+  }
+
+  /* ============ 未解锁 / 未遇见 占位 ============ */
+  .pc.locked .pc-art img{filter:brightness(0) drop-shadow(0 10px 22px rgba(0,0,0,.5));opacity:.5}
+  .pc.locked .pc-art{background:radial-gradient(circle at 50% 34%, #333b44, #1a2129 72%)}
+  .pc-lock{
+    position:absolute;z-index:3;left:50%;top:42%;transform:translate(-50%,-50%);
+    width:52px;height:52px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(20,26,32,.72);border:1px solid rgba(231,201,133,.5);
+    color:var(--gold-light);box-shadow:0 6px 20px rgba(0,0,0,.5);
+  }
+  .pc-lock svg{width:24px;height:24px}
+  .pc.locked .pc-name{color:#9aa2ab;text-shadow:none;letter-spacing:.3em;font-size:20px}
+  .pc-cond{
+    margin-top:auto;font-family:var(--sans);font-size:11px;letter-spacing:.04em;line-height:1.6;
+    color:var(--gold-light);background:rgba(185,138,59,.1);
+    border-top:1px dashed rgba(185,138,59,.4);padding:10px 16px 12px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="rk-head">
+    <span class="seal">阁</span>
+    <div>
+      <h1>凌烟阁</h1>
+      <div class="sub">PAVILION OF MERITORIOUS MINISTERS · 群臣关系与待办关联</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="rk-count">已录 <b id="totalCount">0</b> 人</div>
+  </div>
+  <div class="rk-note">
+    样式预览 · 卡片字段对齐「人物系统 PRD」接口：立绘 portrait · 名字 displayName · 身份 role/title · 关系推测 stance · 关联待办 interaction（来自主功能最终待办卡片）。立绘取自立绘库 assetId。
+  </div>
+
+  <div class="rk-legend" id="legend"></div>
+
+  <div id="sections"></div>
+
+<script>
+  var A = "assets/人物/";
+  var LOCK ='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>';
+
+  /* 关系推测 7 档（PRD §5.2 NPCStance）→ 中文标签 + 语义色变量 */
+  var STANCE = {
+    ally:     { label:"盟友", cssvar:"--st-ally" },
+    friendly: { label:"友好", cssvar:"--st-friendly" },
+    neutral:  { label:"中立", cssvar:"--st-neutral" },
+    cold:     { label:"冷淡", cssvar:"--st-cold" },
+    rival:    { label:"竞争", cssvar:"--st-rival" },
+    hostile:  { label:"敌对", cssvar:"--st-hostile" },
+    unknown:  { label:"未知", cssvar:"--st-unknown" }
+  };
+
+  /* 关联关系 relation（PRD §6.4）→ 中文 */
+  var RELATION = {
+    owner:"主责", stakeholder:"相关方", approver:"待批准",
+    blocker:"阻塞方", recipient:"接收方", mentioned:"提及"
+  };
+
+  /* 五大分区 */
+  var CATEGORIES = [
+    { key:"legend",   label:"名臣异士", note:"偶遇的名臣与神仙" },
+    { key:"minister", label:"辅国大臣", note:"随剧情登场的固定辅臣，未遇见者呈未解锁之态" },
+    { key:"work",     label:"朝中同僚", note:"工作相关人员" },
+    { key:"kin",      label:"亲近之人", note:"非工作相关的亲友" },
+    { key:"folk",     label:"市井之人", note:"于市井之间偶遇之人" }
+  ];
+
+  /* 示例数据：每条 NPCProfile 内嵌一条代表性 interaction（关联待办） */
+  var NPCS = [
+    /* ===== 辅国大臣（固定 NPC，未遇见 → locked） ===== */
+    { cat:"minister", displayName:"直臣", title:"谏议大夫", aliases:["魏征"],
+      portrait:{assetId:"直臣.png"}, relationship:{stance:"ally"},
+      interaction:{ title:"直谏本周最该推进的一桩要务", relation:"owner", count:3 } },
+    { cat:"minister", displayName:"卦师", title:"钦天监正", aliases:[],
+      portrait:{assetId:"卦师.png"}, relationship:{stance:"neutral"},
+      interaction:{ title:"占卜今日宜行之事", relation:"mentioned", count:1 } },
+    { cat:"minister", displayName:"翰林", title:"翰林学士", locked:true,
+      portrait:{assetId:"翰林.png"}, cond:"于藏书阁与之论道后解锁" },
+    { cat:"minister", displayName:"顺臣", title:"随侍中官", locked:true,
+      portrait:{assetId:"顺臣.png"}, cond:"朝堂之上初次面圣后解锁" },
+
+    /* ===== 朝中同僚（工作相关人员） ===== */
+    { cat:"work", displayName:"Alice", title:"产品经理", aliases:["产品 Alice"],
+      identityStatus:"auto_created", portrait:{assetId:"卦师.png"}, relationship:{stance:"rival"},
+      interaction:{ title:"给 Alice 发送需求边界确认", relation:"recipient", count:2 } },
+    { cat:"work", displayName:"李组长", title:"直属上级", aliases:["组长","老李"],
+      portrait:{assetId:"直臣.png"}, relationship:{stance:"neutral"},
+      interaction:{ title:"周一晨会同步项目风险与排期", relation:"approver", count:3 } },
+    { cat:"work", displayName:"王姐", title:"同组同事",
+      portrait:{assetId:"顺臣.png"}, relationship:{stance:"ally"},
+      interaction:{ title:"与王姐对齐接口联调时间", relation:"stakeholder", count:1 } },
+    { cat:"work", displayName:"陈总", title:"合作方负责人", aliases:["甲方陈总"],
+      portrait:{assetId:"史官.png"}, relationship:{stance:"cold"},
+      interaction:{ title:"回复陈总关于交付延期的邮件", relation:"blocker", count:2 } },
+
+    /* ===== 亲近之人（非工作相关） ===== */
+    { cat:"kin", displayName:"母亲", title:"至亲", aliases:["妈"],
+      portrait:{assetId:"宫女.png"}, relationship:{stance:"friendly"},
+      interaction:{ title:"周末回家陪家人吃饭", relation:"mentioned", count:1 } },
+    { cat:"kin", displayName:"挚友小林", title:"多年好友",
+      portrait:{assetId:"翰林.png"}, relationship:{stance:"ally"},
+      interaction:{ title:"约小林周五一起看展散心", relation:"mentioned", count:1 } },
+
+    /* ===== 市井之人（市井偶遇） ===== */
+    { cat:"folk", displayName:"茶摊老张", title:"街角茶摊主",
+      portrait:{assetId:"顺臣.png"}, relationship:{stance:"friendly"},
+      interaction:{ title:"路过时向老张打听近日行情", relation:"mentioned", count:1 } },
+    { cat:"folk", displayName:"“隔壁组 PM”", title:"", identityStatus:"ambiguous",
+      portrait:{assetId:"史官.png"}, relationship:{stance:"unknown"},
+      interaction:{ title:"确认这是否为之前提到的 Alice", relation:"mentioned", count:1 } },
+
+    /* ===== 名臣异士（名臣与神仙） ===== */
+    { cat:"legend", displayName:"太白金星", title:"天界仙官",
+      portrait:{assetId:"卦师.png"}, relationship:{stance:"friendly"},
+      interaction:{ title:"聆听仙人赠予的一则锦囊", relation:"mentioned", count:1 } },
+    { cat:"legend", displayName:"诸葛孔明", title:"名臣异士", locked:true,
+      portrait:{assetId:"直臣.png"}, cond:"于钦天监推演奇局后可遇" }
+  ];
+
+  function stanceBadge(st){
+    var s = STANCE[st] || STANCE.unknown;
+    return '<span class="pc-stance"><i></i>'+s.label+'</span>';
+  }
+
+  function todoBtn(it){
+    if(!it) return '<div class="pc-todo empty"><div class="pt-lbl">暂无关联待办</div></div>';
+    var rel = RELATION[it.relation] || "";
+    return '<button class="pc-todo">' +
+      '<div class="pt-lbl">关联待办' + (rel?' · '+rel:'') +
+        ' <b>'+(it.count||1)+'</b> 项<span class="arw">›</span></div>' +
+      '<div class="pt-tt">'+it.title+'</div>' +
+    '</button>';
+  }
+
+  function cardHtml(n){
+    var img = A + (n.portrait && n.portrait.assetId ? n.portrait.assetId : "史官.png");
+
+    // 未解锁 / 未遇见
+    if(n.locked){
+      return '<div class="pc locked">' +
+        '<div class="pc-art"><img src="'+img+'" alt="" /><div class="pc-lock">'+LOCK+'</div></div>' +
+        '<div class="pc-info"><div class="pc-name">？ ？ ？</div>' +
+          (n.title ? '<div class="pc-title">'+n.title+'</div>' : '') + '</div>' +
+        '<div class="pc-cond">'+(n.cond||"尚未遇见")+'</div>' +
+      '</div>';
+    }
+
+    var st = n.relationship ? n.relationship.stance : "unknown";
+    var stVar = (STANCE[st]||STANCE.unknown).cssvar;
+    var ambiguous = n.identityStatus === "ambiguous";
+    var alias = (n.aliases && n.aliases.length) ? '<div class="pc-alias">又称 '+n.aliases.join(" / ")+'</div>' : "";
+
+    return '<div class="pc'+(ambiguous?' ambiguous':'')+'" style="--stance:var('+stVar+')">' +
+      '<div class="pc-art">' +
+        (ambiguous ? '<span class="pc-ask">? 待确认</span>' : '') +
+        stanceBadge(st) +
+        '<img src="'+img+'" alt="'+n.displayName+'" />' +
+      '</div>' +
+      '<div class="pc-info">' +
+        '<div class="pc-name">'+n.displayName+'</div>' +
+        (n.title ? '<div class="pc-title">'+n.title+'</div>' : '') +
+        alias +
+      '</div>' +
+      todoBtn(n.interaction) +
+    '</div>';
+  }
+
+  // 图例
+  var legend = document.getElementById("legend");
+  Object.keys(STANCE).forEach(function(k){
+    var s = STANCE[k];
+    legend.insertAdjacentHTML("beforeend",
+      '<span class="lg"><i style="background:var('+s.cssvar+')"></i>'+s.label+'</span>');
+  });
+
+  // 分区渲染
+  var host = document.getElementById("sections");
+  var total = 0;
+  CATEGORIES.forEach(function(c){
+    var list = NPCS.filter(function(n){ return n.cat === c.key; });
+    if(!list.length) return;
+    var met = list.filter(function(n){ return !n.locked; }).length;
+    total += met;
+    var grid = list.map(cardHtml).join("");
+    host.insertAdjacentHTML("beforeend",
+      '<div class="sec"><span class="st">'+c.label+'</span>' +
+        '<span class="sn">'+c.note+'</span>' +
+        '<span class="sc">已遇 '+met+' / '+list.length+'</span></div>' +
+      '<div class="rk-grid">'+grid+'</div>');
+  });
+  document.getElementById("totalCount").textContent = total;
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@
   window.App = window.App || {};
   var data = window.App.data;
   var STORAGE_KEY = "nvdi-full-v1";
-  var STATE_VERSION = 9;
+  var STATE_VERSION = 10;
   var ENERGY_CAP = 150;
   var DAILY_ENERGY_GAIN = 30;
   var MAX_DAILY_COUNTED_RESTORE = 60;
@@ -93,7 +93,7 @@
       onboarded: false,
       startedAt: null,        // 由 UI 层填入时间字符串
       day: 1,
-      profile: { nickname: "陛下", answers: [] },
+      profile: { nickname: "陛下", answers: [], preferredMinister: null },
       empressType: null,      // 铁腕/仁厚/谋略/革新
       energy: 100,
       energyCap: ENERGY_CAP,
@@ -118,6 +118,12 @@
       completedTasks: [],     // 已完成 task id（累计计数用）
       mapTasks: [],           // 地图任务 {id,title,cat,scene,durationMinutes,energyTier,energy,gold,restore,from,knowledgeRefs,bg,done,day}
       pendingPetitions: [],   // 奏折匣中待办 {taskId, title, scene, day}
+      npcs: [],               // 凌烟阁人物档案；立绘可为空
+      npcInteractions: [],    // NPC 与最终待办形成的事件摘要
+      npcTaskCardLinks: [],   // NPCInteraction 与最终待办卡片的关联
+      npcSequence: 1,
+      npcInteractionSequence: 1,
+      npcLinkSequence: 1,
       journals: [],           // 起居注 {id,day,title,text}
       conversationSessions: {}, // 当日会话，按场景 id 隔离
       books: [],              // 治国之策藏书
@@ -319,6 +325,12 @@
         }
         state.knowledge = Object.assign({ documents: [] }, parsed.knowledge || {});
         if (!Array.isArray(state.knowledge.documents)) state.knowledge.documents = [];
+        state.npcs = Array.isArray(parsed.npcs) ? parsed.npcs : [];
+        state.npcInteractions = Array.isArray(parsed.npcInteractions) ? parsed.npcInteractions : [];
+        state.npcTaskCardLinks = Array.isArray(parsed.npcTaskCardLinks) ? parsed.npcTaskCardLinks : [];
+        state.npcSequence = Math.max(1, Number(parsed.npcSequence) || state.npcs.length + 1);
+        state.npcInteractionSequence = Math.max(1, Number(parsed.npcInteractionSequence) || state.npcInteractions.length + 1);
+        state.npcLinkSequence = Math.max(1, Number(parsed.npcLinkSequence) || state.npcTaskCardLinks.length + 1);
         state.journals = (Array.isArray(parsed.journals) ? parsed.journals : []).map(cleanLegacyConversationJournal).filter(Boolean);
         state.conversationSessions = state.conversationSessions && typeof state.conversationSessions === "object" ? state.conversationSessions : {};
         Object.keys(state.conversationSessions).forEach(function (sceneId) {
@@ -458,10 +470,15 @@
     return task;
   }
 
-  function maybeOfferDailyMystic(trigger) {
+  function offerMysticCard(cardId, trigger) {
     var daily = ensureMysticDay(state.dayKey || localDayKey());
-    if (daily.status !== "idle" || state.energy > 60) return null;
-    var card = chooseMysticCard(null);
+    if (daily.status !== "idle") {
+      return daily.taskId
+        ? state.mapTasks.filter(function (task) { return task.id === daily.taskId && !task.expired; })[0] || null
+        : null;
+    }
+    if (state.energy >= state.energyCap) return null;
+    var card = (data.MYSTIC_CARDS || []).filter(function (item) { return item.id === cardId; })[0];
     if (!card) return null;
     var task = applyMysticCard({
       id: "mystic-daily-" + state.dayKey,
@@ -490,6 +507,13 @@
     emit("mysticOffer", task);
     emit("task", state);
     return task;
+  }
+
+  function maybeOfferDailyMystic(trigger) {
+    var daily = ensureMysticDay(state.dayKey || localDayKey());
+    if (daily.status !== "idle" || state.energy > 60) return null;
+    var card = chooseMysticCard(null);
+    return card ? offerMysticCard(card.id, trigger) : null;
   }
 
   function rerollDailyMystic() {
@@ -845,7 +869,7 @@
   function moveScene(id, options) {
     var sc = data.sceneById(id); if (!sc) return;
     options = options || {};
-    var recordVisit = options.recordVisit !== false && achievementTrackingEnabled();
+    var recordVisit = options.recordVisit !== false && sc.trackVisit !== false && achievementTrackingEnabled();
     if (recordVisit && state.scene === "folk" && id === "court") state.counters.fogReturnPending = true;
     state.scene = id;
     if (recordVisit && state.visitedScenes.indexOf(id) < 0) {
@@ -949,11 +973,194 @@
     }).filter(Boolean);
   }
 
+  /* ---------- 凌烟阁 NPC ----------
+     人物识别结果随最终决策返回，但只在朱批同意、待办卡片实际落地后写入。 */
+  var NPC_ROLES = ["leader", "coworker", "product", "customer", "mentor", "subordinate", "ally", "rival", "unknown"];
+  var NPC_STANCES = ["unknown", "ally", "friendly", "neutral", "cold", "rival", "hostile"];
+  var NPC_TASK_RELATIONS = ["owner", "stakeholder", "approver", "blocker", "recipient", "mentioned"];
+  var NPC_ROLE_TITLES = {
+    leader: "直属上级", coworker: "同事", product: "产品", customer: "客户",
+    mentor: "导师", subordinate: "下属", ally: "协作者", rival: "竞争者", unknown: "身份待确认"
+  };
+
+  function npcText(value, max) {
+    return String(value == null ? "" : value).trim().slice(0, max || 120);
+  }
+  function npcNumber(value, min, max, fallback) {
+    var number = Number(value);
+    return Number.isFinite(number) ? Math.max(min, Math.min(max, number)) : (fallback || 0);
+  }
+  function npcNameKey(value) {
+    return npcText(value, 80).toLowerCase().replace(/[\s·•"'“”‘’（）()【】\[\]]/g, "");
+  }
+  function nextNpcId() { return "npc-" + (state.npcSequence++); }
+  function nextNpcInteractionId() { return "interaction-" + (state.npcInteractionSequence++); }
+  function nextNpcLinkId() { return "npc-task-link-" + (state.npcLinkSequence++); }
+
+  function cleanNpcRelationship(value) {
+    value = value || {};
+    var stance = NPC_STANCES.indexOf(value.stance) >= 0 ? value.stance : "unknown";
+    return {
+      stance: stance,
+      stanceConfidence: npcNumber(value.stanceConfidence, 0, 1, stance === "unknown" ? 0.2 : 0.45),
+      inferenceReason: npcText(value.inferenceReason, 240),
+      trust: npcNumber(value.trust, -100, 100, 0),
+      influence: npcNumber(value.influence, 0, 100, 0),
+      alignment: npcNumber(value.alignment, -100, 100, 0),
+      conflict: npcNumber(value.conflict, 0, 100, 0),
+      familiarity: npcNumber(value.familiarity, 0, 100, 0)
+    };
+  }
+
+  function findNpc(candidate) {
+    var candidateKeys = [candidate && candidate.displayName].concat(candidate && Array.isArray(candidate.aliases) ? candidate.aliases : [])
+      .map(npcNameKey).filter(Boolean);
+    var explicitId = npcText(candidate && candidate.existingNpcId, 80);
+    if (explicitId) {
+      var exact = state.npcs.filter(function (npc) { return npc.id === explicitId; })[0];
+      if (exact) {
+        var exactKeys = [exact.displayName].concat(Array.isArray(exact.aliases) ? exact.aliases : []).map(npcNameKey).filter(Boolean);
+        if (candidateKeys.some(function (key) { return exactKeys.indexOf(key) >= 0; })) return exact;
+      }
+    }
+    return state.npcs.filter(function (npc) {
+      var knownKeys = [npc.displayName].concat(Array.isArray(npc.aliases) ? npc.aliases : []).map(npcNameKey).filter(Boolean);
+      return candidateKeys.some(function (key) { return knownKeys.indexOf(key) >= 0; });
+    })[0] || null;
+  }
+
+  function mergeNpcAliases(profile, candidate) {
+    var aliases = Array.isArray(profile.aliases) ? profile.aliases.slice(0, 8) : [];
+    [candidate.displayName].concat(Array.isArray(candidate.aliases) ? candidate.aliases : []).forEach(function (alias) {
+      alias = npcText(alias, 60);
+      if (!alias || npcNameKey(alias) === npcNameKey(profile.displayName)) return;
+      if (!aliases.some(function (known) { return npcNameKey(known) === npcNameKey(alias); }) && aliases.length < 8) aliases.push(alias);
+    });
+    profile.aliases = aliases;
+  }
+
+  function upsertNpc(candidate) {
+    var now = new Date().toISOString();
+    var profile = findNpc(candidate);
+    var incomingRelationship = cleanNpcRelationship(candidate && candidate.relationship);
+    if (!profile) {
+      var role = NPC_ROLES.indexOf(candidate && candidate.role) >= 0 ? candidate.role : "unknown";
+      profile = {
+        id: nextNpcId(),
+        cat: "work",
+        displayName: npcText(candidate && candidate.displayName, 60) || "待确认人物",
+        title: npcText(candidate && candidate.title, 80) || NPC_ROLE_TITLES[role],
+        aliases: [],
+        role: role,
+        identityStatus: ["auto_created", "confirmed", "ambiguous"].indexOf(candidate && candidate.identityStatus) >= 0
+          ? candidate.identityStatus : "auto_created",
+        confidence: npcNumber(candidate && candidate.identityConfidence, 0, 1, 0.5),
+        relationship: incomingRelationship,
+        portrait: null,
+        createdAt: now,
+        updatedAt: now
+      };
+      mergeNpcAliases(profile, candidate || {});
+      state.npcs.push(profile);
+      return profile;
+    }
+
+    mergeNpcAliases(profile, candidate || {});
+    if (!profile.title && candidate && candidate.title) profile.title = npcText(candidate.title, 80);
+    if (profile.role === "unknown" && NPC_ROLES.indexOf(candidate && candidate.role) >= 0) profile.role = candidate.role;
+    profile.confidence = Math.max(Number(profile.confidence) || 0, npcNumber(candidate && candidate.identityConfidence, 0, 1, 0.5));
+    if (profile.identityStatus !== "confirmed" && candidate && candidate.identityStatus === "confirmed") profile.identityStatus = "confirmed";
+    if (!profile.relationship || incomingRelationship.stanceConfidence >= (Number(profile.relationship.stanceConfidence) || 0)) {
+      profile.relationship = incomingRelationship;
+    }
+    if (profile.portrait === undefined) profile.portrait = null;
+    profile.updatedAt = now;
+    return profile;
+  }
+
+  function recordDecisionNpcs(decision, resolved, pathKey) {
+    var detection = decision && decision.npcDetection;
+    var candidates = detection && Array.isArray(detection.candidates) ? detection.candidates : [];
+    if (!detection || !detection.hasRelevantPeople || !candidates.length) return [];
+    var changed = false;
+    var touched = [];
+    var selectedPath = pathKey === "alt" ? "alt" : "recommend";
+    candidates.forEach(function (candidate) {
+      var taskLinks = (Array.isArray(candidate.taskLinks) ? candidate.taskLinks : []).filter(function (link) {
+        return link && link.path === selectedPath && resolved[link.taskIndex] && resolved[link.taskIndex].task;
+      });
+      if (!taskLinks.length) return;
+      var npc = upsertNpc(candidate);
+      changed = true;
+      if (touched.indexOf(npc) < 0) touched.push(npc);
+      taskLinks.forEach(function (link) {
+        var task = resolved[link.taskIndex].task;
+        var duplicate = state.npcTaskCardLinks.some(function (savedLink) {
+          return savedLink.npcId === npc.id && savedLink.taskCardId === task.id;
+        });
+        if (duplicate) return;
+        var now = new Date().toISOString();
+        var interaction = {
+          id: nextNpcInteractionId(),
+          npcId: npc.id,
+          taskCardIds: [task.id],
+          title: task.title,
+          summary: task.title,
+          relationshipSignal: {
+            trust: npc.relationship.trust,
+            influence: npc.relationship.influence,
+            alignment: npc.relationship.alignment,
+            conflict: npc.relationship.conflict,
+            familiarity: npc.relationship.familiarity
+          },
+          recordedAt: now,
+          updatedAt: now
+        };
+        state.npcInteractions.push(interaction);
+        state.npcTaskCardLinks.push({
+          id: nextNpcLinkId(),
+          npcId: npc.id,
+          interactionId: interaction.id,
+          taskCardId: task.id,
+          relation: NPC_TASK_RELATIONS.indexOf(link.relation) >= 0 ? link.relation : "mentioned",
+          reason: npcText(link.reason, 240),
+          confidence: npcNumber(link.confidence, 0, 1, 0.5),
+          createdAt: now,
+          updatedAt: now
+        });
+      });
+    });
+    if (changed) commit("npc");
+    return touched;
+  }
+
+  // 外部立绘服务或素材库接入点；新人物默认 portrait: null。
+  function setNpcPortrait(npcId, portrait) {
+    var npc = state.npcs.filter(function (profile) { return profile.id === npcId; })[0];
+    if (!npc) return null;
+    if (portrait == null) {
+      npc.portrait = null;
+    } else {
+      var providers = ["asset_library", "external_service", "manual_upload"];
+      if (providers.indexOf(portrait.provider) < 0) return null;
+      npc.portrait = {
+        provider: portrait.provider,
+        assetId: npcText(portrait.assetId, 200),
+        imageUrl: npcText(portrait.imageUrl, 1000),
+        updatedAt: new Date().toISOString()
+      };
+    }
+    npc.updatedAt = new Date().toISOString();
+    commit("npc");
+    return npc;
+  }
+
   // templates: [{title,cat,durationMinutes,from,knowledgeRefs}]；数值始终由 economy 固定计算。
   // 返回落地后的任务数组（含 id/scene/bg）
   function deployTasks(templates) {
     var created = [];
     var merged = [];
+    var resolved = [];
     (templates || []).forEach(function (tpl, i) {
       var title = cleanTaskTitle(tpl.title) || "推进此事的第一步";
       var category = data.CATEGORIES[tpl.cat] ? tpl.cat : "daily";
@@ -965,6 +1172,7 @@
         var existing = overlap.task;
         mergeTaskMetadata(existing, Object.assign({}, safeTemplate, { updatedDay: state.day }));
         merged.push({ task: existing, template: safeTemplate, similarity: overlap.similarity });
+        resolved.push({ task: existing, template: safeTemplate, merged: true });
         return;
       }
       var task = {
@@ -989,8 +1197,10 @@
       };
       state.mapTasks.push(task);
       created.push(task);
+      resolved.push({ task: task, template: safeTemplate, merged: false });
     });
     created.merged = merged;
+    created.resolved = resolved;
     commit("task");
     emit("deploy", { created: created, merged: merged });
     return created;
@@ -1119,7 +1329,7 @@
   /* ---------- 朱批（决策奏折） ----------
      kind: 'agree'（采纳并投放） | 'again'（再议，记起居注） | 'bold'（大胆，大臣道歉重问）
      agree 时传入 templates（将生成的任务），返回投放的任务。 */
-  function applyPizhu(kind, decision, templates) {
+  function applyPizhu(kind, decision, templates, options) {
     if (kind === "again") {
       if (achievementTrackingEnabled()) state.counters.pizhuAgain++;
       unlock("pizhu-zaiyi");
@@ -1138,7 +1348,9 @@
     unlock("first-vermilion-brush");
     unlock("first-audience-minister");
     if (achievementTrackingEnabled()) state.counters.approvals++;
-    return deployTasks(templates);
+    var deployed = deployTasks(templates);
+    deployed.npcs = recordDecisionNpcs(decision, deployed.resolved || [], options && options.pathKey);
+    return deployed;
   }
 
   /* ---------- 起居注 / 藏书 ---------- */
@@ -1370,8 +1582,8 @@
     moveScene: moveScene,
     deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask, finalizeDemoTasks: finalizeDemoTasks,
     tasksForScene: tasksForScene, pendingCount: pendingCount,
-    maybeOfferDailyMystic: maybeOfferDailyMystic, rerollDailyMystic: rerollDailyMystic,
-    applyPizhu: applyPizhu,
+    maybeOfferDailyMystic: maybeOfferDailyMystic, offerMysticCard: offerMysticCard, rerollDailyMystic: rerollDailyMystic,
+    applyPizhu: applyPizhu, setNpcPortrait: setNpcPortrait,
     // 成就
     unlock: unlock, bumpAch: bumpAch, setAchProgress: setAchProgress,
     achState: achState, progress: progress,

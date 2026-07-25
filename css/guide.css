@@ -1,0 +1,496 @@
+/* =============================================================
+   guide.css —— 遮罩式新手引导原型
+   视觉方向：宫廷夜行灯。遮罩如夜色，聚光如御前提灯，提示卡如短札。
+   ============================================================= */
+
+:root {
+  --guide-ink: #080c10;
+  --guide-paper: #f7efd9;
+  --guide-paper-deep: #e8d6ad;
+  --guide-gold: #d9b76b;
+  --guide-gold-bright: #f2d58d;
+  --guide-verm: #9f352f;
+  --guide-text: #34291f;
+}
+
+.guide-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1800;
+  pointer-events: none;
+  font-family: "Noto Serif SC", serif;
+}
+
+.guide-root[hidden] {
+  display: none;
+}
+
+.guide-veil-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.guide-veil-fill {
+  fill: rgba(8, 12, 16, .57);
+  transition: fill .22s ease;
+}
+
+.guide-focus-layer {
+  position: absolute;
+  inset: 0;
+  transition: opacity .22s ease;
+}
+
+.guide-portrait-glow-layer {
+  pointer-events: none;
+  opacity: .9;
+  transition: opacity .22s ease;
+}
+
+.guide-focus-frame {
+  position: fixed;
+  border: 2px solid var(--guide-gold-bright);
+  border-radius: 14px;
+  box-shadow:
+    0 0 0 1px rgba(88, 51, 22, .5),
+    0 0 24px rgba(242, 213, 141, .48),
+    inset 0 0 18px rgba(242, 213, 141, .12);
+  animation: guideFocusIn .28s ease-out both;
+}
+
+.guide-focus-frame::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(242, 213, 141, .28);
+  border-radius: 17px;
+}
+
+/* 第 3—6 步共用同一套自适应容器，内容从底部自然长出，避免追问切到奏折时整框跳位。 */
+body.guide-walkthrough .convo.expanded:has(.reply-zone .opt-btn),
+body.guide-reading-decision .convo.expanded.decision-pending {
+  height: auto;
+  max-height: calc(100% - 76px);
+  transition:
+    max-height .34s cubic-bezier(.22, .72, .2, 1),
+    margin .34s cubic-bezier(.22, .72, .2, 1),
+    padding .34s cubic-bezier(.22, .72, .2, 1);
+}
+
+body.guide-walkthrough .convo.expanded:has(.reply-zone .opt-btn) .convo-scroll,
+body.guide-reading-decision .convo.expanded.decision-pending .convo-scroll {
+  flex: 0 1 auto;
+  min-height: 52px;
+  max-height: min(17vh, 150px);
+}
+
+/* 讲解奏折时把有限高度留给完整奏折；原对话没有删除，结束引导后照常恢复。 */
+body.guide-reading-decision .convo.expanded.decision-pending .convo-scroll {
+  display: none;
+}
+
+body.guide-walkthrough .convo.expanded:has(.reply-zone .opt-btn) .gal-box {
+  flex: 0 1 auto;
+  max-height: min(42vh, 360px);
+}
+
+body.guide-reading-decision .convo.expanded.decision-pending .gal-box {
+  flex: 0 1 auto;
+  max-height: min(68vh, calc(100vh - 190px));
+}
+
+body.guide-reading-decision .decision-sheet {
+  padding: 12px 14px 10px;
+  animation: guideDecisionReveal .36s cubic-bezier(.22, .72, .2, 1) both;
+}
+
+body.guide-reading-decision .decision-sheet .ds-title {
+  margin: 5px 0 3px;
+  font-size: 17px;
+}
+
+body.guide-reading-decision .decision-sheet .ds-summary {
+  margin-bottom: 7px;
+  line-height: 1.55;
+}
+
+body.guide-reading-decision .decision-sheet .ds-mirror {
+  margin-bottom: 7px;
+}
+
+body.guide-reading-decision .decision-sheet .ds-paths {
+  gap: 6px;
+}
+
+body.guide-reading-decision .decision-sheet .path-row {
+  padding: 7px 10px;
+}
+
+body.guide-reading-decision .decision-sheet .ds-actions {
+  margin-top: 8px;
+}
+
+@keyframes guideFocusIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes guideDecisionReveal {
+  from { opacity: .72; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.guide-root[data-step="stamp"] .guide-card {
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px 18px 12px;
+}
+
+.guide-root[data-step="stamp"] .guide-card h3 {
+  font-size: 18px;
+}
+
+.guide-root[data-step="stamp"] .guide-card-body {
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.guide-root[data-step="stamp"] .guide-card-actions {
+  margin-top: 8px;
+}
+
+/* 第 3—6 步保持同一张短札的视觉体量；高度仍由文字自然撑开。 */
+.guide-root[data-step="probe"] .guide-card,
+body.guide-reading-decision .guide-card {
+  width: min(340px, calc(100vw - 32px));
+  padding: 17px 20px 14px;
+}
+
+.guide-root[data-step="probe"] .guide-card-kicker,
+body.guide-reading-decision .guide-card-kicker {
+  margin-bottom: 5px;
+}
+
+.guide-root[data-step="probe"] .guide-card h3,
+body.guide-reading-decision .guide-card h3 {
+  margin-bottom: 6px;
+  font-size: 19px;
+}
+
+.guide-root[data-step="probe"] .guide-card-body,
+body.guide-reading-decision .guide-card-body {
+  font-size: 12px;
+  line-height: 1.62;
+}
+
+.guide-root[data-step="probe"] .guide-card-actions,
+body.guide-reading-decision .guide-card-actions {
+  margin-top: 12px;
+}
+
+.guide-card {
+  position: fixed;
+  width: min(320px, calc(100vw - 32px));
+  color: var(--guide-text);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.58), transparent 34%),
+    radial-gradient(circle at 80% 12%, rgba(199, 161, 88, .18), transparent 34%),
+    var(--guide-paper);
+  border: 1px solid rgba(114, 75, 35, .48);
+  border-radius: 4px 16px 4px 16px;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, .44),
+    inset 0 0 0 3px rgba(255,255,255,.35);
+  padding: 22px 22px 18px;
+  pointer-events: auto;
+  transform-origin: center;
+  animation: guideCardIn .24s ease both;
+  transition:
+    left .34s cubic-bezier(.22, .72, .2, 1),
+    top .34s cubic-bezier(.22, .72, .2, 1),
+    opacity .22s ease;
+}
+
+.guide-card::before,
+.guide-card::after {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+}
+
+.guide-card::before {
+  left: 7px;
+  top: 7px;
+  border-left: 1px solid rgba(159, 53, 47, .55);
+  border-top: 1px solid rgba(159, 53, 47, .55);
+}
+
+.guide-card::after {
+  right: 7px;
+  bottom: 7px;
+  border-right: 1px solid rgba(159, 53, 47, .4);
+  border-bottom: 1px solid rgba(159, 53, 47, .4);
+}
+
+@keyframes guideCardIn {
+  from { opacity: 0; transform: translateY(7px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.guide-root.is-transitioning .guide-card,
+.guide-root.is-transitioning .guide-focus-layer,
+.guide-root.is-transitioning .guide-portrait-glow-layer {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.guide-root.is-transitioning .guide-veil-fill {
+  fill: rgba(8, 12, 16, .62);
+}
+
+.guide-card-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+  color: #80602e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .24em;
+}
+
+.guide-card-kicker::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+}
+
+.guide-card h3 {
+  margin: 0 0 9px;
+  color: #2e241b;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1.4;
+}
+
+.guide-card-body {
+  font-family: "Noto Sans SC", sans-serif;
+  color: #5f4f3c;
+  font-size: 13px;
+  line-height: 1.78;
+}
+
+.guide-card-body strong {
+  color: var(--guide-verm);
+  font-weight: 700;
+}
+
+.guide-card-example {
+  display: block;
+  margin-top: 10px;
+  padding: 9px 11px;
+  color: #735b3c;
+  background: rgba(132, 91, 40, .08);
+  border-left: 2px solid rgba(159, 53, 47, .5);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.guide-card-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 17px;
+}
+
+.guide-step-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 30px;
+  padding: 0 8px;
+  color: #fff5e8;
+  background: var(--guide-verm);
+  border: 1px solid rgba(105, 24, 21, .42);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.12);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.guide-next {
+  min-height: 38px;
+  padding: 0 17px;
+  color: #fff8e8;
+  background: linear-gradient(180deg, #a84037, #8d2c28);
+  border: 1px solid #74231f;
+  border-radius: 5px 11px 5px 11px;
+  box-shadow: 0 6px 16px rgba(104, 35, 30, .24);
+  cursor: pointer;
+  font-family: "Noto Serif SC", serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+
+.guide-next:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.guide-skip {
+  position: fixed;
+  right: 18px;
+  top: 16px;
+  z-index: 2;
+  padding: 8px 12px;
+  color: rgba(255, 244, 216, .78);
+  background: rgba(16, 18, 20, .62);
+  border: 1px solid rgba(218, 183, 107, .36);
+  border-radius: 999px;
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: 12px;
+  letter-spacing: .08em;
+  backdrop-filter: blur(8px);
+}
+
+.guide-skip:hover {
+  color: #fff4d8;
+  border-color: rgba(218, 183, 107, .7);
+}
+
+.guide-waiting {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 1801;
+  transform: translateX(-50%);
+  padding: 9px 16px;
+  color: #f5e8c9;
+  background: rgba(13, 16, 18, .82);
+  border: 1px solid rgba(217, 183, 107, .35);
+  border-radius: 999px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.3);
+  font-size: 12px;
+  letter-spacing: .08em;
+  pointer-events: none;
+}
+
+.guide-waiting::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--guide-gold-bright);
+  box-shadow: 0 0 10px var(--guide-gold);
+  animation: guidePulse 1.15s ease-in-out infinite;
+}
+
+@keyframes guidePulse {
+  50% { opacity: .4; transform: scale(.72); }
+}
+
+.guide-mini-card {
+  position: fixed;
+  z-index: 1790;
+  width: min(286px, calc(100vw - 32px));
+  padding: 16px 18px;
+  color: var(--guide-text);
+  background: var(--guide-paper);
+  border: 1px solid rgba(114, 75, 35, .48);
+  border-radius: 4px 14px 4px 14px;
+  box-shadow: 0 20px 58px rgba(0,0,0,.38);
+  font-family: "Noto Serif SC", serif;
+}
+
+.guide-mini-card strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #38291e;
+}
+
+.guide-mini-card p {
+  margin: 0 0 12px;
+  color: #66513d;
+  font-family: "Noto Sans SC", sans-serif;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+@media (max-width: 760px) {
+  .guide-card {
+    left: 16px !important;
+    right: auto;
+    bottom: auto;
+    width: calc(100vw - 32px);
+    max-height: 42vh;
+    overflow: auto;
+  }
+
+  .guide-skip {
+    right: 10px;
+    top: 10px;
+  }
+
+  body.guide-reading-decision .guide-card {
+    left: 12px !important;
+    right: auto;
+    bottom: auto;
+    width: min(270px, calc(100vw - 24px));
+    max-height: 38vh;
+  }
+}
+
+@media (max-height: 540px) {
+  body.guide-reading-decision .convo.expanded.decision-pending .convo-scroll {
+    display: none;
+  }
+
+  body.guide-reading-decision .decision-sheet {
+    padding: 8px 10px 7px;
+  }
+
+  body.guide-reading-decision .decision-sheet .ds-summary,
+  body.guide-reading-decision .decision-sheet .pr-text,
+  body.guide-reading-decision .decision-sheet .ds-sources {
+    font-size: 10.5px;
+    line-height: 1.35;
+  }
+
+  body.guide-reading-decision .decision-sheet .ds-mirror,
+  body.guide-reading-decision .decision-sheet .ds-paths {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  body.guide-reading-decision .decision-sheet .ds-actions {
+    margin-top: 4px;
+  }
+
+  .guide-root[data-step="stamp"] .guide-card {
+    max-height: 44vh;
+    overflow: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-card,
+  .guide-focus-frame,
+  .guide-waiting::before,
+  body.guide-reading-decision .decision-sheet {
+    animation: none;
+    transition: none;
+  }
+}

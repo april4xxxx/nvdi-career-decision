@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>奏折卡 · 横排精修 v4</title>
+<style>
+  :root{
+    --ink:#1f2830; --ink-soft:#3a4650; --ink-mute:#6b7580;
+    --paper:#f7f2e6; --paper-2:#efe7d3; --paper-3:#e6dabf;
+    --gold:#b98a3b; --gold-light:#e7c985; --gold-deep:#8a6323;
+    --jade:#487b70; --jade-light:#6fa89a; --verm:#a7473c; --verm-light:#c9695c;
+    --line:rgba(31,40,48,.14); --line-strong:rgba(31,40,48,.28);
+    --shadow-sm:0 2px 8px rgba(31,40,48,.10); --shadow-md:0 8px 26px rgba(31,40,48,.18); --shadow-lg:0 20px 60px rgba(31,40,48,.30);
+    --r-sm:8px; --r-md:14px; --r-lg:22px;
+    --serif:"Songti SC","STSong",Georgia,serif;
+    --cat-bronze:#9c6b3f; --cat-porcelain:#4a6f8a; --cat-jade:#4f8a72; --cat-gold:#c39a3c; --cat-wood:#8a6a4a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:var(--serif); background:#20262d; color:var(--ink); padding:40px 32px 80px; }
+
+  .page-head{ max-width:1240px; margin:0 auto 30px; color:var(--paper); }
+  .page-head h1{ font-size:25px; letter-spacing:.08em; }
+  .page-head p{ font-size:13.5px; color:rgba(247,242,230,.62); margin-top:8px; line-height:1.75; max-width:880px; }
+  .page-head .legend{ margin-top:13px; display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--gold-light); align-items:center; }
+
+  .scheme{ max-width:1240px; margin:0 auto 50px; }
+  .scheme-title{ display:flex; align-items:baseline; gap:12px; margin-bottom:6px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,.14); }
+  .scheme-title .no{ width:30px; height:30px; flex:none; border-radius:50%; background:var(--gold); color:#3a2a08; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; }
+  .scheme-title h2{ color:var(--paper); font-size:19px; letter-spacing:.06em; }
+  .scheme-title .desc{ color:rgba(247,242,230,.5); font-size:13px; }
+  .scheme-note{ color:rgba(247,242,230,.42); font-size:12px; margin:10px 0 20px; line-height:1.6; }
+
+  .field{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .sq{ overflow:hidden; background:var(--paper-3); flex:none; }
+  .sq img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .ic{ width:16px; height:16px; flex:none; vertical-align:-3px; }
+  .stat{ display:inline-flex; align-items:center; gap:5px; font-size:14px; font-weight:700; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .stat .u{ font-weight:400; font-size:12px; color:var(--ink-mute); }
+  .stats{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+
+  .catdot{ width:8px; height:8px; border-radius:50%; background:var(--c,var(--gold)); flex:none; }
+  .cta{ font-size:13px; color:#fff; font-weight:700; letter-spacing:.04em; white-space:nowrap; background:linear-gradient(135deg,var(--gold-light),var(--gold)); border:1px solid var(--gold-deep); color:#4a340c; padding:7px 15px; border-radius:999px; }
+  .title{ font-weight:800; color:var(--ink); line-height:1.35; }
+  .sign{ font-size:12.5px; color:var(--gold-deep); line-height:1.5; font-style:italic; }
+  .mystic-name{ font-size:12px; font-weight:800; letter-spacing:.14em; color:var(--gold-deep); }
+  .reroll{ font-size:12px; padding:3px 11px; border-radius:999px; border:1px solid var(--gold); color:var(--gold-deep); background:transparent; cursor:pointer; }
+  .done-card{ filter:saturate(.55); opacity:.9; }
+  .done-card .title{ text-decoration:line-through; opacity:.8; }
+
+  /* ===== 金币强调：金色渐变胶囊 ===== */
+  .reward{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 13px 5px 9px; border-radius:999px;
+    background:linear-gradient(135deg,#fbe6bd,#efc978 45%,#d6a24a); border:1px solid #b98a3b;
+    box-shadow:0 2px 6px rgba(155,111,34,.28), inset 0 1px 0 rgba(255,255,255,.55);
+    font-weight:800; font-size:16px; color:#5a3f10; font-variant-numeric:tabular-nums;
+  }
+  .reward .ic{ width:19px; height:19px; vertical-align:-4px; }
+  .reward .u{ font-size:11px; font-weight:700; color:#7d5716; }
+  .reward.big{ font-size:19px; padding:7px 16px 7px 11px; }
+  .reward.big .ic{ width:23px; height:23px; }
+
+  /* ============ 通用横排卡：更宽、图更大、无待办行 ============ */
+  .card{ width:100%; max-width:600px; display:flex; gap:18px; align-items:center; background:#fff; border:1px solid var(--line);
+    border-radius:var(--r-md); padding:14px; box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .16s,box-shadow .2s; }
+  .card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-md); }
+  .card .body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:12px; }
+  /* 标题行：分类色圆点 + 标题，直接开写，无「待办」标签 */
+  .card .titrow{ display:flex; align-items:center; gap:9px; }
+  .card .title{ font-size:19px; }
+  .card .foot{ display:flex; align-items:center; justify-content:space-between; }
+
+  /* 图片：不再纯方，稍宽一点（4:3 左右） */
+  .card .sq{ width:140px; height:112px; border-radius:var(--r-sm); }
+
+  /* ---- L：宽图 4:3 + 内联金胶囊 ---- */
+  /* ---- M：更宽横图 5:3 ---- */
+  .M .card .sq{ width:168px; height:112px; }
+  /* ---- N：纸黄底 + 分类色书脊 + 右下大号金币 ---- */
+  .N .card{ background:linear-gradient(135deg,#fffdf7,#f4ecd8); border:1px solid var(--line-strong); border-left:5px solid var(--c,var(--gold)); }
+  .N .card .sq{ width:150px; height:112px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4d79a"/><stop offset=".45" stop-color="#d9a94e"/><stop offset="1" stop-color="#9a6f22"/>
+    </linearGradient>
+    <linearGradient id="jadeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fc9b8"/><stop offset="1" stop-color="#3f7266"/>
+    </linearGradient>
+    <symbol id="ic-coin" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="url(#goldGrad)" stroke="#7d5716" stroke-width="1"/>
+      <circle cx="12" cy="12" r="7" fill="none" stroke="#fff2cf" stroke-width="1" opacity=".7"/>
+      <path d="M12 7.2v9.6M9.4 9.4h5.2M9.4 12h5.2" stroke="#7d5716" stroke-width="1.4" stroke-linecap="round" opacity=".85"/>
+    </symbol>
+    <symbol id="ic-energy" viewBox="0 0 24 24">
+      <path d="M13.5 2 5 13.2h5.2L9.2 22 19 9.6h-5.6z" fill="url(#goldGrad)" stroke="#7d5716" stroke-width="1" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ic-energy-rest" viewBox="0 0 24 24">
+      <path d="M13.5 2 5 13.2h5.2L9.2 22 19 9.6h-5.6z" fill="url(#jadeGrad)" stroke="#2f574d" stroke-width="1" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ic-time" viewBox="0 0 24 24">
+      <path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9" fill="none" stroke="url(#goldGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="page-head">
+  <h1>奏折卡 · 横排精修 v4</h1>
+  <p>在 v3 基础上：去掉「待办 / 已办」那一行，标题直接开写；图片不再纯方，放宽到横向（4:3～5:3）。分类仍用色点区分，金币仍是金色渐变胶囊。三种是图片宽度的不同处理，结构一致。</p>
+  <div class="legend">
+    <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg> 耗精力</span>
+    <span class="stat"><svg class="ic"><use href="#ic-time"/></svg> 时长</span>
+    <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>金币奖励</span>
+  </div>
+</div>
+
+<!-- L -->
+<section class="scheme L">
+  <div class="scheme-title"><span class="no">L</span><h2>宽图 4:3 · 标题直开</h2><span class="desc">图 140×112 · 无待办行 · 金币内联胶囊</span></div>
+  <p class="scheme-note">最贴近你选的基底：去掉待办标签，进卡就是标题；图放宽成 4:3。金币金胶囊在结算行内联最大号。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (27).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">牵头制定明年部门 OKR</span></div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>20</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>90<span class="u">分</span></span>
+            <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>150</span>
+          </div>
+          <span class="cta">呈报 ▸</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-gold)">
+      <div class="sq"><img src="assets/任务底图/image_1 (16).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="mystic-name">今日天象</span></div>
+        <div class="title">午后小憩二十分钟</div>
+        <div class="sign">「云开见月，宜静养待时」</div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy-rest"/></svg>+12</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>20<span class="u">分</span></span>
+          </div>
+          <span class="reroll">换一签</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- M -->
+<section class="scheme M">
+  <div class="scheme-title"><span class="no">M</span><h2>更宽横图 5:3</h2><span class="desc">图 168×112 · 图占比更重 · 其余同 L</span></div>
+  <p class="scheme-note">图片再拉宽成近 5:3 的横幅感，画面更舒展、更像卡牌插画。文字区相应收窄。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-jade)">
+      <div class="sq"><img src="assets/任务底图/image_2 (10).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">约行业前辈喝一次咖啡</span></div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>7</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>60<span class="u">分</span></span>
+            <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>60</span>
+          </div>
+          <span class="cta">呈报 ▸</span>
+        </div>
+      </div>
+    </div>
+    <div class="card done-card" style="--c:var(--cat-wood)">
+      <div class="sq"><img src="assets/任务底图/image_3 (13).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">重启搁置三周的复盘文档</span></div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>10</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>25<span class="u">分</span></span>
+            <span class="reward"><svg class="ic"><use href="#ic-coin"/></svg>30</span>
+          </div>
+          <span style="font-size:12px;color:var(--jade);letter-spacing:.1em">已办 ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- N -->
+<section class="scheme N">
+  <div class="scheme-title"><span class="no">N</span><h2>纸黄底 · 分类色书脊 · 大号金币</h2><span class="desc">图 150×112 · 纸黄卡 + 左脊 · 金币右下放大</span></div>
+  <p class="scheme-note">纸黄底加分类色左脊更有奏折味；金币金胶囊右对齐放大，视觉重量压在奖励上。</p>
+  <div class="field">
+    <div class="card" style="--c:var(--cat-porcelain)">
+      <div class="sq"><img src="assets/任务底图/image_2 (12).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">更新项目进度看板</span></div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>6</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>20<span class="u">分</span></span>
+          </div>
+          <span class="reward big"><svg class="ic"><use href="#ic-coin"/></svg>30</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="--c:var(--cat-bronze)">
+      <div class="sq"><img src="assets/任务底图/image_0 (36).png" alt=""></div>
+      <div class="body">
+        <div class="titrow"><span class="catdot"></span><span class="title">准备晋升答辩材料</span></div>
+        <div class="foot">
+          <div class="stats">
+            <span class="stat"><svg class="ic"><use href="#ic-energy"/></svg>16</span>
+            <span class="stat"><svg class="ic"><use href="#ic-time"/></svg>50<span class="u">分</span></span>
+          </div>
+          <span class="reward big"><svg class="ic"><use href="#ic-coin"/></svg>130</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
