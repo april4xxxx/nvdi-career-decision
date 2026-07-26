@@ -38,17 +38,33 @@ test("ordinary task settlement is idempotent and uses the approved scale", () =>
 
   store.completeMapTask(task.id);
   assert.equal(store.get().energy, 90);
-  assert.equal(store.get().gold, 225);
-  assert.equal(store.get().totalGold, 225);
+  assert.equal(store.get().gold, 85);
+  assert.equal(store.get().totalGold, 10);
   assert.equal(store.get().counters.tasksDone, 1);
   assert.match(store.get().journals[0].text, /精力 -10（100→90）/);
   assert.match(store.get().journals[0].text, /任务金币 \+10/);
-  assert.match(store.get().journals[0].text, /成就奖励 \+215 金已自动到账/);
+  assert.match(store.get().journals[0].text, /成就奖励 \+75 金已自动到账/);
 
   store.completeMapTask(task.id);
   assert.equal(store.get().energy, 90);
-  assert.equal(store.get().gold, 225);
+  assert.equal(store.get().gold, 85);
   assert.equal(store.get().counters.tasksDone, 1);
+});
+
+test("first approved ministry task leaves the newcomer with 35 gold", () => {
+  const { store } = createStore();
+  const tasks = store.applyPizhu("agree", { title: "首份职场决策" }, [
+    { title: "整理首份工作清单", cat: "daily", durationMinutes: 20, sourceKind: "decision" }
+  ]);
+
+  assert.equal(store.get().gold, 10);
+  store.completeMapTask(tasks[0].id);
+
+  assert.equal(store.get().gold, 35);
+  assert.equal(store.get().totalGold, 10);
+  assert.equal(store.get().dailyStats["2026-07-20"].goldEarned, 10);
+  assert.equal(store.get().achievements["gold-50"].unlocked, false);
+  assert.equal(store.get().achievements["single-day-gold-200"].unlocked, false);
 });
 
 test("recovery only records actual gain and grants no gold or ordinary task progress", () => {
@@ -60,9 +76,9 @@ test("recovery only records actual gain and grants no gold or ordinary task prog
   store.completeMapTask(first.id);
 
   assert.equal(store.get().energy, 150);
-  assert.equal(store.get().gold, 90);
-  assert.equal(store.get().totalGold, 90);
-  assert.equal(store.get().achievements["gold-50"].rewardGranted, true);
+  assert.equal(store.get().gold, 60);
+  assert.equal(store.get().totalGold, 0);
+  assert.equal(store.get().achievements["gold-50"].rewardGranted, false);
   assert.equal(store.get().totalActualRestored, 5);
   assert.equal(store.get().totalRestored, 5);
   assert.equal(store.get().counters.tasksDone, 0);
@@ -104,8 +120,8 @@ test("v1 saves migrate to the current version without shrinking the 150 energy c
   assert.equal(store.get().version, 11);
   assert.equal(store.get().energy, 140);
   assert.equal(store.get().energyCap, 150);
-  assert.equal(store.get().gold, 100);
-  assert.equal(store.get().totalGold, 120);
+  assert.equal(store.get().gold, 80);
+  assert.equal(store.get().totalGold, 90);
   assert.equal(store.get().achievements["gold-50"].rewardGranted, true);
   assert.equal(store.get().totalActualRestored, 0);
 });
@@ -648,12 +664,24 @@ test("achievement rewards arrive automatically once in the unified gold balance"
   store.unlock("gold-50");
   store.unlock("gold-100");
 
-  assert.equal(store.get().gold, 30);
-  assert.equal(store.get().totalGold, 30);
+  assert.equal(store.get().gold, 10);
+  assert.equal(store.get().totalGold, 0);
   assert.equal(store.get().achievements["gold-50"].rewardGranted, true);
   assert.match(store.get().achievements["gold-50"].date, /^2026-07-20 · 登基第1天$/);
   assert.equal(Object.keys(store.get().settlementLedger).filter((id) => id === "achievement:gold-50").length, 1);
   assert.deepEqual(Array.from(store.get().titles), ["理财新丁"]);
+});
+
+test("achievement gold enters the wallet without advancing earned-gold milestones", () => {
+  const { store } = createStore();
+
+  store.unlock("first-task-kiln-fire");
+
+  assert.equal(store.get().gold, 10);
+  assert.equal(store.get().totalGold, 0);
+  assert.equal(store.get().dailyStats["2026-07-20"].goldEarned, 0);
+  assert.equal(store.get().achievements["gold-50"].unlocked, false);
+  assert.equal(store.get().achievements["single-day-gold-200"].unlocked, false);
 });
 
 test("legacy unlocked achievements receive one migration payout", () => {
@@ -670,12 +698,13 @@ test("legacy unlocked achievements receive one migration payout", () => {
     mapTasks: []
   });
   assert.equal(first.store.get().gold, 10);
+  assert.equal(first.store.get().totalGold, 0);
   assert.match(first.store.get().journals[0].title, /旧成就奖励补发/);
 
   const persisted = JSON.parse(first.memory.get("nvdi-full-v1"));
   const second = createStore(persisted);
   assert.equal(second.store.get().gold, 10);
-  assert.equal(second.store.get().totalGold, 10);
+  assert.equal(second.store.get().totalGold, 0);
 });
 
 test("all 59 displayed achievement rewards can settle exactly once", () => {
@@ -688,10 +717,10 @@ test("all 59 displayed achievement rewards can settle exactly once", () => {
   const firstTitles = store.get().titles.length;
   data.ACHIEVEMENTS.forEach((achievement) => store.unlock(achievement.id));
 
-  assert.equal(firstGold, 1730);
+  assert.equal(firstGold, 1595);
   assert.equal(firstTitles, 17);
-  assert.equal(store.get().gold, 1730);
-  assert.equal(store.get().totalGold, 1730);
+  assert.equal(store.get().gold, 1595);
+  assert.equal(store.get().totalGold, 0);
   assert.equal(store.get().titles.length, 17);
   assert.equal(Object.keys(store.get().settlementLedger).filter((id) => id.startsWith("achievement:")).length, 59);
   assert.equal(data.ACHIEVEMENTS.filter((item) => item.availability === "dormant").length, 1);

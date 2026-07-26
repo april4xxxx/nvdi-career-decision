@@ -79,7 +79,7 @@
       passiveRestored: 0,
       actualRestored: 0,
       achievementRestored: 0,
-      goldEarned: 0,
+      goldEarned: 0,          // 当日可计入金币成就的任务收入；不含成就奖励
       productiveTasks: 0,
       recoveryEvents: 0,
       overdrawn: false,
@@ -171,7 +171,7 @@
       totalActualRestored: 0,
       totalCountedRestored: 0,
       gold: 0,
-      totalGold: 0,
+      totalGold: 0,           // 可计入金币成就的历史任务收入；不含成就奖励
       titles: [],
       settlementLedger: {},
       settlementSequence: 0,
@@ -379,7 +379,9 @@
           state.dayKey = state.dayKey || localDayKey();
           state.dailyStats = state.dailyStats && typeof state.dailyStats === "object" ? state.dailyStats : {};
         }
-        state.totalGold = Math.max(0, Number(state.totalGold) || Number(state.gold) || 0);
+        state.totalGold = Math.max(0, parsed.totalGold != null
+          ? (Number(parsed.totalGold) || 0)
+          : (Number(state.gold) || 0));
         delete state.taskGoldEarned;
         delete state.achievementGoldEarned;
         // 合并成就 map，兼容新增成就
@@ -697,7 +699,8 @@
     state.gold = Math.max(0, state.gold + requestedGold);
     var actualGold = state.gold - goldBefore;
     var goldKind = String(transaction.goldKind || "none");
-    if (countsForAchievements && actualGold > 0) {
+    var countsTowardGoldProgress = countsForAchievements && actualGold > 0 && goldKind !== "achievement";
+    if (countsTowardGoldProgress) {
       state.totalGold += actualGold;
       stats.goldEarned += actualGold;
     }
@@ -743,7 +746,7 @@
     }
     if (countsForAchievements && energyKind === "passive" && state.energy >= 150) unlock("jade-full-cap-150");
     if (countsForAchievements && (energyKind === "recovery" || energyKind === "passive") && state.gold >= 500 && state.energy >= 100) unlock("gold-and-energy-balance");
-    if (countsForAchievements && actualGold > 0) evaluateGoldAchievements(actualGold, transaction.source, goldKind);
+    if (countsTowardGoldProgress) evaluateGoldAchievements(actualGold, transaction.source, goldKind);
     if (countsForAchievements && actualGold < 0) unlock("first-spend");
 
     if ((energyKind === "spend" && actualEnergy < 0 && energyBefore > 60 && state.energy <= 60) ||
