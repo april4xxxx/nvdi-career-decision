@@ -71,7 +71,7 @@
       var canReroll = isDailyMystic && !t.done && st.dailyMystic && st.dailyMystic.taskId === t.id && st.dailyMystic.rerollsUsed < rerollCap;
       // 结算行（v5 定稿）：金币胶囊独立在前，精力/时长成组在后
       // 名臣加成即时预览（§10.3.5）：招募后普通任务卡的金币/精力预估按有效值刷新
-      var eff = effectiveTaskValues(t);
+      var eff = store.effectiveTaskValues(t);
       var goldChanged = !t.restore && eff.gold !== (t.gold || 0);
       var energyChanged = !t.restore && eff.energy !== Math.abs(t.energy || 0);
       var stats =
