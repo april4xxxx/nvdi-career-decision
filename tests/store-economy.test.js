@@ -101,7 +101,7 @@ test("v1 saves migrate to the current version without shrinking the 150 energy c
     mapTasks: []
   });
 
-  assert.equal(store.get().version, 10);
+  assert.equal(store.get().version, 11);
   assert.equal(store.get().energy, 140);
   assert.equal(store.get().energyCap, 150);
   assert.equal(store.get().gold, 100);
@@ -171,7 +171,7 @@ test("v8 存档重新校准被演示污染的到访进度，但不重复发放�
     titles: ["九重游者"]
   });
 
-  assert.equal(store.get().version, 10);
+  assert.equal(store.get().version, 11);
   assert.deepEqual(Array.from(store.get().visitedScenes), ["court"]);
   assert.equal(store.get().achievements["first-explore-step"].unlocked, false);
   assert.equal(store.get().achievements["garden-stroll"].unlocked, false);

@@ -69,6 +69,20 @@
   border-radius: 17px;
 }
 
+/* 盖印办结阶段：确认弹层与金币飞入动画抬到引导夜幕（1800）之上，
+   用户能看见弹层、亲手盖印，并看清金币真实飞入国库。 */
+body.guide-settling .overlay { z-index: 1850; }
+/* 金币可能在结算→庆祝的切换瞬间仍在飞行，两个阶段都保持高过夜幕。 */
+body.guide-settling .fly-coin,
+body.guide-settling .fly-trail,
+body.guide-settling .fly-spark,
+body.guide-rewarding .fly-coin,
+body.guide-rewarding .fly-trail,
+body.guide-rewarding .fly-spark { z-index: 1860 !important; }
+/* 顶栏金币框仅在收尾庆祝步抬高过夜幕，聚光落在真实数字上；
+   其余步骤不抬高，避免金币框穿透夜幕发亮。 */
+body.guide-rewarding #goldRes { position: relative; z-index: 1805; }
+
 /* 第 3—6 步共用同一套自适应容器，内容从底部自然长出，避免追问切到奏折时整框跳位。 */
 body.guide-walkthrough .convo.expanded:has(.reply-zone .opt-btn),
 body.guide-reading-decision .convo.expanded.decision-pending {
@@ -314,6 +328,7 @@ body.guide-reading-decision .guide-card-actions {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   min-width: 48px;
   height: 30px;
   padding: 0 8px;
@@ -325,6 +340,22 @@ body.guide-reading-decision .guide-card-actions {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .08em;
+}
+
+/* 可回看的步：印章变按钮，露出返回箭头，点它回上一步。 */
+.guide-step-seal--back {
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter .16s, transform .16s;
+}
+.guide-step-seal--back .gss-arrow {
+  font-size: 12px;
+  opacity: .82;
+  transform: translateY(-.5px);
+}
+.guide-step-seal--back:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
 }
 
 .guide-next {

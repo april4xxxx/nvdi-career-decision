@@ -50,7 +50,8 @@
         '<div class="tr-cats">' + catChips + '</div>' +
         '<div class="tr-summary">已藏 <b>' + c.unlocked + '</b> / ' + c.total + ' 珍</div>' +
       '</div>' +
-      '<div class="tr-body" id="trBody"></div>';
+      '<div class="tr-body" id="trBody"></div>' +
+      '<img class="panel-figure tr-figure" src="' + ui.esc(data.ASSET_BASE + "人物/宫女.png") + '" alt="侍女" onerror="this.style.display=\'none\'" />';
 
     ui.$("#trClose").onclick = function () { close(); App.nav.goScene("court"); };
     Array.prototype.forEach.call(panel.querySelectorAll(".tr-chip"), function (b) {
@@ -91,7 +92,14 @@
     body.innerHTML = html || '<div class="empty-hint">此筛选下暂无珍宝。</div>';
 
     Array.prototype.forEach.call(body.querySelectorAll(".ach-card"), function (c) {
-      c.addEventListener("click", function () { showDetail(c.getAttribute("data-id")); });
+      c.addEventListener("click", function () {
+        var id = c.getAttribute("data-id");
+        // 演示态：点哪件珍宝就点亮哪件（未解锁则就地解锁，再看详情）。
+        if (App.demo && App.demo.active === true && !store.achState(id).unlocked) {
+          store.demoUnlock(id);
+        }
+        showDetail(id);
+      });
     });
   }
 

@@ -137,8 +137,22 @@ img { display: block; max-width: 100%; }
 .demo-badge.active { display: inline-flex; }
 .demo-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--verm-light); animation: blink 1s infinite; }
 
-/* 演示模式高亮当前操作元素 */
+/* 演示模式高亮当前操作元素（仅用于按钮等操作目标，人物卡不加框） */
 .demo-focus { outline: 3px solid var(--gold) !important; outline-offset: 3px; box-shadow: 0 0 0 6px rgba(185,138,59,.25) !important; border-radius: var(--r-sm); transition: outline .2s, box-shadow .2s; }
+
+/* 演示模式：点击推进的提示条（用户点它，演示才切到下一步） */
+.demo-advance {
+  position: fixed; bottom: 54px; left: 50%; transform: translateX(-50%) translateY(8px);
+  z-index: 132; display: none; align-items: center; gap: 10px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(212,167,79,.96), rgba(154,111,34,.96));
+  color: #fff7e6; border: 1px solid var(--gold-light); border-radius: 999px;
+  padding: 10px 22px; font-size: 14px; letter-spacing: .1em; box-shadow: var(--shadow-md);
+  opacity: 0; transition: opacity .25s, transform .25s;
+}
+.demo-advance.show { display: inline-flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+.demo-advance .dtext { font-weight: 600; }
+.demo-advance .dcaret { animation: dnudge 1.1s ease-in-out infinite; }
+@keyframes dnudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 
 /* ---------- 通用工具类 ---------- */
 .hidden { display: none !important; }

@@ -55,7 +55,7 @@
         (t.knowledgeRefs && t.knowledgeRefs.length ? '<div class="muted" style="font-size:12px">参考「' + t.knowledgeRefs.map(ui.esc).join('、') + '」</div>' : '') +
         '<div class="pi-btns" style="margin-top:8px;display:flex;gap:8px">' +
           '<button class="btn go" data-scene="' + t.scene + '" style="padding:6px 12px">前往场景 ▸</button>' +
-          '<button class="btn btn-gold done" data-task="' + t.id + '" style="padding:6px 12px">呈报办结 ✓</button>' +
+          '<button class="btn btn-gold done" data-task="' + t.id + '" style="padding:6px 12px">盖印办结 ✓</button>' +
         '</div></div>';
     }).join("");
     Array.prototype.forEach.call(body.querySelectorAll(".go"), function (b) {
@@ -66,8 +66,15 @@
     });
     Array.prototype.forEach.call(body.querySelectorAll(".done"), function (b) {
       b.addEventListener("click", function () {
+        // 起点取盖印按钮当刻的真实坐标（奏折匣列表位置同样不固定）
+        var fromPoint = App.coinfly ? App.coinfly.pointFrom(b) : null;
+        var goldBefore = store.get().gold;
         store.completeMapTask(b.getAttribute("data-task"));
         render();
+        if (App.coinfly && fromPoint) {
+          var gained = store.get().gold - goldBefore;
+          if (gained > 0) App.coinfly.play(fromPoint, gained, { endVal: store.get().gold });
+        }
       });
     });
   }

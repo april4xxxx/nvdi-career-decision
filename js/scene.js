@@ -37,6 +37,26 @@
     } else npcEl.style.display = "none";
 
     renderTasks(sc, st);
+    syncFolkMode(sc);
+  }
+
+  // 民间 · 市井偶遇：不再是点击才触发的任务，而是直接取代大臣立绘与对话框。
+  // 进入民间即与一位尚未遇见的市井之人照面；可将其一席话「收入藏书阁·治国之策」，或再遇下一人。
+  var folkStageEl;
+
+  function folkStage() {
+    if (!folkStageEl) folkStageEl = ui.$("#folkStage");
+    return folkStageEl;
+  }
+
+  // 场景切换时，仅民间显示市井偶遇舞台，其余场景隐藏并复原大臣对话框。
+  function syncFolkMode(sc) {
+    var stage = ui.$("#stage");
+    var isFolk = !!sc && sc.id === "folk";
+    if (stage) stage.classList.toggle("folk-mode", isFolk);
+    var host = folkStage();
+    if (host) { host.innerHTML = ""; host.style.display = "none"; }
+    if (isFolk) App.folkEncounter && App.folkEncounter.render();
   }
 
   // 场景内的地图任务：每桩一张卡，铺任务底图（模块 03 需求）
@@ -47,14 +67,19 @@
     var cat = data.catByScene(sc.id) || { color: "var(--gold)", label: "" };
     fieldEl.innerHTML = tasks.map(function (t, i) {
       var isDailyMystic = !!t.isDailyMystic;
-      var canReroll = isDailyMystic && !t.done && st.dailyMystic && st.dailyMystic.taskId === t.id && st.dailyMystic.rerollsUsed < 1;
+      var rerollCap = store.dailyRerollCap ? store.dailyRerollCap() : 1;
+      var canReroll = isDailyMystic && !t.done && st.dailyMystic && st.dailyMystic.taskId === t.id && st.dailyMystic.rerollsUsed < rerollCap;
       // 结算行（v5 定稿）：金币胶囊独立在前，精力/时长成组在后
+      // 名臣加成即时预览（§10.3.5）：招募后普通任务卡的金币/精力预估按有效值刷新
+      var eff = effectiveTaskValues(t);
+      var goldChanged = !t.restore && eff.gold !== (t.gold || 0);
+      var energyChanged = !t.restore && eff.energy !== Math.abs(t.energy || 0);
       var stats =
-        (t.restore ? '' : '<span class="tc-reward"><svg class="tc-ic"><use href="#ic-coin"/></svg>' + t.gold + '</span>') +
+        (t.restore ? '' : '<span class="tc-reward' + (goldChanged ? ' tc-buffed' : '') + '"><svg class="tc-ic"><use href="#ic-coin"/></svg>' + eff.gold + '</span>') +
         '<div class="tc-stats">' +
         (t.restore
           ? '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy-rest"/></svg>+' + t.restore + '</span>'
-          : '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-energy"/></svg>' + Math.abs(t.energy) + '</span>') +
+          : '<span class="tc-stat' + (energyChanged ? ' tc-buffed' : '') + '"><svg class="tc-ic"><use href="#ic-energy"/></svg>' + eff.energy + '</span>') +
         '<span class="tc-stat"><svg class="tc-ic"><use href="#ic-time"/></svg>' + (t.durationMinutes || 30) + '<span class="u">分</span></span>' +
         '</div>';
       // 竖向操作钮
@@ -62,7 +87,7 @@
         ? '<span class="tc-cta" aria-hidden="true">已办</span>'
         : (canReroll
             ? '<span class="tc-reroll" role="button" tabindex="0" aria-label="免费换一签">换一签</span>'
-            : '<span class="tc-cta">呈报</span>');
+            : '<span class="tc-cta">盖印</span>');
       return '<button class="task-card' + (t.done ? " done" : "") + (isDailyMystic ? " mystic-daily" : "") + '" data-task="' + t.id + '"' +
         ' style="--c:' + cat.color + ';animation-delay:' + (i * 70) + 'ms">' +
         '<span class="tc-img"><img src="' + ui.esc(t.bg) + '" alt="" onerror="this.style.display=\'none\'" /></span>' +
@@ -96,7 +121,7 @@
         var id = btn.getAttribute("data-task");
         var task = store.tasksForScene(sc.id).filter(function (x) { return x.id === id; })[0];
         if (!task || task.done) return;
-        confirmComplete(task);
+        confirmComplete(task, btn);
       });
     });
   }
@@ -173,7 +198,7 @@
           '<span class="tc-titrow"><span class="tc-dot"></span><span class="tc-title">' + ui.esc(template.title) + '</span></span>' +
           foot +
         '</span>' +
-        '<span class="tc-cta">' + ui.esc(template.cta || "呈报") + '</span>' +
+        '<span class="tc-cta">' + ui.esc(template.cta || "盖印") + '</span>' +
       '</button>';
     fieldEl.querySelector(".task-template-card").addEventListener("click", function () {
       if (App.conversation) App.conversation.expand();
@@ -181,7 +206,7 @@
   }
 
   // 呈报完成：轻确认 → 结算
-  function confirmComplete(task) {
+  function confirmComplete(task, cardEl) {
     var settlement = task.restore
       ? '<div class="tcf-stat"><span>恢复精力</span><strong>+' + task.restore + '</strong></div>' +
         '<span class="tcf-divider" aria-hidden="true"></span>' +
@@ -192,19 +217,28 @@
     ui.openModal(
       '<div class="task-confirm" role="alertdialog" aria-labelledby="taskConfirmTitle" aria-describedby="taskConfirmNote">' +
       '<div class="tcf-kicker">' + (task.isDailyMystic ? '天 象 奏 报' : '任 务 奏 报') + '</div>' +
-      '<h3 id="taskConfirmTitle">呈报此任务已办结？</h3>' +
+      '<h3 id="taskConfirmTitle">盖印呈递此任务已办结？</h3>' +
       '<div class="tcf-task"><span>' + (task.isDailyMystic ? '微探索' : '待办') + '</span><strong>' + ui.esc(task.title) + '</strong></div>' +
       '<div class="tcf-settlement" aria-label="办结结算">' + settlement + '</div>' +
       '<p class="tcf-note" id="taskConfirmNote">确认后将立即结算，并将任务标记为已办。</p>' +
       '<div class="tcf-btns">' +
         '<button class="btn btn-ghost" id="tcfCancel">稍后再报</button>' +
-        '<button class="btn btn-gold" id="tcfOk">呈报办结</button>' +
+        '<button class="btn btn-gold" id="tcfOk">盖印办结</button>' +
       '</div></div>'
     , "task-confirm-modal");
     ui.$("#tcfCancel").onclick = ui.closeModal;
     ui.$("#tcfOk").onclick = function () {
+      // 金币飞入起点：盖印当刻现取被点中卡片的真实坐标（任务卡位置不固定，不能写死）。
+      // 卡片此刻仍在弹层背后的场景里，rect 有效。
+      var fromPoint = null;
+      if (App.coinfly && cardEl) fromPoint = App.coinfly.pointFrom(cardEl);
+      var goldBefore = store.get().gold;
       store.completeMapTask(task.id);
       ui.closeModal();
+      if (App.coinfly && fromPoint) {
+        var gained = store.get().gold - goldBefore;
+        if (gained > 0) App.coinfly.play(fromPoint, gained, { endVal: store.get().gold });
+      }
     };
     ui.$("#tcfCancel").focus();
   }
@@ -236,7 +270,7 @@
   function init() {
     bgEl = ui.$("#sceneBg");
     headEl = ui.$("#sceneHead");
-    fieldEl = ui.$("#taskField");
+    fieldEl = ui.$("#taskFieldInner");
     npcEl = ui.$("#npcPortrait");
     render();
     // 任务投放/完成 → 刷新当前场景任务卡
@@ -245,6 +279,16 @@
       renderTasks(data.sceneById(st.scene), st);
     });
     store.on("scene", render);
+    // 招募名臣 → 加成即时生效：刷新偶遇卡按钮态 + 当前场景任务卡（精力/金币预估按有效值刷新）
+    store.on("legend-recruited", function () {
+      var st = store.get();
+      if (App.folkEncounter && st.scene === "folk") App.folkEncounter.render();
+      renderTasks(data.sceneById(st.scene), st);
+    });
+    store.on("buff-activated", function () {
+      var st = store.get();
+      renderTasks(data.sceneById(st.scene), st);
+    });
   }
 
   App.scene = { init: init, render: render };

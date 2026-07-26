@@ -54,6 +54,29 @@
     if (e.target === ui.$("#overlay")) ui.closeModal();
   });
 
+  // 汇报态：进入 app 后按 URL 的 ?demo=<key> 直接落到对应模块，保持完全可交互（不自动播放）。
+  if (window.APP_DEMO) {
+    // 报告卡的 key → nvdi 场景 / 模式
+    var SCENE_MAP = {
+      decision: { scene: "court" },
+      tasks:    { scene: "court" },
+      library:  { scene: "library" },
+      treasury: { scene: "treasury" },
+      lingyan:  { scene: "lingyan" },
+      flow:     { scene: "court", mode: "flow" },
+      prophecy: { scene: "court", mode: "prophecy" }
+    };
+    var target = SCENE_MAP[window.APP_DEMO];
+    if (target) {
+      store.on("enterApp", function () {
+        setTimeout(function () {
+          if (App.nav && App.nav.goScene) App.nav.goScene(target.scene, { recordVisit: false });
+          if (target.mode && App.modes && App.modes.switchTo) App.modes.switchTo(target.mode);
+        }, 250);
+      });
+    }
+  }
+
   // 引导：有存档进 app，否则御前推演
   App.onboarding.boot();
 

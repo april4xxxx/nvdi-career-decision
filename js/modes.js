@@ -32,6 +32,8 @@
   // 只负责清理模式 UI；供模式之间切换时复用，不单独修改 store.mode。
   function exitOverlays() {
     stopTimer();
+    if (App.flowAudio) App.flowAudio.stop();
+    if (App.silverleaf) App.silverleaf.stop();
     if (flowVeil) flowVeil.classList.remove("active");
     if (prophVeil) prophVeil.classList.remove("active");
     if (App.prophecy && prophVeil) App.prophecy.close(prophVeil);
@@ -56,30 +58,84 @@
     return st.mapTasks.filter(function (t) { return !t.done; })[0] || null;
   }
 
+  var currentTask = "";
+
   function openFlow() {
     var mins = 25;
     total = mins * 60; remain = total;
     var activeT = firstPending();
-    var taskName = activeT ? activeT.title : "静心批阅奏章";
-    flowVeil.innerHTML =
-      '<div class="ftitle">心 流 · 专 注</div>' +
-      '<div class="flow-ring">' +
-        '<svg width="240" height="240" viewBox="0 0 240 240">' +
-          '<defs><linearGradient id="flowGrad" x1="0" y1="0" x2="1" y2="1">' +
-          '<stop offset="0" stop-color="#6fa89a"/><stop offset="1" stop-color="#e7c985"/></linearGradient></defs>' +
-          '<circle class="track" cx="120" cy="120" r="110"/>' +
-          '<circle class="prog" id="flowProg" cx="120" cy="120" r="110" ' +
-            'stroke-dasharray="' + (2 * Math.PI * 110).toFixed(1) + '" stroke-dashoffset="0"/>' +
-        '</svg>' +
-        '<div class="time"><div class="tt" id="flowTime">25:00</div><div class="ss">专注中</div></div>' +
-      '</div>' +
-      '<div class="flow-task">当前专注：' + ui.esc(taskName) + '</div>' +
-      '<div class="flow-ctrl">' +
-        '<button class="btn btn-gold" id="flowStart">开始专注</button>' +
-        '<button class="btn btn-ghost" id="flowExit" style="color:#f7f2e6;border-color:rgba(255,255,255,.4)">退出</button>' +
-      '</div>';
+    currentTask = activeT ? activeT.title : "静心批阅奏章";
     flowVeil.classList.add("active");
+    if (App.flowAudio) App.flowAudio.start();   // 按当前场景播背景音
+    renderTeaLanding();   // 先进茶席落地态；饮下茶汤后再入沉浸态
+  }
+
+  // 茶席态：金色 UI 静置卡片 + 右侧半圆茶盏（内嵌银叶菊随水流实时预览，作页面蒙版）
+  function renderTeaLanding() {
+    flowVeil.classList.remove("flow-immersed");
+    flowVeil.classList.add("flow-tea");
+    flowVeil.innerHTML =
+      '<div class="flow-tea-scene">' +
+        '<div class="flow-tea-copy">' +
+          '<p class="flow-eyebrow">心流 · 茶席</p>' +
+          '<h1 class="flow-h1">静 心 一 盏</h1>' +
+          '<p class="flow-tea-desc">备下一盏银叶茶汤。<br>饮罢入席，静守二十五分钟深度专注。</p>' +
+          '<p class="flow-focus-label">当前专注</p>' +
+          '<div class="flow-task">' + ui.esc(currentTask) + '</div>' +
+          '<div class="flow-tea-clock" aria-label="专注时间">' +
+            '<span class="flow-clock-label">专注时间</span>' +
+            '<strong class="flow-clock-time" id="flowTime">25:00</strong>' +
+          '</div>' +
+          '<div class="flow-ctrl">' +
+            '<button class="btn btn-gold" id="flowStart">开始专注</button>' +
+            '<button class="btn btn-ghost" id="flowExit">退出</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="flow-tea-side">' +
+          '<button class="flow-teacup" id="flowTea" ' +
+            'aria-label="饮下这盏银叶茶汤，进入专注">' +
+            '<canvas class="flow-teacup-canvas" id="flowTeaCanvas" role="img" ' +
+              'aria-label="银叶菊在茶汤中随水流流动"></canvas>' +
+            '<span class="flow-teacup-shine"></span>' +
+          '</button>' +
+          '<div class="flow-teacup-cap">' +
+            '<span class="flow-teacup-title">一 盏 茶 汤</span>' +
+            '<span class="flow-teacup-hint">点击入席 ▸</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    if (App.silverleaf) App.silverleaf.start(ui.$("#flowTeaCanvas"));
+    updateFlow();   // 若已在计时，切回茶席时同步显示当前剩余
     ui.$("#flowStart").onclick = startTimer;
+    ui.$("#flowTea").onclick = enterImmersion;
+    ui.$("#flowExit").onclick = function () { switchTo("normal"); };
+  }
+
+  // 沉浸态：银叶菊随水流铺满全屏 + 居中金色专注计时
+  function enterImmersion() {
+    flowVeil.classList.remove("flow-tea");
+    flowVeil.classList.add("flow-immersed");
+    flowVeil.innerHTML =
+      '<canvas class="flow-water" id="flowWater" role="img" ' +
+        'aria-label="多枝银叶菊随水流经过画面，鼠标移动会拨动水流与附近花枝"></canvas>' +
+      // 时钟单独绝对居中，对齐水面漩涡中心
+      '<div class="flow-clock" aria-label="专注时间">' +
+        '<div>' +
+          '<span class="flow-clock-label">专注时间</span>' +
+          '<strong class="flow-clock-time" id="flowTime">25:00</strong>' +
+        '</div>' +
+      '</div>' +
+      // 任务与按钮排在时钟正下方
+      '<div class="flow-below">' +
+        '<p class="flow-focus-label">当前专注</p>' +
+        '<div class="flow-task">' + ui.esc(currentTask) + '</div>' +
+        '<div class="flow-ctrl">' +
+          '<button class="btn btn-ghost" id="flowExit">退出</button>' +
+        '</div>' +
+      '</div>';
+    if (App.silverleaf) App.silverleaf.start(ui.$("#flowWater"));
+    updateFlow();                     // 沿用茶席起的表，接着显示当前剩余
+    if (!timer) startTimer();         // 兜底：若在茶席未点开始就入席，则此刻起表
     ui.$("#flowExit").onclick = function () { switchTo("normal"); };
   }
 
@@ -87,9 +143,6 @@
     var mm = String(Math.floor(remain / 60)).padStart(2, "0");
     var ss = String(remain % 60).padStart(2, "0");
     var tEl = ui.$("#flowTime"); if (tEl) tEl.textContent = mm + ":" + ss;
-    var circ = 2 * Math.PI * 110;
-    var prog = ui.$("#flowProg");
-    if (prog) prog.setAttribute("stroke-dashoffset", (circ * (1 - remain / total)).toFixed(1));
   }
 
   function startTimer() {
@@ -157,6 +210,6 @@
     isOverlayActive: isOverlayActive,
     openFlow: openFlow, openProphecy: openProphecy,
     setDemoSpeed: function (v) { demoSpeed = v; },
-    _startTimer: startTimer
+    _startTimer: startTimer, _stopTimer: stopTimer, _renderTea: renderTeaLanding
   };
 })();

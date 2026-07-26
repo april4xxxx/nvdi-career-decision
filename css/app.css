@@ -117,7 +117,7 @@
 .sidebar::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 40px; height: 190px;
   background: url("../assets/svg图标/装饰svg/古风祥云云朵42.svg") no-repeat center bottom;
-  background-size: 92% auto; opacity: .08; pointer-events: none; z-index: 0;
+  background-size: 92% auto; opacity: .22; pointer-events: none; z-index: 0;
 }
 .sb-collapsed .sidebar::after, .sb-collapsed.sidebar::after { display: none; }
 .sidebar .sb-inner { position: relative; z-index: 1; }
@@ -150,11 +150,15 @@
 
 /* ===== 场景任务卡（纸黄底 + 分类色书脊 + 4:3 视觉 + 竖向呈报） ===== */
 .task-field {
-  position: relative; z-index: 3; margin: 14px 16px 0;
-  display: flex; gap: 14px; flex-wrap: wrap; align-content: flex-start;
-  max-width: min(820px, calc(100% - 40px));
+  position: relative; z-index: 3;
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
   overscroll-behavior: contain; scrollbar-gutter: stable;
+}
+/* 内层承载卡片布局并限宽；滚动条留给外层全宽容器，因此始终贴最右侧 */
+.task-field-inner {
+  margin: 14px 16px 0;
+  display: flex; gap: 14px; flex-wrap: wrap; align-content: flex-start;
+  max-width: min(820px, calc(100% - 40px));
 }
 
 /* 卡片：宽度随内容收紧，不撑满 */
@@ -301,6 +305,98 @@
 .task-confirm .tcf-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 17px; }
 .task-confirm .tcf-btns .btn { min-height: 42px; min-width: 112px; }
 
+/* ---- 民间 · 市井偶遇舞台（取代大臣立绘与对话框，直接在舞台内呈现照面者） ---- */
+/* 民间模式：隐去大臣立绘与对话框，让市井偶遇舞台独占下方 */
+.stage.folk-mode .npc-portrait { display: none !important; }
+.stage.folk-mode #convo { display: none !important; }
+.stage.folk-mode #drawerTab { display: none !important; }
+
+.folk-stage {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  pointer-events: none;
+}
+/* 立绘悬于右侧，占位与大臣立绘一致（右 3% / 贴底 / 高 74%，压在对话框之上） */
+.folk-stage .fe-portrait {
+  position: absolute; right: 3%; bottom: 0; z-index: 3; height: 74%; max-height: none;
+  object-fit: contain; filter: drop-shadow(-8px 0 20px rgba(0,0,0,.35));
+  pointer-events: none; animation: riseIn .6s ease;
+}
+.folk-stage .fe-portrait-legend { filter: drop-shadow(-8px 0 24px rgba(150,110,30,.5)); }
+/* 偶遇卡（PRD §7/§9.1）：占满底部一条，与原对话框同宽 */
+.folk-stage .fe-card {
+  position: relative; z-index: 2; pointer-events: auto;
+  width: auto; margin: auto 18px 16px;
+  padding: 12px 18px 14px; border-radius: var(--r-md);
+  background: linear-gradient(180deg, rgba(247,242,230,.86), rgba(240,231,211,.8));
+  border: 1px solid var(--gold); box-shadow: var(--shadow-md); backdrop-filter: blur(12px);
+  animation: riseIn .4s ease;
+}
+.folk-stage .fe-card.fe-empty { text-align: center; }
+.folk-stage .fe-body { position: relative; z-index: 2; max-width: min(74%, 760px); }
+.folk-stage .fe-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.folk-stage .fe-kicker { color: var(--gold-deep); font-size: 10px; font-weight: 700; letter-spacing: .18em; opacity: .8; }
+.folk-stage .fe-kicker-legend { color: #a5761f; }
+.folk-stage .fe-new {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; color: #1f2830;
+  background: linear-gradient(180deg, #f4d79a, #d9a94e); border-radius: 999px; padding: 2px 9px;
+}
+.folk-stage .fe-name {
+  font-size: 13px; font-weight: 400; letter-spacing: .06em; margin: 2px 0 6px;
+  color: var(--ink-mute); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.folk-stage .fe-name .fe-title { font-size: 11px; font-weight: 400; color: var(--gold-deep); letter-spacing: .1em; }
+.folk-stage .fe-text {
+  margin: 6px 0 0; position: relative;
+  font-size: 18px; line-height: 1.7; letter-spacing: .02em; color: var(--ink);
+  padding: 14px 16px; border-radius: var(--r-sm);
+  background: linear-gradient(180deg, rgba(185,138,59,.12), rgba(185,138,59,.05));
+  border: 1px solid rgba(185,138,59,.32); border-left: 3px solid var(--gold);
+}
+.folk-stage .fe-kind-poem { font-family: "Noto Serif SC", serif; font-size: 19px; }
+.folk-stage .fe-source { margin-top: 10px; font-size: 11px; line-height: 1.6; letter-spacing: .02em; }
+.folk-stage .fe-src-tag {
+  display: inline-block; margin-right: 8px; font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  color: #1f2830; background: linear-gradient(180deg, #f4d79a, #d9a94e); border-radius: 999px; padding: 2px 9px;
+}
+.folk-stage .fe-src-text { color: var(--ink-mute); }
+.folk-stage .fe-src-link { color: var(--gold-deep); text-decoration: underline; word-break: break-word; }
+.folk-stage .fe-skill {
+  margin-top: 11px; padding: 10px 13px; border-radius: var(--r-sm);
+  background: linear-gradient(180deg, rgba(165,118,31,.14), rgba(165,118,31,.05));
+  border: 1px solid rgba(165,118,31,.34);
+}
+.folk-stage .fe-skill-tag {
+  display: inline-block; margin-right: 8px; font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  color: #1f2830; background: linear-gradient(180deg, #f4d79a, #d9a94e); border-radius: 999px; padding: 2px 9px;
+}
+.folk-stage .fe-skill-name { font-weight: 700; color: #8a5f18; letter-spacing: .06em; }
+.folk-stage .fe-skill-desc { display: block; margin-top: 5px; font-size: 12px; line-height: 1.6; color: var(--ink); }
+.folk-stage .fe-btns { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.folk-stage .fe-btns .btn { min-height: 44px; min-width: 112px; }
+.folk-stage .fe-empty-line { font-size: 13px; line-height: 1.75; color: var(--ink); margin: 8px 0 0; }
+
+/* 收书 / 招募成功弹窗 */
+.modal.fe-success .fe-modal { text-align: center; padding: 4px 2px; }
+.fe-modal-title { font-size: 20px; letter-spacing: .1em; color: var(--gold-deep); margin: 0 0 10px; }
+.fe-modal-body { font-size: 14px; line-height: 1.7; color: var(--ink); margin: 0 0 14px; }
+.fe-modal-skill {
+  text-align: left; margin: 0 0 16px; padding: 12px 14px; border-radius: var(--r-sm);
+  background: linear-gradient(180deg, rgba(165,118,31,.14), rgba(165,118,31,.05));
+  border: 1px solid rgba(165,118,31,.34);
+}
+.fe-modal-skill-head { font-weight: 700; color: #8a5f18; letter-spacing: .06em; margin-bottom: 5px; }
+.fe-modal-skill-desc { font-size: 12px; line-height: 1.6; color: var(--ink); }
+.fe-modal-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.fe-modal-btns .btn { min-height: 44px; min-width: 120px; }
+/* 任务卡加成生效标记（金币/精力预估被名臣加成改写） */
+.task-card .tc-buffed { color: #a5761f; font-weight: 700; }
+
+@media (max-width: 480px) {
+  .folk-stage .fe-body { max-width: 100%; }
+  .folk-stage .fe-portrait { opacity: .3; height: 56%; }
+}
+
 /* NPC 立绘 */
 .npc-portrait {
   position: absolute; right: 3%; bottom: 0; z-index: 2; height: 74%;
@@ -319,9 +415,9 @@
 .convo.expanded {
   max-height: 78%; min-height: 0;
   margin: auto 18px 16px; padding: 12px 14px;
-  background: linear-gradient(180deg, rgba(247,242,230,.97), rgba(240,231,211,.95));
+  background: linear-gradient(180deg, rgba(247,242,230,.8), rgba(240,231,211,.76));
   border: 1px solid var(--gold); border-radius: var(--r-md);
-  box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-md); backdrop-filter: blur(12px);
 }
 .convo.expanded .convo-top { display: flex; flex: 0 0 auto; }
 .convo.expanded .convo-scroll {
@@ -411,9 +507,9 @@
 /* ===== 底部 GAL 对话框（金色细线 + 淡金白渐变 + 半透明） ===== */
 .gal-box {
   position: relative; border: 1px solid var(--gold);
-  background: linear-gradient(180deg, rgba(255,253,247,.92), rgba(247,242,230,.9));
+  background: linear-gradient(180deg, rgba(255,253,247,.72), rgba(247,242,230,.66));
   border-radius: var(--r-md); padding: 9px 18px; box-shadow: var(--shadow-md);
-  backdrop-filter: blur(6px); min-height: 54px;
+  backdrop-filter: blur(12px); min-height: 54px;
 }
 .gal-box .gal-name {
   position: absolute; top: -13px; left: 16px;
@@ -440,24 +536,26 @@
 
 /* ===== 常驻输入区（整段对话保持可用） ===== */
 .convo-input {
-  display: flex; gap: 10px; align-items: center; margin-top: 10px;
+  display: flex; gap: 10px; align-items: stretch; margin-top: 10px;
 }
-.convo-input input {
-  flex: 1; min-width: 0; padding: 13px 18px; border-radius: 999px; font-size: 15px;
+.convo-input textarea {
+  flex: 1; min-width: 0; padding: 11px 18px; border-radius: 18px; font-size: 15px;
+  line-height: 1.5; height: calc(1.5em * 2 + 22px); min-height: calc(1.5em * 2 + 22px);
+  resize: none; overflow-y: auto; font-family: inherit;
   background: rgba(255,255,255,.94); border: 1px solid var(--gold);
   box-shadow: inset 0 1px 3px rgba(0,0,0,.06); color: var(--ink);
 }
-.convo-input input:focus { outline: none; border-color: var(--gold-deep); box-shadow: 0 0 0 3px rgba(185,138,59,.18); }
-.convo-input input::placeholder { color: var(--ink-mute); }
+.convo-input textarea:focus { outline: none; border-color: var(--gold-deep); box-shadow: 0 0 0 3px rgba(185,138,59,.18); }
+.convo-input textarea::placeholder { color: var(--ink-mute); }
 /* 主按钮：常态「探讨国事」红边白底；决策态变「同意」印章 */
 .ci-send {
-  flex: none; padding: 13px 22px; border-radius: 999px; font-size: 15px; font-weight: 700;
+  flex: none; padding: 0 22px; border-radius: 18px; font-size: 15px; font-weight: 700;
   letter-spacing: .08em; color: var(--verm); background: #fff; border: 1.5px solid var(--verm);
   transition: all .16s; white-space: nowrap;
 }
 .ci-send:hover { background: var(--verm); color: #fff; }
 .ci-send.stamp {
-  color: #fff; border-color: #7d2b22; letter-spacing: .28em; padding: 13px 26px;
+  color: #fff; border-color: #7d2b22; letter-spacing: .28em; padding: 0 26px;
   background: radial-gradient(circle at 50% 42%, var(--verm-light), var(--verm) 70%);
   box-shadow: 0 2px 10px rgba(167,71,60,.5), inset 0 0 0 2px rgba(255,255,255,.35);
   font-family: var(--serif); animation: stampIn .3s ease;
@@ -592,7 +690,8 @@
 /* 浏览器高倍放大后，优先保留对话与输入入口。 */
 @media (max-height: 400px) {
   .scene-head { display: none; }
-  .task-field { margin-top: 8px; flex: 0 0 auto; overflow-y: auto; }
+  .task-field { flex: 0 0 auto; overflow-y: auto; }
+  .task-field-inner { margin-top: 8px; }
   .task-card .tc-img, .task-template-card .tc-img { width: 118px; height: 88px; }
   .task-card .tc-title, .task-template-card .tc-title { font-size: 16px; }
   .task-template-card .tc-meta {
@@ -619,24 +718,174 @@
 }
 
 /* ================= 模式：心流 / 预言 ================= */
-/* 心流专注遮罩 */
+/* 心流专注遮罩 —— 两态：茶席落地态 → 银叶菊随水流沉浸态 */
 .flow-veil {
   position: absolute; inset: 0; z-index: 70; display: none;
-  background: radial-gradient(circle at 50% 40%, rgba(40,60,56,.82), rgba(18,22,27,.96));
-  backdrop-filter: blur(4px); color: var(--paper);
-  flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  isolation: isolate; overflow: hidden;
+  font-family: "Noto Serif SC","Songti SC",STSong,serif;
 }
-.flow-veil.active { display: flex; animation: fadeIn .4s ease; }
-.flow-veil .ftitle { letter-spacing: .3em; color: var(--jade-light); font-size: 15px; }
-.flow-ring { position: relative; width: 240px; height: 240px; }
-.flow-ring svg { transform: rotate(-90deg); }
-.flow-ring .track { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 10; }
-.flow-ring .prog { fill: none; stroke: url(#flowGrad); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
-.flow-ring .time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.flow-ring .time .tt { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.flow-ring .time .ss { font-size: 13px; color: var(--jade-light); letter-spacing: .2em; }
-.flow-task { font-size: 16px; max-width: 460px; text-align: center; line-height: 1.7; color: rgba(247,242,230,.85); }
-.flow-ctrl { display: flex; gap: 12px; }
+.flow-veil.active { display: block; animation: fadeIn .4s ease; }
+/* 心流开启时，舞台只留场景图与人物立绘作背景，隐去任务卡/对话/奏折等信息层 */
+.stage:has(.flow-veil.active) .scene-head,
+.stage:has(.flow-veil.active) .task-field,
+.stage:has(.flow-veil.active) .convo,
+.stage:has(.flow-veil.active) .drawer-tab,
+.stage:has(.flow-veil.active) .drawer { display: none !important; }
+/* 茶席态：暖金纸底透出场景 / 沉浸态：不透明浅灰底，遮住背后场景 */
+.flow-veil.flow-tea { background: linear-gradient(135deg, rgba(30,24,16,.62), rgba(18,22,20,.5)); color: var(--paper); }
+.flow-veil.flow-immersed { background: #d7dad3; color: #394943; }
+
+/* ---------- 心流背景音 · 音量组件（挂 body，常驻于遮罩之上） ---------- */
+.flow-audio {
+  position: fixed; right: 22px; bottom: 22px; z-index: 120;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px 9px 10px;
+  background: rgba(20, 24, 22, .72);
+  border: 1px solid rgba(217, 183, 107, .34);
+  border-radius: 999px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, .34);
+  backdrop-filter: blur(8px);
+  color: #f5e8c9;
+  font-family: "Noto Sans SC", sans-serif;
+  animation: fadeIn .4s ease;
+}
+.flow-audio .fa-toggle {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(217, 183, 107, .16);
+  border: 1px solid rgba(217, 183, 107, .32);
+  cursor: pointer; font-size: 16px; line-height: 1;
+  transition: background .16s, transform .16s;
+}
+.flow-audio .fa-toggle:hover { background: rgba(217, 183, 107, .3); transform: translateY(-1px); }
+.flow-audio .fa-track { display: flex; flex-direction: column; gap: 4px; }
+.flow-audio .fa-name {
+  font-size: 11px; letter-spacing: .08em; color: rgba(247, 242, 230, .78);
+}
+.flow-audio .fa-range {
+  -webkit-appearance: none; appearance: none;
+  width: 128px; height: 4px; border-radius: 999px;
+  background: rgba(247, 242, 230, .26); outline: none; cursor: pointer;
+}
+.flow-audio .fa-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #f2d58d; border: 1px solid #a5762c;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .4);
+}
+.flow-audio .fa-range::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #f2d58d; border: 1px solid #a5762c;
+}
+
+/* ---------- 茶席落地态 ---------- */
+.flow-tea-scene {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 40px; padding: 6% 7% 6% 8%;
+}
+.flow-tea-copy { max-width: 440px; }
+.flow-veil .flow-eyebrow { margin: 0; color: var(--gold-light); font-size: 13px; letter-spacing: .22em; }
+.flow-veil .flow-h1 { margin: 12px 0 0; font-size: 46px; font-weight: 700; letter-spacing: .12em; color: var(--paper); text-shadow: 0 2px 14px rgba(0,0,0,.45); }
+.flow-tea-desc { margin: 16px 0 26px; font-size: 15px; line-height: 1.9; color: rgba(247,242,230,.82); max-width: 380px; }
+.flow-veil .flow-focus-label { margin: 0; color: var(--gold-light); font-size: 12px; letter-spacing: .12em; }
+.flow-veil .flow-task { margin: 8px 0 18px; font-size: 20px; line-height: 1.6; max-width: 380px; color: var(--paper); }
+.flow-veil .flow-task b { color: var(--gold-light); }
+/* 茶席态小计时：金框胶囊，横排「专注时间 25:00」 */
+.flow-tea-clock {
+  display: inline-flex; align-items: baseline; gap: 12px; margin-bottom: 22px;
+  padding: 10px 20px; border-radius: 999px;
+  border: 1px solid rgba(240,214,143,.5); background: rgba(0,0,0,.22);
+}
+.flow-tea-clock .flow-clock-label { color: rgba(247,242,230,.7); font-size: 12px; letter-spacing: .14em; }
+.flow-tea-clock .flow-clock-time { color: var(--gold-light); font-size: 30px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+.flow-veil .flow-ctrl { display: flex; gap: 12px; }
+.flow-veil .flow-ctrl .btn-ghost { color: var(--paper); border-color: rgba(240,214,143,.55); background: rgba(0,0,0,.15); }
+
+/* 半圆茶盏：内嵌银叶菊随水流实时画布，overflow 裁成盏形 */
+.flow-tea-side { display: flex; flex-direction: column; align-items: center; gap: 16px; flex: none; }
+.flow-teacup {
+  position: relative; width: 340px; height: 200px;
+  border-radius: 0 0 170px 170px / 0 0 190px 190px;
+  overflow: hidden; cursor: pointer; padding: 0;
+  border: 3px solid var(--gold);
+  border-top: 5px solid var(--gold-light);
+  background: #0f1512;
+  box-shadow: 0 22px 60px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,250,223,.28),
+    inset 0 10px 26px rgba(255,244,208,.14);
+  transition: transform .35s cubic-bezier(.2,.9,.3,1), box-shadow .35s;
+}
+.flow-teacup:hover { transform: translateY(-4px) scale(1.015); box-shadow: 0 30px 74px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,250,223,.4); }
+.flow-teacup:focus-visible { outline: 3px solid var(--gold-light); outline-offset: 4px; }
+.flow-teacup-canvas { display: block; width: 100%; height: 100%; }
+/* 盏面高光：茶汤表面的一层柔光 */
+.flow-teacup-shine {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120% 60% at 30% 0%, rgba(255,248,224,.34) 0%, rgba(255,248,224,0) 55%),
+    linear-gradient(180deg, rgba(255,250,223,.12) 0%, rgba(0,0,0,0) 24%);
+}
+/* 盏耳：右侧一个把手，强化"茶杯"意象 */
+.flow-teacup::after {
+  content: ""; position: absolute; right: -30px; top: 34px;
+  width: 52px; height: 84px; border: 5px solid var(--gold);
+  border-left-color: transparent; border-radius: 0 60% 60% 0;
+  box-shadow: inset 0 0 0 1px rgba(255,250,223,.25);
+}
+.flow-teacup-cap { text-align: center; }
+.flow-teacup-title { display: block; font-size: 22px; font-weight: 700; letter-spacing: .3em; color: var(--gold-light); text-shadow: 0 2px 10px rgba(0,0,0,.5); }
+.flow-teacup-hint { display: block; margin-top: 6px; font-size: 12px; letter-spacing: .14em; color: rgba(247,242,230,.7); }
+
+/* ---------- 沉浸态 ---------- */
+/* 环境层：水面/漩涡/花枝的实时画布，需接收鼠标事件 */
+.flow-veil .flow-water { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; cursor: default; }
+/* 时钟绝对居中，正对水面漩涡中心（vortex = 画布正中） */
+.flow-immersed .flow-clock {
+  position: absolute; z-index: 2; left: 50%; top: 50%;
+  transform: translate(-50%,-50%); pointer-events: none;
+}
+/* 任务与按钮排在时钟下方，水平居中；仅按钮放开鼠标 */
+.flow-immersed .flow-below {
+  position: absolute; z-index: 2; left: 50%; top: calc(50% + 118px);
+  transform: translateX(-50%); pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  text-align: center;
+}
+.flow-immersed .flow-focus-label { color: #68756f; letter-spacing: .04em; }
+.flow-immersed .flow-task { margin: -6px 0 2px; font-size: 19px; max-width: 360px; color: #394943; }
+.flow-immersed .flow-task b { color: #976c24; }
+.flow-immersed .flow-ctrl { pointer-events: auto; }
+.flow-immersed .flow-ctrl .btn-ghost { color: #4e452f; border-color: rgba(151,108,36,.5); }
+.flow-immersed .flow-ctrl .btn-ghost { color: #f2f4ec; border-color: rgba(240,214,143,.6); }
+/* 中心专注计时：浅金到沉金径向渐变的正圆，同心圈 */
+.flow-veil .flow-clock {
+  position: relative;
+  width: 154px; height: 154px;
+  display: grid; place-items: center; pointer-events: none;
+  border: 1px solid rgba(151,108,36,.74); border-radius: 50%;
+  background: radial-gradient(circle at 34% 27%, rgba(255,249,222,.96) 0%, rgba(239,207,125,.92) 54%, rgba(184,128,34,.9) 100%);
+  box-shadow: 0 12px 40px rgba(0,0,0,.32), inset 0 0 0 1px rgba(255,250,223,.7);
+  color: #4e452f; text-align: center; font-variant-numeric: tabular-nums;
+}
+.flow-veil .flow-clock::before,
+.flow-veil .flow-clock::after { position: absolute; content: ""; border-radius: 50%; pointer-events: none; }
+.flow-veil .flow-clock::before { inset: -14px; border: 1px solid rgba(240,214,143,.5); }
+.flow-veil .flow-clock::after { inset: 12px; border: 1px solid rgba(151,108,36,.38); }
+.flow-veil .flow-clock-label { display: block; margin-bottom: 6px; color: rgba(78,69,47,.76); font-size: 11px; letter-spacing: 0; }
+.flow-veil .flow-clock-time { display: block; font-size: 34px; font-weight: 400; line-height: 1; letter-spacing: 0; }
+@media (max-width: 860px) {
+  .flow-tea-scene { flex-direction: column; justify-content: center; text-align: center; gap: 28px; padding: 8% 6%; }
+  .flow-tea-copy { max-width: 460px; }
+  .flow-veil .flow-ctrl, .flow-tea-copy .flow-focus-label { justify-content: center; }
+  .flow-teacup { width: 280px; height: 168px; }
+}
+@media (max-width: 640px) {
+  .flow-veil .flow-h1 { font-size: 34px; }
+  .flow-immersed .flow-below { top: calc(50% + 96px); gap: 12px; }
+  .flow-immersed .flow-task { max-width: 240px; font-size: 15px; }
+  .flow-veil .flow-clock { width: 126px; height: 126px; }
+  .flow-veil .flow-clock-time { font-size: 28px; }
+}
 
 /* 预言模式 */
 .prophecy-veil {

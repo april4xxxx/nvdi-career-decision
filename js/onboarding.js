@@ -28,6 +28,7 @@
   }
   function closeModal() { $("#overlay").classList.remove("active"); }
   function achToast(def) {
+    if (!def || !data.CAT_META[def.cat]) return;   // 无 payload 的刷新型 emit 不弹 toast
     var layer = $("#achToastLayer");
     var el = document.createElement("div");
     el.className = "ach-toast";

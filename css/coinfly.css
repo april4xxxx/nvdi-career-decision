@@ -1,0 +1,47 @@
+/* =============================================================
+   coinfly.css —— 盖印结算金币飞入(方案 B:金光铜币 + 拖尾迸发)
+   由 js/coinfly.js 驱动;元素挂到 <body>,fixed 定位,层级压过一切
+   ============================================================= */
+
+/* 飞行铜币 */
+.fly-coin {
+  position: fixed; width: 26px; height: 26px; border-radius: 50%;
+  z-index: 200; pointer-events: none; left: 0; top: 0;
+  background: radial-gradient(circle at 35% 30%, #fbe9b8, #d9a94e 55%, #9a6f22);
+  border: 1px solid #7d5716;
+  box-shadow: 0 0 14px 3px rgba(233,201,133,.9), 0 2px 6px rgba(122,87,22,.5), inset 0 0 0 2px rgba(255,242,207,.7);
+  will-change: transform, opacity;
+}
+.fly-coin::after {
+  content: "₡"; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #7d5716; font-weight: 900;
+}
+
+/* 金光拖尾 */
+.fly-trail {
+  position: fixed; width: 20px; height: 20px; border-radius: 50%;
+  z-index: 199; pointer-events: none; left: 0; top: 0;
+  background: radial-gradient(circle, rgba(255,246,220,.85), rgba(231,201,133,.35), rgba(231,201,133,0));
+  will-change: transform, opacity;
+}
+
+/* 落框迸发的金光粒子 */
+.fly-spark {
+  position: fixed; width: 8px; height: 8px; border-radius: 50%;
+  z-index: 201; pointer-events: none; left: 0; top: 0;
+  background: radial-gradient(circle, #fff6dc, #e7c985 60%, rgba(231,201,133,0));
+  will-change: transform, opacity;
+}
+
+/* 金币框:入账时轻弹 + 泛金光(作用在顶栏 #goldRes 上) */
+#goldRes { transition: transform .18s ease; border-radius: 999px; }
+#goldRes.cf-bump { transform: scale(1.16); }
+#goldRes.cf-glow {
+  box-shadow: 0 0 22px 4px rgba(233,201,133,.75), 0 0 0 3px rgba(233,201,133,.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fly-coin, .fly-trail, .fly-spark { display: none !important; }
+  #goldRes.cf-bump { transform: none; }
+}

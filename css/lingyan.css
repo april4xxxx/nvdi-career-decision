@@ -48,7 +48,7 @@
 /* 立绘区（竖向 4:5） */
 .ly-grid .pc-art {
   position: relative; aspect-ratio: 4 / 5; overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #3a4650, #202932 70%);
+  background: #fdf6e3;
 }
 .ly-grid .pc-art img {
   position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
@@ -117,7 +117,7 @@
 
 /* 未解锁 / 未遇见 占位 */
 .ly-grid .pc.locked .pc-art img { filter: brightness(0) drop-shadow(0 10px 22px rgba(0, 0, 0, .5)); opacity: .5; }
-.ly-grid .pc.locked .pc-art { background: radial-gradient(circle at 50% 34%, #333b44, #1a2129 72%); }
+.ly-grid .pc.locked .pc-art { background: #fdf6e3; }
 .ly-grid .pc-lock {
   position: absolute; z-index: 3; left: 50%; top: 42%; transform: translate(-50%, -50%);
   width: 52px; height: 52px; border-radius: 50%;
@@ -131,6 +131,19 @@
   margin-top: auto; font-size: 11px; letter-spacing: .04em; line-height: 1.6;
   color: var(--gold-light); background: rgba(185, 138, 59, .1);
   border-top: 1px dashed rgba(185, 138, 59, .4); padding: 10px 16px 12px;
+}
+
+/* 同僚 / 亲近之人 · 空态占位（陛下所提及之人，会被记录在案） */
+.ly-empty {
+  display: flex; align-items: center; gap: 14px;
+  padding: 22px 24px; border-radius: 14px;
+  border: 1px dashed rgba(185, 138, 59, .35);
+  background: rgba(247, 242, 230, .035);
+}
+.ly-empty .lye-ic { font-size: 24px; opacity: .7; flex: none; }
+.ly-empty .lye-line {
+  font-size: 13px; line-height: 1.7; letter-spacing: .03em;
+  color: rgba(247, 242, 230, .6);
 }
 
 /* 名臣异士 · 增益技能块（替代底部关联待办条） */

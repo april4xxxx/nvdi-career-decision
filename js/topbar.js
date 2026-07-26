@@ -34,9 +34,9 @@
           '<div class="' + ecls + '"><div class="fill" style="width:' + epct + '%"></div></div>' +
           '<span class="val">' + st.energy + '</span><span class="muted" style="font-size:12px">/' + st.energyCap + '</span>' +
         '</div>' +
-        '<div class="res-item" title="金币">' +
+        '<div class="res-item" id="goldRes" title="金币">' +
           '<img src="' + data.ASSET_BASE + 'svg图标/金币.svg" alt="金币" onerror="this.style.display=\'none\'" />' +
-          '<span class="val">' + st.gold + '</span>' +
+          '<span class="val" id="goldVal">' + st.gold + '</span>' +
         '</div>' +
         '<div class="day-chip">' + store.today() + '</div>' +
       '</div>';

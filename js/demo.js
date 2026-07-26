@@ -38,6 +38,55 @@
     setTimeout(function () { el.classList.remove("demo-focus"); }, DEMO_PACE.focus + 400);
   }
 
+  // 点击推进：亮出「点击继续」提示条，等用户点击（或点提示条本身）再 resolve。
+  // 取消演示时立即 resolve，交由 guard() 抛出中断。
+  var advanceEl;
+  function waitClick(label) {
+    return new Promise(function (resolve) {
+      if (cancelFlag) return resolve();
+      if (!advanceEl) advanceEl = ui.$("#demoAdvance");
+      var textEl = advanceEl && advanceEl.querySelector(".dtext");
+      if (textEl) textEl.textContent = label || "点击继续";
+      var done = false;
+      function finish() {
+        if (done) return; done = true;
+        if (advanceEl) { advanceEl.classList.remove("show"); advanceEl.onclick = null; }
+        document.removeEventListener("click", onDoc, true);
+        clearInterval(poll);
+        resolve();
+      }
+      function onDoc() { finish(); }
+      // 稍作延迟再挂监听，避免把触发本步的那次点击也算进来
+      setTimeout(function () {
+        if (cancelFlag) return finish();
+        if (advanceEl) { advanceEl.classList.add("show"); advanceEl.onclick = finish; }
+        document.addEventListener("click", onDoc, true);
+      }, 260);
+      // 若演示被从别处停止，及时收尾
+      var poll = setInterval(function () { if (cancelFlag) finish(); }, 200);
+    });
+  }
+
+  // 退出推进：只挂「退出」按钮自身的点击，不监听全局点击。
+  // 用户点画面里的成就卡时不会误触退出，只有点这枚按钮（或演示被停止）才 resolve。
+  function waitExit(label) {
+    return new Promise(function (resolve) {
+      if (cancelFlag) return resolve();
+      if (!advanceEl) advanceEl = ui.$("#demoAdvance");
+      var textEl = advanceEl && advanceEl.querySelector(".dtext");
+      if (textEl) textEl.textContent = label || "退出演示";
+      var done = false;
+      function finish() {
+        if (done) return; done = true;
+        if (advanceEl) { advanceEl.classList.remove("show"); advanceEl.onclick = null; }
+        clearInterval(poll);
+        resolve();
+      }
+      if (advanceEl) { advanceEl.classList.add("show"); advanceEl.onclick = finish; }
+      var poll = setInterval(function () { if (cancelFlag) finish(); }, 200);
+    });
+  }
+
   /* ---------- 演示条目 ---------- */
   var ITEMS = [
     { key: "guide", label: "新手引导", desc: "重新体验：认识辅臣→提出问题→看懂奏折→朱批→生成行动" },
@@ -48,7 +97,7 @@
     { key: "prophecy", label: "预言推演", desc: "查看未来七天天象与长期功绩史卷" },
     { key: "library", label: "藏书阁", desc: "浏览主线里程碑、起居注，并上传一卷典籍" },
     { key: "treasury", label: "珍宝阁成就", desc: "看看你的每一次决策与坚持，如何化作一件件可收藏的珍宝" },
-    { key: "lingyan", label: "凌烟阁人物", desc: "浏览演示人物、关系推测与关联待办" }
+    { key: "lingyan", label: "凌烟阁人物", desc: "决策生成人物入阁→民间偶遇银叶菊仙并招募→听夸赞→采纳闲谈入藏书阁" }
   ];
 
   function openMenu() {
@@ -75,6 +124,8 @@
 
   function stopDemo() {
     cancelFlag = true; running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
+    if (!advanceEl) advanceEl = ui.$("#demoAdvance");
+    if (advanceEl) { advanceEl.classList.remove("show"); advanceEl.onclick = null; }
     if (store.finalizeDemoTasks) store.finalizeDemoTasks();
   }
 
@@ -98,6 +149,8 @@
       else if (key === "lingyan") await demoLingyan();
     } catch (e) { console.warn("[demo] interrupted", e); }
     running = false; App.demo.active = false; setBadge(false); App.modes.setDemoSpeed(false);
+    if (!advanceEl) advanceEl = ui.$("#demoAdvance");
+    if (advanceEl) { advanceEl.classList.remove("show"); advanceEl.onclick = null; }
     if (store.finalizeDemoTasks) store.finalizeDemoTasks();
   }
   function guard() { if (cancelFlag) throw new Error("cancelled"); }
@@ -163,14 +216,21 @@
   async function demoFlow() {
     App.modes.setDemoSpeed(true);
     App.modes.switchTo("flow"); App.topbar.render();
-    await sleep(DEMO_PACE.scene); guard();
+    await sleep(DEMO_PACE.window); guard();
+    // 茶席态：先在此处点「开始专注」起表（demoSpeed 下加速）
     flash("#flowStart");
     var start = ui.$("#flowStart"); if (start) start.click();
-    // 加速跑完（demoSpeed 下约数秒）
-    await sleep(6500); guard();
+    // 让观众看清茶席上的计时读秒
+    await sleep(DEMO_PACE.readMedium); guard();
+    // 再点茶盏入席，进入全屏沉浸态，计时继续走
+    flash("#flowTea");
+    var tea = ui.$("#flowTea"); if (tea) tea.click();
+    // 沉浸态看水流铺满与漩涡中心的计时
+    await sleep(DEMO_PACE.readLong); guard();
     App.modes.setDemoSpeed(false);
-    var done = ui.$("#flowDone"); if (done) done.click();
-    await sleep(DEMO_PACE.window);
+    var done = ui.$("#flowDone");
+    if (done) { done.click(); await sleep(DEMO_PACE.window); }
+    else { App.modes._stopTimer(); }
   }
 
   async function demoProphecy() {
@@ -221,28 +281,162 @@
     ui.closeModal();
   }
 
+  // 演示点亮的成就同样需保护：非 URL 演示会落盘，先快照 achievements、结束（含中途取消）时还原。
+  function snapshotAchievements() {
+    return JSON.parse(JSON.stringify(store.get().achievements || {}));
+  }
+  function restoreAchievements(snap) {
+    if (!snap) return;
+    store.get().achievements = snap;
+    store.save();
+    store.emit("achievement");
+  }
+
   async function demoTreasury() {
+    var snap = window.APP_DEMO ? null : snapshotAchievements();
+    try {
+      await demoTreasuryBody();
+    } finally {
+      if (snap) restoreAchievements(snap);
+    }
+  }
+
+  async function demoTreasuryBody() {
     await sleep(DEMO_PACE.window); guard();
     App.nav.goScene("treasury", { recordVisit: false }); await sleep(DEMO_PACE.scene); guard();
-    // 切换筛选
-    var chips = document.querySelectorAll(".tr-chip");
-    if (chips[1]) { flash(chips[1]); chips[1].click(); }
-    await sleep(DEMO_PACE.readMedium); guard();
-    if (chips[0]) chips[0].click();
-    await sleep(DEMO_PACE.window); guard();
-    // 打开一个成就详情
-    App.treasury.showDetail("jade-full-cap-150");
-    await sleep(DEMO_PACE.readLong); guard();
-    ui.closeModal();
-    await sleep(DEMO_PACE.window);
+    // 不自动推进：停在珍宝阁，用户点哪件成就哪件就点亮（treasury 演示态点击即解锁），
+    // 不点、不退，画面保持不动。只有点「退出演示」按钮才收尾。
+    await waitExit("点亮想看的珍宝 · 退出演示");
+  }
+
+  // 侧栏菜单触发的演示仍会落盘（仅 URL ?demo= 免落盘），故凌烟阁演示改动的字段先快照、结束时还原，绝不污染真实存档
+  function snapshotLingyanState() {
+    var st = store.get();
+    var ft = store.folkTalk();
+    return {
+      npcs: JSON.parse(JSON.stringify(st.npcs || [])),
+      npcInteractions: JSON.parse(JSON.stringify(st.npcInteractions || [])),
+      npcTaskCardLinks: JSON.parse(JSON.stringify(st.npcTaskCardLinks || [])),
+      books: JSON.parse(JSON.stringify(st.books || [])),
+      journals: JSON.parse(JSON.stringify(st.journals || [])),
+      recruitedLegends: JSON.parse(JSON.stringify(ft.recruitedLegends || {})),
+      activeBuffs: JSON.parse(JSON.stringify(ft.activeBuffs || {})),
+      actionLedger: JSON.parse(JSON.stringify(ft.actionLedger || {})),
+      unlockedCommoners: JSON.parse(JSON.stringify(ft.unlockedCommoners || {})),
+      seenContentIds: JSON.parse(JSON.stringify(ft.seenContentIds || [])),
+      recentContentIds: JSON.parse(JSON.stringify(ft.recentContentIds || [])),
+      activeEncounter: null
+    };
+  }
+  function restoreLingyanState(snap) {
+    if (!snap) return;
+    var st = store.get();
+    var ft = store.folkTalk();
+    st.npcs = snap.npcs; st.npcInteractions = snap.npcInteractions; st.npcTaskCardLinks = snap.npcTaskCardLinks;
+    st.books = snap.books; st.journals = snap.journals;
+    ft.recruitedLegends = snap.recruitedLegends; ft.activeBuffs = snap.activeBuffs; ft.actionLedger = snap.actionLedger;
+    ft.unlockedCommoners = snap.unlockedCommoners; ft.seenContentIds = snap.seenContentIds; ft.recentContentIds = snap.recentContentIds;
+    ft.activeEncounter = null;
+    store.save();
+    store.emit("npc"); store.emit("folk"); store.emit("book");
+  }
+
+  // 硬编码一位「决策中新生成」的朝中同僚，令凌烟阁「朝中同僚」区有真实人物（幂等）
+  function seedDecisionNpc() {
+    var st = store.get();
+    st.npcs = Array.isArray(st.npcs) ? st.npcs : [];
+    if (st.npcs.some(function (n) { return n.id === "demo-npc-manager"; })) return;
+    var now = new Date().toISOString();
+    st.npcs.push({
+      id: "demo-npc-manager", cat: "work",
+      displayName: "林主管", title: "部门主管", aliases: ["直属上级"],
+      role: "manager", identityStatus: "confirmed", confidence: 0.9,
+      relationship: { stance: "neutral", stanceConfidence: 0.8 }, portrait: null,
+      createdAt: now, updatedAt: now
+    });
+    st.npcInteractions = Array.isArray(st.npcInteractions) ? st.npcInteractions : [];
+    st.npcTaskCardLinks = Array.isArray(st.npcTaskCardLinks) ? st.npcTaskCardLinks : [];
+    st.npcInteractions.push({ id: "demo-interaction-1", npcId: "demo-npc-manager", title: "与林主管敲定行业分享的排期", relation: "owner", createdAt: now });
+    st.npcTaskCardLinks.push({ id: "demo-link-1", npcId: "demo-npc-manager", interactionId: "demo-interaction-1", taskCardId: "demo-task-share", relation: "owner", createdAt: now });
+    store.emit("npc");
+  }
+
+  // 硬编码一场市井偶遇：直接写 activeEncounter，绕过随机抽取，再就地渲染
+  var demoEncSeq = 0;
+  function stageFolkEncounter(enc) {
+    if (store.get().scene !== "folk") App.nav.goScene("folk", { recordVisit: false });
+    var ft = store.folkTalk();
+    demoEncSeq++;
+    ft.activeEncounter = Object.assign({
+      encounterId: "demo-enc-" + demoEncSeq,
+      navigationToken: "demo-" + demoEncSeq,
+      fromScene: "court", status: "generated",
+      bookCollected: false, recruited: false,
+      isFirstMeetCommoner: true,
+      createdAt: new Date().toISOString()
+    }, enc);
+    if (App.folkEncounter) App.folkEncounter.render();
   }
 
   async function demoLingyan() {
+    // 非 URL 演示也会落盘，故先快照、结束（含中途取消）时还原，绝不污染真实存档
+    var snap = window.APP_DEMO ? null : snapshotLingyanState();
+    try {
+      await demoLingyanBody();
+    } finally {
+      if (snap) restoreLingyanState(snap);
+    }
+  }
+
+  async function demoLingyanBody() {
+    // ① 决策中新生成的人物：先埋入一位朝中同僚，再入凌烟阁看「朝中同僚」区
+    seedDecisionNpc();
     App.nav.goScene("lingyan", { recordVisit: false });
-    await sleep(DEMO_PACE.scene); guard();
-    var firstCard = document.querySelector("#lingyanPanel .pc:not(.locked)");
-    if (firstCard) flash(firstCard);
-    await sleep(DEMO_PACE.readLong);
+    await sleep(DEMO_PACE.window); guard();
+    var mgr = Array.prototype.filter.call(document.querySelectorAll("#lingyanPanel .pc"), function (el) {
+      return el.textContent.indexOf("林主管") >= 0;
+    })[0];
+    if (mgr) mgr.scrollIntoView({ block: "center", behavior: "smooth" });
+    await waitClick("决策生成的同僚已入阁 · 点击继续"); guard();
+
+    // ② 民间抽到名臣（写死银叶菊仙）→ 收入麾下（每步单独等点击）
+    stageFolkEncounter({ actorType: "legend", legendId: "legend_silver_chrysanthemum", actorId: "legend_silver_chrysanthemum", contentId: "legend_silver_praise_01" });
+    await sleep(DEMO_PACE.window); guard();
+    await waitClick("民间偶遇名臣 · 点击收入麾下"); guard();
+    var recruit = ui.$("#feRecruit");
+    if (recruit) recruit.click();
+    await sleep(DEMO_PACE.window); guard();
+    await waitClick("已入麾下 · 点击继续逛逛"); guard();
+    var keepWalking = ui.$("#feKeepWalking"); if (keepWalking) keepWalking.click();
+    await sleep(DEMO_PACE.window); guard();
+
+    // ③ 民间收到夸赞（source:null，只听不成书）
+    stageFolkEncounter({ actorType: "commoner", actorId: "commoner_002", contentId: "folk_praise_01" });
+    await sleep(DEMO_PACE.window); guard();
+    await waitClick("市井夸赞 · 只听不成书 · 点击继续"); guard();
+
+    // ④ 民间采纳闲谈 → 进入藏书阁（带 source 的 knowledge，可成书）
+    stageFolkEncounter({ actorType: "commoner", actorId: "commoner_003", contentId: "folk_knowledge_01" });
+    await sleep(DEMO_PACE.window); guard();
+    await waitClick("市井闲谈 · 点击收入藏书阁"); guard();
+    var collect = ui.$("#feCollect");
+    if (collect) collect.click();
+    await sleep(DEMO_PACE.readShort); guard();
+    await waitClick("已成书 · 点击前往藏书阁"); guard();
+    var goLib = ui.$("#feGoLibrary");
+    if (goLib) goLib.click();
+    await sleep(DEMO_PACE.window); guard();
+    ui.closeModal();
+
+    // ⑤ 回凌烟阁：银叶菊仙已入「名臣异士」，市井之人已解锁
+    await waitClick("点击回凌烟阁查看战果"); guard();
+    App.nav.goScene("lingyan", { recordVisit: false });
+    await sleep(DEMO_PACE.window); guard();
+    var silver = Array.prototype.filter.call(document.querySelectorAll("#lingyanPanel .pc:not(.locked)"), function (el) {
+      return el.textContent.indexOf("银叶菊仙") >= 0;
+    })[0];
+    if (silver) silver.scrollIntoView({ block: "center", behavior: "smooth" });
+    await waitClick("演示结束 · 点击收尾"); guard();
   }
 
   async function demoTour() {

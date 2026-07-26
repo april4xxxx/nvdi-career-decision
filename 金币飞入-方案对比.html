@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>金币飞入动画 · 方案对比</title>
+<style>
+  :root{
+    --ink:#1f2830; --ink-soft:#3a4650; --ink-mute:#6b7580;
+    --paper:#f7f2e6; --paper-2:#efe7d3; --paper-3:#e6dabf;
+    --gold:#b98a3b; --gold-light:#e7c985; --gold-deep:#8a6323;
+    --jade:#487b70; --verm:#a7473c;
+    --line:rgba(31,40,48,.14); --line-strong:rgba(31,40,48,.28);
+    --shadow-sm:0 2px 8px rgba(31,40,48,.10);
+    --shadow-md:0 8px 26px rgba(31,40,48,.18);
+    --r-sm:8px; --r-md:14px; --r-lg:22px;
+    --serif:"Noto Serif SC",serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--serif),system-ui,sans-serif;
+    background:radial-gradient(120% 120% at 50% 0%,#2a3540 0%,#1a222a 60%,#141a20 100%);
+    color:var(--paper); min-height:100vh; padding:28px 20px 60px;
+  }
+  .page-head{max-width:1120px;margin:0 auto 26px;text-align:center}
+  .page-head h1{font-size:24px;letter-spacing:.12em;font-weight:900}
+  .page-head h1 .seal{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:8px;margin-right:8px;vertical-align:-6px;
+    background:linear-gradient(135deg,var(--verm),#833229);color:#fff;font-size:18px;
+    box-shadow:var(--shadow-sm);
+  }
+  .page-head p{margin-top:10px;color:var(--gold-light);font-size:13px;letter-spacing:.06em}
+
+  .grid{
+    max-width:1120px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px;
+  }
+  .demo{
+    position:relative;border-radius:var(--r-lg);overflow:hidden;
+    background:var(--paper);color:var(--ink);box-shadow:var(--shadow-md);
+    border:1px solid var(--gold);display:flex;flex-direction:column;
+  }
+  .demo-label{
+    padding:14px 18px 12px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--paper),var(--paper-2));
+  }
+  .demo-label .tag{font-size:11px;letter-spacing:.28em;color:var(--gold-deep);font-weight:700}
+  .demo-label h2{font-size:17px;letter-spacing:.06em;margin-top:5px}
+  .demo-label .desc{font-size:12px;color:var(--ink-mute);margin-top:5px;line-height:1.6}
+
+  /* 迷你顶栏(金币框) */
+  .mini-topbar{
+    display:flex;align-items:center;gap:12px;justify-content:flex-end;
+    padding:12px 18px;background:linear-gradient(180deg,#26303a,#1e262e);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .gold-box{
+    display:inline-flex;align-items:center;gap:7px;font-size:15px;color:var(--paper);
+    padding:5px 12px;border-radius:999px;background:rgba(233,201,133,.10);
+    border:1px solid rgba(233,201,133,.28);transition:transform .18s,box-shadow .25s;
+  }
+  .gold-box .coin-ic{
+    width:22px;height:22px;border-radius:50%;flex:none;
+    background:radial-gradient(circle at 35% 30%,#fbe9b8,#d9a94e 55%,#9a6f22);
+    border:1px solid #7d5716;position:relative;
+    box-shadow:inset 0 0 0 2px rgba(255,242,207,.5);
+  }
+  .gold-box .coin-ic::after{content:"₡";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#7d5716;font-weight:900}
+  .gold-box .val{font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .gold-box.bump{transform:scale(1.16);box-shadow:0 0 0 4px rgba(233,201,133,.30),0 6px 18px rgba(233,201,133,.4)}
+  .gold-box.glow{box-shadow:0 0 22px 4px rgba(233,201,133,.75),0 0 0 3px rgba(233,201,133,.5)}
+
+  /* 场景舞台 + 任务卡 */
+  .stage{
+    position:relative;flex:1;min-height:280px;padding:26px 20px 22px;
+    background:
+      linear-gradient(180deg,rgba(247,242,230,0) 0%,rgba(230,218,191,.55) 100%),
+      repeating-linear-gradient(45deg,#efe7d3 0 14px,#eae0c8 14px 28px);
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .task-card{
+    position:relative;width:230px;padding:13px;border-radius:var(--r-md);
+    background:linear-gradient(135deg,#fffdf7,#f4ecd8);
+    border:1px solid var(--line-strong);border-left:5px solid var(--gold);
+    box-shadow:var(--shadow-sm);text-align:left;display:flex;gap:12px;align-items:stretch;
+  }
+  .task-card .tc-img{
+    width:64px;height:64px;border-radius:8px;flex:none;
+    background:radial-gradient(circle at 40% 30%,#8fc9b8,#3f7266);
+    display:flex;align-items:center;justify-content:center;font-size:26px;
+  }
+  .task-card .tc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+  .task-card .tc-title{font-size:15px;font-weight:800;letter-spacing:.02em}
+  .task-card .tc-meta{margin-top:6px;font-size:12px;color:var(--gold-deep);display:flex;align-items:center;gap:4px}
+  .task-card .tc-cta{
+    position:absolute;top:50%;right:-1px;transform:translateY(-50%);
+    writing-mode:vertical-rl;letter-spacing:.14em;
+    padding:10px 4px;font-size:13px;font-weight:800;color:#3a2a08;border-radius:0 var(--r-md) var(--r-md) 0;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    box-shadow:var(--shadow-sm);cursor:pointer;user-select:none;
+    border:1px solid var(--gold-deep);border-left:none;transition:filter .15s,transform .1s;
+  }
+  .task-card .tc-cta:hover{filter:brightness(1.07)}
+  .task-card.done{opacity:.55;filter:grayscale(.3)}
+  .task-card.done .tc-cta{background:var(--paper-3);color:var(--ink-mute);border-color:var(--line-strong);cursor:default}
+
+  /* 盖印朱印(方案4备用,这里也给直线飞入加一个轻印) */
+  .stamp-mark{
+    position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.4) rotate(-16deg);
+    width:78px;height:78px;border-radius:12px;pointer-events:none;opacity:0;z-index:5;
+    border:3px solid var(--verm);color:var(--verm);
+    display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;
+    background:rgba(167,71,60,.06);
+  }
+  .stamp-mark.fire{animation:stampDown .5s cubic-bezier(.3,1.4,.5,1) forwards}
+  @keyframes stampDown{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(1.5) rotate(-16deg)}
+    55%{opacity:1;transform:translate(-50%,-50%) scale(.85) rotate(-16deg)}
+    70%{transform:translate(-50%,-50%) scale(.98) rotate(-16deg)}
+    100%{opacity:.92;transform:translate(-50%,-50%) scale(.9) rotate(-16deg)}
+  }
+
+  /* 飞行铜币 */
+  .fly-coin{
+    position:fixed;width:26px;height:26px;border-radius:50%;z-index:80;pointer-events:none;
+    background:radial-gradient(circle at 35% 30%,#fbe9b8,#d9a94e 55%,#9a6f22);
+    border:1px solid #7d5716;box-shadow:0 2px 6px rgba(122,87,22,.5),inset 0 0 0 2px rgba(255,242,207,.55);
+    will-change:transform,opacity;
+  }
+  .fly-coin::after{content:"₡";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#7d5716;font-weight:900}
+  .fly-coin.golden{box-shadow:0 0 14px 3px rgba(233,201,133,.9),0 2px 6px rgba(122,87,22,.5),inset 0 0 0 2px rgba(255,242,207,.7)}
+
+  /* 金光粒子 */
+  .spark{
+    position:fixed;width:8px;height:8px;border-radius:50%;z-index:79;pointer-events:none;
+    background:radial-gradient(circle,#fff6dc,#e7c985 60%,rgba(231,201,133,0));
+    will-change:transform,opacity;
+  }
+  /* 拖尾金光 */
+  .trail{
+    position:fixed;width:20px;height:20px;border-radius:50%;z-index:78;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,246,220,.85),rgba(231,201,133,.35),rgba(231,201,133,0));
+    will-change:transform,opacity;
+  }
+
+  .replay{
+    margin:12px 18px 16px;align-self:flex-start;font-size:12px;letter-spacing:.1em;
+    padding:7px 14px;border-radius:999px;cursor:pointer;color:var(--ink);
+    background:var(--paper-2);border:1px solid var(--line-strong);
+  }
+  .replay:hover{background:var(--paper-3)}
+  .foot{max-width:1120px;margin:30px auto 0;text-align:center;color:var(--ink-mute);font-size:12px;opacity:.7}
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <h1><span class="seal">币</span>金币飞入动画 · 方案对比</h1>
+    <p>点击每张任务卡右侧「盖印」，对比三种入账动效。选定后我再接进主程序。</p>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="foot">演示页 · 不影响主程序 · 数值与颜色沿用「女皇入朝」设计 token</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- 三种方案配置 ----
+  var VARIANTS = [
+    {
+      key:"line",
+      tag:"方案 A",
+      name:"铜币直线飞入 + 数字滚动",
+      desc:"多枚铜币沿直线弹射至金币框，数字滚动递增，框体轻弹。干净利落。",
+      coins:6, golden:false, line:true, sparks:false, roll:true
+    },
+    {
+      key:"golden",
+      tag:"方案 B",
+      name:"金光铜币飞入 + 数字滚动",
+      desc:"铜币自带金光拖尾，入框时框体泛金光，数字滚动递增。更有仪式感。",
+      coins:6, golden:true, line:true, sparks:true, roll:true
+    },
+    {
+      key:"burst",
+      tag:"方案 C",
+      name:"盖印迸发 + 金光直线飞入",
+      desc:"朱印落下的冲击迸出金光铜币，直线归框，数字滚动。与「盖印」文案联动。",
+      coins:8, golden:true, line:true, sparks:true, roll:true, stamp:true
+    }
+  ];
+
+  var REWARD = 20; // 每次盖印赏赐金币
+  var grid = document.getElementById("grid");
+
+  VARIANTS.forEach(function(v){
+    var el = document.createElement("div");
+    el.className = "demo";
+    el.innerHTML =
+      '<div class="mini-topbar">'+
+        '<div class="gold-box" data-gold><span class="coin-ic"></span><span class="val" data-val>120</span></div>'+
+      '</div>'+
+      '<div class="demo-label">'+
+        '<div class="tag">'+v.tag+'</div>'+
+        '<h2>'+v.name+'</h2>'+
+        '<div class="desc">'+v.desc+'</div>'+
+      '</div>'+
+      '<div class="stage" data-stage>'+
+        '<div class="task-card" data-card>'+
+          '<div class="tc-img">📜</div>'+
+          '<div class="tc-body">'+
+            '<div class="tc-title">周报梳理</div>'+
+            '<div class="tc-meta">＋'+REWARD+' 金 · 90 分</div>'+
+          '</div>'+
+          '<div class="stamp-mark" data-stamp>印</div>'+
+          '<div class="tc-cta" data-cta>盖印</div>'+
+        '</div>'+
+      '</div>'+
+      '<button class="replay" data-replay>↺ 重置演示</button>';
+    grid.appendChild(el);
+    wire(el, v);
+  });
+
+  function wire(root, v){
+    var card = root.querySelector("[data-card]");
+    var cta = root.querySelector("[data-cta]");
+    var goldBox = root.querySelector("[data-gold]");
+    var valEl = root.querySelector("[data-val]");
+    var stamp = root.querySelector("[data-stamp]");
+    var replay = root.querySelector("[data-replay]");
+    var busy = false;
+
+    cta.addEventListener("click", function(){
+      if(busy || card.classList.contains("done")) return;
+      busy = true;
+      run(v, card, cta, goldBox, valEl, stamp, function(){ busy = false; });
+    });
+
+    replay.addEventListener("click", function(){
+      busy = false;
+      card.classList.remove("done");
+      cta.textContent = "盖印";
+      stamp.classList.remove("fire");
+      valEl.textContent = "120";
+    });
+  }
+
+  function run(v, card, cta, goldBox, valEl, stamp, done){
+    var startVal = parseInt(valEl.textContent,10) || 0;
+    var endVal = startVal + REWARD;
+
+    // 起点:任务卡中心;终点:金币框中心
+    var cr = card.getBoundingClientRect();
+    var gr = goldBox.getBoundingClientRect();
+    var from = { x: cr.left + cr.width/2, y: cr.top + cr.height/2 };
+    var to   = { x: gr.left + gr.width/2, y: gr.top + gr.height/2 };
+
+    var launch = function(){
+      spawnCoins(v, from, to, function(){
+        // 每枚铜币到框:框体弹 + 数字滚动一小步
+        bump(goldBox, v.golden);
+      }, function(){
+        // 全部结束:确保数值到位、卡片置灰
+        valEl.textContent = String(endVal);
+        card.classList.add("done");
+        cta.textContent = "已办";
+        done();
+      });
+      // 数字滚动(与飞行并行,略滞后)
+      setTimeout(function(){ rollNumber(valEl, startVal, endVal, 620); }, 240);
+    };
+
+    if(v.stamp){
+      cta.textContent = "已盖";
+      stamp.classList.add("fire");
+      setTimeout(launch, 300); // 等朱印落下的冲击
+    } else {
+      cta.textContent = "呈递中";
+      launch();
+    }
+  }
+
+  // 生成若干铜币,沿贝塞尔曲线飞向金币框
+  function spawnCoins(v, from, to, onArrive, onAllDone){
+    var n = v.coins, arrived = 0;
+    for(var i=0;i<n;i++){
+      (function(idx){
+        var coin = document.createElement("div");
+        coin.className = "fly-coin" + (v.golden ? " golden" : "");
+        document.body.appendChild(coin);
+
+        // 每枚起点略微散开
+        var jx = (Math.random()-0.5)*46;
+        var jy = (Math.random()-0.5)*30;
+        var sx = from.x + jx, sy = from.y + jy;
+
+        // 控制点:先小幅上抛再归框(直线感为主,轻微弧度)
+        var midX = sx + (to.x - sx)*0.5;
+        var midY = Math.min(sy, to.y) - (40 + Math.random()*36);
+
+        var delay = idx * 55;
+        var dur = 560 + Math.random()*160;
+
+        animateCoin(coin, sx, sy, midX, midY, to.x, to.y, dur, delay, v, function(){
+          arrived++;
+          onArrive();
+          coin.remove();
+          if(arrived === n) onAllDone();
+        });
+      })(i);
+    }
+  }
+
+  function animateCoin(coin, sx, sy, cx, cy, ex, ey, dur, delay, v, cb){
+    var start = null;
+    coin.style.transform = "translate("+sx+"px,"+sy+"px)";
+    coin.style.opacity = "0";
+
+    function frame(ts){
+      if(start === null) start = ts;
+      var el = ts - start;
+      if(el < delay){ requestAnimationFrame(frame); return; }
+      var t = Math.min(1, (el - delay)/dur);
+      var e = t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; // easeInOutQuad
+
+      // 二次贝塞尔
+      var mt = 1-e;
+      var x = mt*mt*sx + 2*mt*e*cx + e*e*ex;
+      var y = mt*mt*sy + 2*mt*e*cy + e*e*ey;
+      var scale = 1 - 0.35*e;
+      var rot = e*260;
+
+      coin.style.opacity = el < delay+80 ? String((el-delay)/80) : (t>.85 ? String((1-t)/0.15) : "1");
+      coin.style.transform = "translate("+(x-13)+"px,"+(y-13)+"px) rotate("+rot+"deg) scale("+scale+")";
+
+      // 金光拖尾
+      if(v.sparks && t>0.05 && t<0.95 && Math.random()<0.5){
+        spawnTrail(x, y);
+      }
+
+      if(t < 1){ requestAnimationFrame(frame); }
+      else {
+        if(v.sparks) burstSparks(ex, ey);
+        cb();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function spawnTrail(x,y){
+    var tr = document.createElement("div");
+    tr.className = "trail";
+    tr.style.transform = "translate("+(x-10)+"px,"+(y-10)+"px)";
+    document.body.appendChild(tr);
+    var s=null, dur=280;
+    (function f(ts){
+      if(s===null)s=ts; var t=Math.min(1,(ts-s)/dur);
+      tr.style.opacity=String(1-t);
+      tr.style.transform="translate("+(x-10)+"px,"+(y-10)+"px) scale("+(1-0.6*t)+")";
+      if(t<1)requestAnimationFrame(f); else tr.remove();
+    })(0);
+  }
+
+  function burstSparks(x,y){
+    for(var i=0;i<7;i++){
+      (function(){
+        var sp=document.createElement("div");
+        sp.className="spark";
+        document.body.appendChild(sp);
+        var ang=Math.random()*Math.PI*2, dist=14+Math.random()*22;
+        var dx=Math.cos(ang)*dist, dy=Math.sin(ang)*dist;
+        var s=null,dur=360+Math.random()*160;
+        (function f(ts){
+          if(s===null)s=ts; var t=Math.min(1,(ts-s)/dur);
+          var e=1-Math.pow(1-t,2);
+          sp.style.opacity=String(1-t);
+          sp.style.transform="translate("+(x-4+dx*e)+"px,"+(y-4+dy*e)+"px) scale("+(1-0.5*t)+")";
+          if(t<1)requestAnimationFrame(f); else sp.remove();
+        })(0);
+      })();
+    }
+  }
+
+  function bump(goldBox, golden){
+    goldBox.classList.remove("bump");
+    void goldBox.offsetWidth;
+    goldBox.classList.add("bump");
+    if(golden){
+      goldBox.classList.add("glow");
+      setTimeout(function(){ goldBox.classList.remove("glow"); }, 420);
+    }
+    setTimeout(function(){ goldBox.classList.remove("bump"); }, 200);
+  }
+
+  function rollNumber(el, from, to, dur){
+    var start=null;
+    (function f(ts){
+      if(start===null)start=ts;
+      var t=Math.min(1,(ts-start)/dur);
+      var e=1-Math.pow(1-t,3);
+      el.textContent=String(Math.round(from+(to-from)*e));
+      if(t<1)requestAnimationFrame(f);
+    })(0);
+  }
+})();
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@
   window.App = window.App || {};
   var data = window.App.data;
   var STORAGE_KEY = "nvdi-full-v1";
-  var STATE_VERSION = 10;
+  var STATE_VERSION = 11;
   var ENERGY_CAP = 150;
   var DAILY_ENERGY_GAIN = 30;
   var MAX_DAILY_COUNTED_RESTORE = 60;
@@ -87,6 +87,76 @@
     };
   }
 
+  function freshFolkTalk() {
+    return {
+      visitSequence: 0,
+      activeEncounter: null,
+      history: [],
+      seenContentIds: [],
+      recentContentIds: [],
+      unlockedCommoners: {},
+      recruitedLegends: {},
+      activeBuffs: {},
+      actionLedger: {}
+    };
+  }
+
+  function legacyCommonerId(value) {
+    var exact = (data.COMMONERS || []).filter(function (item) { return item.id === value; })[0];
+    if (exact) return exact.id;
+    var match = String(value || "").match(/(\d{1,3})$/);
+    if (!match) return null;
+    var id = "commoner_" + String(Number(match[1])).padStart(3, "0");
+    return (data.COMMONERS || []).some(function (item) { return item.id === id; }) ? id : null;
+  }
+
+  function normalizeFolkTalk(saved, legacy, oldVersion) {
+    var base = freshFolkTalk();
+    var source = saved && typeof saved === "object" ? saved : {};
+    var talk = Object.assign(base, source);
+    talk.visitSequence = Math.max(0, Number(talk.visitSequence) || 0);
+    talk.activeEncounter = talk.activeEncounter && typeof talk.activeEncounter === "object" ? talk.activeEncounter : null;
+    talk.history = Array.isArray(talk.history) ? talk.history.slice(0, 200) : [];
+    talk.seenContentIds = Array.isArray(talk.seenContentIds) ? talk.seenContentIds.slice(-500) : [];
+    talk.recentContentIds = Array.isArray(talk.recentContentIds) ? talk.recentContentIds.slice(-5) : [];
+    talk.unlockedCommoners = talk.unlockedCommoners && typeof talk.unlockedCommoners === "object" ? talk.unlockedCommoners : {};
+    talk.recruitedLegends = talk.recruitedLegends && typeof talk.recruitedLegends === "object" ? talk.recruitedLegends : {};
+    talk.activeBuffs = talk.activeBuffs && typeof talk.activeBuffs === "object" ? talk.activeBuffs : {};
+    talk.actionLedger = talk.actionLedger && typeof talk.actionLedger === "object" ? talk.actionLedger : {};
+
+    // V10 及更早版本的市井角色只有 id 数组；能对应的角色保留已遇见状态。
+    if (oldVersion < 11 && legacy && Array.isArray(legacy.folkMet)) {
+      legacy.folkMet.forEach(function (oldId) {
+        var id = legacyCommonerId(oldId);
+        if (!id || talk.unlockedCommoners[id]) return;
+        talk.unlockedCommoners[id] = {
+          encounterCount: 1,
+          firstEncounteredAt: new Date().toISOString(),
+          lastEncounteredAt: new Date().toISOString(),
+          migrated: true
+        };
+      });
+    }
+    return talk;
+  }
+
+  function normalizeBooks(savedBooks) {
+    return (Array.isArray(savedBooks) ? savedBooks : []).map(function (book, index) {
+      var normalized = Object.assign({}, book);
+      if (!normalized.shelf) normalized.shelf = normalized.folk ? "folk-talk" : "strategy";
+      if (normalized.shelf === "folk-talk") {
+        normalized.origin = normalized.origin || "folk-encounter";
+        normalized.sourceKey = normalized.sourceKey || ("legacy:folk:" + (normalized.id || index));
+        normalized.useInDecision = false;
+        normalized.collectedAt = normalized.collectedAt || normalized.createdAt || new Date().toISOString();
+      } else {
+        normalized.origin = normalized.origin || (normalized.upload || normalized.uploadedAt || normalized.remote ? "upload" : "seed");
+        if (normalized.useInDecision == null) normalized.useInDecision = true;
+      }
+      return normalized;
+    });
+  }
+
   function initialState() {
     return {
       version: STATE_VERSION,
@@ -121,6 +191,11 @@
       npcs: [],               // 凌烟阁人物档案；立绘可为空
       npcInteractions: [],    // NPC 与最终待办形成的事件摘要
       npcTaskCardLinks: [],   // NPCInteraction 与最终待办卡片的关联
+      folkMet: [],            // [废弃] 旧市井偶遇解锁 id；保留声明兼容旧存档，新流程改用 folkTalk
+      folkBooks: [],          // [废弃] 旧成卷市井之人 id；同上
+      folkCurrentId: null,    // [废弃] 旧当前照面者 id；同上
+      // 市井偶遇 / 凌烟阁招募（PRD 09 §12.3）——共享内容池、名臣招募、加成
+      folkTalk: freshFolkTalk(),
       npcSequence: 1,
       npcInteractionSequence: 1,
       npcLinkSequence: 1,
@@ -268,6 +343,14 @@
   /* ---------- 加载 / 保存 ---------- */
   var state;
   function load() {
+    // 汇报演示态：不读真实存档，直接构造种子态（已登基、谋略型），刷新即重置。
+    if (typeof window !== "undefined" && window.APP_DEMO) {
+      state = initialState();
+      state.onboarded = true;
+      state.empressType = "谋略";
+      state.profile.nickname = "陛下";
+      return;
+    }
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -328,6 +411,11 @@
         state.npcs = Array.isArray(parsed.npcs) ? parsed.npcs : [];
         state.npcInteractions = Array.isArray(parsed.npcInteractions) ? parsed.npcInteractions : [];
         state.npcTaskCardLinks = Array.isArray(parsed.npcTaskCardLinks) ? parsed.npcTaskCardLinks : [];
+        state.folkMet = Array.isArray(parsed.folkMet) ? parsed.folkMet : [];
+        state.folkBooks = Array.isArray(parsed.folkBooks) ? parsed.folkBooks : [];
+        state.folkCurrentId = parsed.folkCurrentId || null;
+        state.folkTalk = normalizeFolkTalk(parsed.folkTalk, parsed, oldVersion);
+        state.books = normalizeBooks(parsed.books);
         state.npcSequence = Math.max(1, Number(parsed.npcSequence) || state.npcs.length + 1);
         state.npcInteractionSequence = Math.max(1, Number(parsed.npcInteractionSequence) || state.npcInteractions.length + 1);
         state.npcLinkSequence = Math.max(1, Number(parsed.npcLinkSequence) || state.npcTaskCardLinks.length + 1);
@@ -375,6 +463,8 @@
     state = initialState();
   }
   function save() {
+    // 演示态永不落盘，绝不污染访客真实存档。
+    if (typeof window !== "undefined" && window.APP_DEMO) return;
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch (e) { console.warn("[store] save failed", e); }
   }
@@ -516,9 +606,10 @@
     return card ? offerMysticCard(card.id, trigger) : null;
   }
 
+  function dailyRerollCap() { return 1 + Math.max(0, Math.round(sumBuffValue("daily_reroll_add"))); }
   function rerollDailyMystic() {
     var daily = ensureMysticDay(state.dayKey || localDayKey());
-    if (daily.status !== "offered" || daily.rerollsUsed >= 1 || !daily.taskId) return null;
+    if (daily.status !== "offered" || daily.rerollsUsed >= dailyRerollCap() || !daily.taskId) return null;
     var task = state.mapTasks.filter(function (item) { return item.id === daily.taskId; })[0];
     if (!task || task.done || task.expired) return null;
     var card = chooseMysticCard(daily.cardId);
@@ -631,7 +722,13 @@
       goldActual: actualGold,
       goldKind: goldKind,
       countsForAchievements: countsForAchievements,
-      titleGranted: grantedTitle
+      titleGranted: grantedTitle,
+      // 名臣加成流水（PRD §10.6.9）：记 appliedBuffIds 及各资源基础/最终值
+      appliedBuffIds: Array.isArray(transaction.appliedBuffIds) ? transaction.appliedBuffIds : [],
+      baseGold: transaction.baseGold != null ? transaction.baseGold : requestedGold,
+      finalGold: transaction.finalGold != null ? transaction.finalGold : requestedGold,
+      baseEnergy: transaction.baseEnergy != null ? transaction.baseEnergy : Math.abs(requestedEnergy),
+      finalEnergy: transaction.finalEnergy != null ? transaction.finalEnergy : Math.abs(requestedEnergy)
     };
     state.settlementLedger[id] = receipt;
     save();
@@ -723,6 +820,20 @@
     );
     save();
     emit("achievement", Object.assign({}, def, { rewardReceipt: rewardReceipt }));
+    return true;
+  }
+  // 演示专用：点哪个成就就点亮哪个。绕过成就总开关，只改内存、发事件，
+  // 不结算经济、不写起居注、不落盘（save 在 APP_DEMO 下本就 no-op），演示结束一刷新即还原。
+  function demoUnlock(id) {
+    var def = data.achById[id]; if (!def) return false;
+    var rec = state.achievements[id] || (state.achievements[id] = { unlocked: false, cur: 0, date: null, rewardGranted: false });
+    if (rec.unlocked) return false;
+    rec.unlocked = true;
+    if (rec.cur < def.target) rec.cur = def.target;
+    rec.date = localDayKey() + " · " + today();
+    rec.unlockedAt = new Date().toISOString();
+    rec.rewardGranted = true;   // 演示态视作已到账，详情不显示「正在补发」
+    emit("achievement", def);   // 触发解锁 toast + 珍宝阁面板刷新
     return true;
   }
   function achState(id) {
@@ -871,7 +982,14 @@
     options = options || {};
     var recordVisit = options.recordVisit !== false && sc.trackVisit !== false && achievementTrackingEnabled();
     if (recordVisit && state.scene === "folk" && id === "court") state.counters.fogReturnPending = true;
+    var prevScene = state.scene;
     state.scene = id;
+    // 有效进入民间（PRD §5.1）：目标 folk 且前场景非 folk → 生成 navigationToken、开启一次偶遇。
+    // resize/重渲染/刷新时 state.scene 已是 folk，不经此路径，故不会重抽。
+    if (id === "folk" && prevScene !== "folk") {
+      var ft = folkTalk();
+      beginFolkVisit("folk-nav:" + ((Number(ft.visitSequence) || 0) + 1), prevScene);
+    }
     if (recordVisit && state.visitedScenes.indexOf(id) < 0) {
       state.visitedScenes.push(id);
       // 木器成就
@@ -1155,6 +1273,390 @@
     return npc;
   }
 
+  /* =============================================================
+     市井偶遇 / 凌烟阁招募（PRD 09）——共享内容池、名臣招募、加成
+     ============================================================= */
+  function folkTalk() {
+    if (!state.folkTalk || typeof state.folkTalk !== "object") state.folkTalk = normalizeFolkTalk(null);
+    return state.folkTalk;
+  }
+  function contentById(id) { return (data.FOLK_CONTENT || []).filter(function (c) { return c.id === id; })[0] || null; }
+  function commonerById(id) { return (data.COMMONERS || []).filter(function (c) { return c.id === id; })[0] || null; }
+  function legendById(id) { return (data.LEGENDS || []).filter(function (l) { return l.id === id; })[0] || null; }
+  function enabledLegends() {
+    return (data.LEGENDS || []).filter(function (legend) {
+      return legend && legend.enabled && legend.portraitAsset && legend.buff && legend.buff.id &&
+        Array.isArray(legend.praiseContentIds) && legend.praiseContentIds.some(function (id) { return !!contentById(id); });
+    });
+  }
+
+  // sourceKey → 稳定短 hash，用于 book id（避免 DOI/URL 特殊字符进 DOM id）
+  function hashSourceKey(key) {
+    var s = String(key || ""), h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+
+  // 读激活加成，按 buffId 排序返回（供结算/换签调用；各模块只读 activeBuffs，不看 UI）
+  function getActiveRewardModifiers() {
+    var buffs = folkTalk().activeBuffs || {};
+    return Object.keys(buffs).sort().map(function (id) {
+      return Object.assign({ id: id }, buffs[id]);
+    });
+  }
+  function sumBuffValue(type) {
+    return getActiveRewardModifiers().reduce(function (acc, b) {
+      return b.type === type ? acc + (Number(b.value) || 0) : acc;
+    }, 0);
+  }
+  function multiplyBuffValue(type, base) {
+    // 按 buffId 排序依次相乘（PRD §10.2）
+    return getActiveRewardModifiers().reduce(function (acc, b) {
+      return b.type === type ? acc * (Number(b.value) || 1) : acc;
+    }, base);
+  }
+  function legendChance() {
+    return enabledLegends().length ? Math.min(0.5, 0.15 + sumBuffValue("encounter_weight_add")) : 0;
+  }
+  function effectiveTaskGold(taskOrValue) {
+    var task = taskOrValue && typeof taskOrValue === "object" ? taskOrValue : null;
+    var base = Math.max(0, Number(task ? task.gold : taskOrValue) || 0);
+    if (task && (task.restore || task.cat === "mystic")) return 0;
+    return Math.round(multiplyBuffValue("task_gold_multiplier", base));
+  }
+  function effectiveTaskEnergy(taskOrValue) {
+    var task = taskOrValue && typeof taskOrValue === "object" ? taskOrValue : null;
+    var base = Math.max(0, Math.abs(Number(task ? task.energy : taskOrValue) || 0));
+    if (!base || (task && (task.restore || task.cat === "mystic"))) return 0;
+    return Math.max(1, Math.round(multiplyBuffValue("task_energy_multiplier", base)));
+  }
+
+  // 任务卡预估：普通任务按当前激活加成给出有效金币/精力（§10.3.5）。恢复任务不受影响。
+  function effectiveTaskValues(task) {
+    var isRecovery = !!(task && task.restore) || (task && task.cat === "mystic");
+    var baseGold = (task && task.gold) || 0;
+    var baseEnergy = Math.abs((task && task.energy) || 0);
+    if (isRecovery) return { gold: baseGold, energy: baseEnergy };
+    var gold = Math.round(multiplyBuffValue("task_gold_multiplier", baseGold));
+    var energy = baseEnergy > 0 ? Math.max(1, Math.round(multiplyBuffValue("task_energy_multiplier", baseEnergy))) : 0;
+    return { gold: gold, energy: energy };
+  }
+
+  // 权重抽取（PRD §6，注入式 RNG）
+  function drawEncounter(rng) {
+    rng = rng || Math.random;
+    var ft = folkTalk();
+    var legendsAvail = enabledLegends().filter(function (l) {
+      // 已招募的名臣仍可再遇（按钮显示「已在麾下」），故不因已招募而排除
+      return true;
+    });
+    var baseLegendChance = 0.15;
+    var effectiveLegendChance = legendChance();
+    var appliedBuffIds = getActiveRewardModifiers()
+      .filter(function (b) { return b.type === "encounter_weight_add"; })
+      .map(function (b) { return b.id; });
+
+    var actorType, actorId, contentId = null, legendId = null;
+    if (legendsAvail.length && rng() < effectiveLegendChance) {
+      actorType = "legend";
+      legendId = pickLegend(rng);
+      actorId = legendId;
+      contentId = pickLegendPraise(legendId, rng);
+    } else {
+      actorType = "commoner";
+      actorId = pickCommoner(rng);
+      contentId = pickContent(rng);
+    }
+    return {
+      actorType: actorType, actorId: actorId, legendId: legendId, contentId: contentId,
+      baseLegendChance: baseLegendChance, effectiveLegendChance: effectiveLegendChance,
+      appliedBuffIds: appliedBuffIds
+    };
+  }
+
+  // 市井选人（§6.2）：优先未解锁等概率；全解锁则最久未见的 50% 中随机；避免连续同一人
+  function pickCommoner(rng) {
+    var ft = folkTalk();
+    var pool = (data.COMMONERS || []).filter(function (c) { return c && c.enabled; });
+    if (!pool.length) return "commoner_001";
+    var lastId = ft.activeEncounter && ft.activeEncounter.actorType === "commoner" ? ft.activeEncounter.actorId : null;
+    var unseen = pool.filter(function (c) { return !ft.unlockedCommoners[c.id]; });
+    var candidates;
+    if (unseen.length) {
+      candidates = unseen;
+    } else {
+      // 全解锁：按 lastEncounteredAt 升序取前 50%（最久未见），再随机
+      var sorted = pool.slice().sort(function (a, b) {
+        var ta = (ft.unlockedCommoners[a.id] || {}).lastEncounteredAt || 0;
+        var tb = (ft.unlockedCommoners[b.id] || {}).lastEncounteredAt || 0;
+        return ta - tb;
+      });
+      candidates = sorted.slice(0, Math.max(1, Math.ceil(sorted.length / 2)));
+    }
+    if (candidates.length > 1 && lastId) {
+      var filtered = candidates.filter(function (c) { return c.id !== lastId; });
+      if (filtered.length) candidates = filtered;
+    }
+    return candidates[Math.floor(rng() * candidates.length)].id;
+  }
+
+  // 内容选择（§6.3）：按 30/50/20 抽 kind → 未 seen 优先 → 全 seen 排除 recent(≤5) → 仍空则全量但不连续同 id
+  function pickContent(rng) {
+    var ft = folkTalk();
+    var kinds = [["praise", 30], ["knowledge", 50], ["poem", 20]];
+    var total = 100, r = rng() * total, acc = 0, chosenKind = "praise";
+    for (var i = 0; i < kinds.length; i++) { acc += kinds[i][1]; if (r < acc) { chosenKind = kinds[i][0]; break; } }
+    var pool = (data.FOLK_CONTENT || []).filter(function (c) {
+      return c && c.enabled && c.kind === chosenKind && c.id.indexOf("legend_") !== 0;
+    });
+    if (!pool.length) pool = (data.FOLK_CONTENT || []).filter(function (c) { return c && c.enabled && c.id.indexOf("legend_") !== 0; });
+    if (!pool.length) return null;
+    var lastId = ft.recentContentIds[ft.recentContentIds.length - 1];
+    var unseen = pool.filter(function (c) { return ft.seenContentIds.indexOf(c.id) < 0; });
+    var candidates = unseen.length ? unseen : pool.filter(function (c) { return ft.recentContentIds.indexOf(c.id) < 0; });
+    if (!candidates.length) candidates = pool;
+    if (candidates.length > 1 && lastId) {
+      var f = candidates.filter(function (c) { return c.id !== lastId; });
+      if (f.length) candidates = f;
+    }
+    return candidates[Math.floor(rng() * candidates.length)].id;
+  }
+
+  // 名臣选人（§6.4）：未招募等概率；全招募可重复遇到
+  function pickLegend(rng) {
+    var ft = folkTalk();
+    var pool = enabledLegends();
+    if (!pool.length) return null;
+    var unrecruited = pool.filter(function (l) { return !ft.recruitedLegends[l.id]; });
+    var candidates = unrecruited.length ? unrecruited : pool;
+    return candidates[Math.floor(rng() * candidates.length)].id;
+  }
+  function pickLegendPraise(legendId, rng) {
+    var legend = legendById(legendId);
+    if (!legend || !legend.praiseContentIds || !legend.praiseContentIds.length) return null;
+    var ft = folkTalk();
+    var lastId = ft.recentContentIds[ft.recentContentIds.length - 1];
+    var ids = legend.praiseContentIds.slice();
+    if (ids.length > 1 && lastId) {
+      var f = ids.filter(function (id) { return id !== lastId; });
+      if (f.length) ids = f;
+    }
+    return ids[Math.floor(rng() * ids.length)];
+  }
+
+  var encSeq = 0;
+  function nextEncounterId() { encSeq++; return "enc-" + folkTalk().visitSequence + "-" + encSeq; }
+
+  function archiveEncounter(encounter, reason) {
+    if (!encounter) return;
+    var ft = folkTalk();
+    ft.history.unshift(Object.assign({}, encounter, {
+      closedAt: nowStamp(),
+      closeReason: reason || "closed"
+    }));
+    ft.history = ft.history.slice(0, 200);
+  }
+
+  // 有效进入民间：生成 navigationToken、按权重抽取、写 activeEncounter（先落盘再渲染 §5.3）
+  function beginFolkVisit(navigationToken, fromScene, rng) {
+    var ft = folkTalk();
+    if (ft.activeEncounter && String(ft.activeEncounter.navigationToken) === String(navigationToken)) return ft.activeEncounter;
+    var selection = drawEncounter(rng);
+    if (ft.activeEncounter) archiveEncounter(ft.activeEncounter, "new-visit");
+    ft.visitSequence = (Number(ft.visitSequence) || 0) + 1;
+    var actor = selection.actorType === "legend" ? legendById(selection.actorId) : commonerById(selection.actorId);
+    // 兜底（§16.2）：抽取失败 → commoner_001 + 固定夸赞，绝不空白
+    if (!actor) {
+      selection.actorType = "commoner";
+      selection.actorId = "commoner_001";
+      selection.legendId = null;
+      actor = commonerById("commoner_001") || { id: "commoner_001", displayName: "市井来客", title: "", portraitAsset: "市井1.png" };
+    }
+    var content = selection.contentId ? contentById(selection.contentId) : null;
+    if (!content) {
+      var fallback = (data.FOLK_CONTENT || []).filter(function (c) { return c.kind === "praise" && c.id.indexOf("legend_") !== 0; })[0];
+      content = fallback || { id: "folk_praise_01", kind: "praise", text: "陛下今日气色甚佳。", source: null };
+      selection.contentId = content.id;
+    }
+    var encounter = {
+      encounterId: nextEncounterId(),
+      navigationToken: navigationToken,
+      fromScene: fromScene || null,
+      actorType: selection.actorType,
+      actorId: selection.actorId,
+      legendId: selection.legendId,
+      contentId: selection.contentId,
+      status: "generated",
+      baseLegendChance: selection.baseLegendChance,
+      effectiveLegendChance: selection.effectiveLegendChance,
+      appliedBuffIds: selection.appliedBuffIds,
+      bookCollected: false,
+      recruited: false,
+      isFirstMeetCommoner: selection.actorType === "commoner" && !ft.unlockedCommoners[selection.actorId],
+      createdAt: nowStamp()
+    };
+    ft.activeEncounter = encounter;
+    commit("folk-encounter");
+    return encounter;
+  }
+
+  // 素材就绪、展示时调用：status→displayed，commoner 首显写 unlockedCommoners（幂等）
+  function markEncounterDisplayed(encounterId) {
+    var ft = folkTalk();
+    var enc = ft.activeEncounter;
+    if (!enc || enc.encounterId !== encounterId) return null;
+    if (enc.status === "displayed" || enc.displayedAt) return enc;
+    enc.status = "displayed";
+    enc.displayedAt = nowStamp();
+    // 记录 recent/seen 内容
+    if (enc.contentId) {
+      if (ft.seenContentIds.indexOf(enc.contentId) < 0) ft.seenContentIds.push(enc.contentId);
+      ft.recentContentIds = ft.recentContentIds.filter(function (id) { return id !== enc.contentId; });
+      ft.recentContentIds.push(enc.contentId);
+      ft.recentContentIds = ft.recentContentIds.slice(-5);
+    }
+    if (enc.actorType === "commoner") {
+      var rec = ft.unlockedCommoners[enc.actorId];
+      var now = nowStamp();
+      if (!rec) {
+        ft.unlockedCommoners[enc.actorId] = { encounterCount: 1, firstEncounteredAt: now, lastEncounteredAt: now };
+        commit("folk");
+        emit("commoner-unlocked", { commonerId: enc.actorId });
+      } else {
+        rec.encounterCount = (rec.encounterCount || 0) + 1;
+        rec.lastEncounteredAt = now;
+        commit("folk");
+      }
+    } else {
+      commit("folk");
+    }
+    emit("folk-encounter-displayed", { encounter: enc, newlyUnlocked: !!enc.isFirstMeetCommoner });
+    return enc;
+  }
+
+  // 收入藏书阁（幂等键 collect:{enc}:{sourceKey}）：同 sourceKey 已有则 already_collected，否则 addBook
+  function collectFolkSource(encounterId, contentId, sourceKey) {
+    var ft = folkTalk();
+    var enc = ft.activeEncounter;
+    if (!enc || enc.encounterId !== encounterId || enc.actorType !== "commoner") return { status: "no_encounter" };
+    if (enc.contentId !== contentId) return { status: "mismatch" };
+    var content = contentById(contentId);
+    if (!content || !content.source) return { status: "not_collectible" };
+    var src = content.source;
+    var key = sourceKey || src.sourceKey;
+    if (!key || key !== src.sourceKey) return { status: "mismatch" };
+    var actionId = "collect:" + encounterId + ":" + key;
+    // 查 books 中同 sourceKey 的 folk-encounter 书
+    var existing = (state.books || []).filter(function (b) { return b && b.shelf === "folk-talk" && b.sourceKey === key; })[0];
+    if (ft.actionLedger[actionId] || existing) {
+      enc.bookCollected = true;
+      save();
+      return { status: "already_collected", book: existing };
+    }
+    var covers = [data.ASSET_BASE + "物品/书1.png", data.ASSET_BASE + "物品/书2.png", data.ASSET_BASE + "物品/书3.png"];
+    var book = {
+      id: "folk-book:" + hashSourceKey(key),
+      title: src.bookTitle,
+      author: src.author || "",
+      note: content.text,
+      content: content.text,
+      cover: covers[(state.books.length) % 3],
+      shelf: "folk-talk",
+      origin: "folk-encounter",
+      useInDecision: false,
+      sourceType: src.sourceType,
+      sourceKey: key,
+      source: Object.assign({}, src),
+      sourceLabel: src.author ? (src.author + (src.year ? " (" + src.year + ")" : "")) : "",
+      sourceUrl: src.url || null,
+      contentId: contentId,
+      collectedFromEncounterId: encounterId,
+      collectedAt: nowStamp(),
+      folk: true
+    };
+    state.books.unshift(book);
+    enc.bookCollected = true;
+    ft.actionLedger[actionId] = { type: "collect", bookId: book.id, completedAt: nowStamp() };
+    appendJournal("市井拾言", "《" + src.bookTitle + "》已收入藏书阁【市井闲谈】。", {
+      type: "folk-book", bookId: book.id, sourceKey: key
+    });
+    commit("folk");
+    emit("folk-book-collected", { book: book, encounterId: encounterId });
+    emit("folkbook", { book: book, encounterId: encounterId });
+    return { status: "collected", book: book };
+  }
+
+  // 招募名臣：原子事务（§9.3），幂等键 recruit:{enc}:{legendId}
+  function recruitLegend(encounterId, legendId) {
+    var ft = folkTalk();
+    var enc = ft.activeEncounter;
+    if (!enc || enc.encounterId !== encounterId) return { status: "no_encounter" };
+    if (enc.actorType !== "legend" || enc.legendId !== legendId) return { status: "mismatch" };
+    var legend = legendById(legendId);
+    if (!legend || !legend.enabled) return { status: "invalid" };
+    if (ft.recruitedLegends[legendId]) { enc.recruited = true; save(); return { status: "already_recruited", legend: legend, buff: ft.activeBuffs[legend.buff.id] }; }
+    var buff = legend.buff;
+    var actionId = "recruit:" + encounterId + ":" + legendId;
+    // 快照回滚点
+    var snapshotRecruited = JSON.parse(JSON.stringify(ft.recruitedLegends));
+    var snapshotBuffs = JSON.parse(JSON.stringify(ft.activeBuffs));
+    var snapshotActions = JSON.parse(JSON.stringify(ft.actionLedger));
+    var snapshotRecruitedFlag = enc.recruited;
+    try {
+      var now = nowStamp();
+      ft.recruitedLegends[legendId] = { recruitedAt: now, encounterId: encounterId };
+      if (!ft.activeBuffs[buff.id]) {   // 同 buffId 不叠加（§10.6.6）
+        ft.activeBuffs[buff.id] = {
+          legendId: legendId, type: buff.type, value: buff.value,
+          stackMode: buff.stackMode, name: buff.name, description: buff.description, activatedAt: now
+        };
+      }
+      enc.recruited = true;
+      ft.actionLedger[actionId] = { type: "recruit", legendId: legendId, buffId: buff.id, completedAt: now };
+      commit("folk");
+      emit("legend-recruited", { legendId: legendId, legend: legend, buff: ft.activeBuffs[buff.id] });
+      emit("buff-activated", { buffId: buff.id, legendId: legendId, buff: ft.activeBuffs[buff.id] });
+      return { status: "recruited", legend: legend, buff: buff };
+    } catch (e) {
+      // 回滚
+      ft.recruitedLegends = snapshotRecruited;
+      ft.activeBuffs = snapshotBuffs;
+      ft.actionLedger = snapshotActions;
+      enc.recruited = snapshotRecruitedFlag;
+      console.error("[store] recruitLegend failed, rolled back", e);
+      return { status: "error" };
+    }
+  }
+
+  // 关闭偶遇：写 history、清 activeEncounter（不生成下一次）
+  function closeFolkEncounter(encounterId) {
+    var ft = folkTalk();
+    var enc = ft.activeEncounter;
+    if (!enc || (encounterId && enc.encounterId !== encounterId)) return;
+    archiveEncounter(enc, "continue");
+    ft.activeEncounter = null;
+    commit("folk");
+    emit("folk-encounter-closed", enc);
+    return enc;
+  }
+
+  function folkActorName(enc) {
+    if (!enc) return "一位市井之人";
+    if (enc.actorType === "legend") { var l = legendById(enc.actorId); return l ? l.displayName : "一位名臣"; }
+    var c = commonerById(enc.actorId); return c ? c.displayName : "一位市井之人";
+  }
+  function nowStamp() {
+    try { return new Date().toISOString(); } catch (e) { return "" + state.day; }
+  }
+
+  // 兼容旧调用（scene/library/lingyan 过渡期）——空实现或代理，避免旧引用报错
+  function folkMetIds() { return Object.keys(folkTalk().unlockedCommoners || {}); }
+  function hasMetFolk(id) { return !!folkTalk().unlockedCommoners[id]; }
+  function currentFolkEncounter() { return folkTalk().activeEncounter; }
+  function isFolkSourceCollected(sourceKey) {
+    return (state.books || []).some(function (book) { return book && book.shelf === "folk-talk" && book.sourceKey === sourceKey; });
+  }
+
   // templates: [{title,cat,durationMinutes,from,knowledgeRefs}]；数值始终由 economy 固定计算。
   // 返回落地后的任务数组（含 id/scene/bg）
   function deployTasks(templates) {
@@ -1237,18 +1739,36 @@
     var countsForAchievements = taskCountsForAchievements(t);
     // 结算：普通任务同时扣精力并发任务金币；恢复任务只恢复精力。
     var isRecovery = !!t.restore || t.cat === "mystic";
+    // 名臣加成（PRD §10）——只作用于普通任务，结算时按 activeBuffs 计算
+    var baseGold = t.gold || 0;
+    var baseEnergy = Math.abs(t.energy || 0);
+    var finalGold = baseGold, finalEnergy = baseEnergy;
+    var appliedBuffIds = [];
+    if (!isRecovery) {
+      var mods = getActiveRewardModifiers();
+      appliedBuffIds = mods.filter(function (b) {
+        return b.type === "task_gold_multiplier" || b.type === "task_energy_multiplier";
+      }).map(function (b) { return b.id; });
+      // 金笔生花：基础金币 → 按 buffId 排序连乘 → 四舍五入
+      finalGold = Math.round(multiplyBuffValue("task_gold_multiplier", baseGold));
+      // 银叶轻覆：max(1, round(base×0.5))，base=0 仍 0
+      if (baseEnergy > 0) finalEnergy = Math.max(1, Math.round(multiplyBuffValue("task_energy_multiplier", baseEnergy)));
+    }
     var receipt = settleEconomy({
       id: "task:" + t.id,
       type: isRecovery ? "recovery-task" : "task",
       source: t.scene,
-      energyDelta: isRecovery ? t.restore : -Math.abs(t.energy || 0),
+      energyDelta: isRecovery ? t.restore : -finalEnergy,
       energyKind: isRecovery ? "recovery" : "spend",
-      goldDelta: isRecovery ? 0 : (t.gold || 0),
+      goldDelta: isRecovery ? 0 : finalGold,
       goldKind: isRecovery ? "none" : "task",
-      countsForAchievements: countsForAchievements
+      countsForAchievements: countsForAchievements,
+      appliedBuffIds: appliedBuffIds,
+      baseGold: baseGold, finalGold: finalGold,
+      baseEnergy: baseEnergy, finalEnergy: finalEnergy
     });
-    if (countsForAchievements && !isRecovery && t.gold && t.sourceKind === "decision") {
-      state.counters.approvalGold += t.gold;
+    if (countsForAchievements && !isRecovery && finalGold && t.sourceKind === "decision") {
+      state.counters.approvalGold += finalGold;
       setAchProgress("approval-gold", state.counters.approvalGold);
     }
 
@@ -1377,6 +1897,8 @@
   function addBook(book, options) {
     options = options || {};
     book.id = book.id || ("ub" + (bSeq++));
+    book.shelf = book.shelf || "strategy";
+    if (book.useInDecision == null) book.useInDecision = book.shelf === "strategy";
     state.books.unshift(book);
     if (options.countsForAchievements !== false && achievementTrackingEnabled()) {
       state.counters.uploads++;
@@ -1553,7 +2075,7 @@
     // 播种起居注
     data.JOURNALS_SEED.forEach(function (j) { state.journals.push(Object.assign({}, j)); });
     // 播种默认藏书
-    data.BOOKS.forEach(function (b) { state.books.push(Object.assign({}, b)); });
+    data.BOOKS.forEach(function (b) { state.books.push(Object.assign({ shelf: "strategy", useInDecision: true }, b)); });
     commit("onboarded");
   }
 
@@ -1582,10 +2104,18 @@
     moveScene: moveScene,
     deployTasks: deployTasks, previewTaskOverlaps: previewTaskOverlaps, completeMapTask: completeMapTask, finalizeDemoTasks: finalizeDemoTasks,
     tasksForScene: tasksForScene, pendingCount: pendingCount,
-    maybeOfferDailyMystic: maybeOfferDailyMystic, offerMysticCard: offerMysticCard, rerollDailyMystic: rerollDailyMystic,
+    maybeOfferDailyMystic: maybeOfferDailyMystic, offerMysticCard: offerMysticCard, rerollDailyMystic: rerollDailyMystic, dailyRerollCap: dailyRerollCap,
     applyPizhu: applyPizhu, setNpcPortrait: setNpcPortrait,
+    // 市井偶遇 / 凌烟阁招募（PRD 09）
+    beginFolkVisit: beginFolkVisit, markEncounterDisplayed: markEncounterDisplayed,
+    collectFolkSource: collectFolkSource, recruitLegend: recruitLegend, closeFolkEncounter: closeFolkEncounter,
+    drawEncounter: drawEncounter, getActiveRewardModifiers: getActiveRewardModifiers, effectiveTaskValues: effectiveTaskValues,
+    currentFolkEncounter: currentFolkEncounter, isFolkSourceCollected: isFolkSourceCollected,
+    legendChance: legendChance, effectiveTaskGold: effectiveTaskGold, effectiveTaskEnergy: effectiveTaskEnergy,
+    maxMysticRerolls: dailyRerollCap,
+    folkTalk: folkTalk, hasMetFolk: hasMetFolk, folkMetIds: folkMetIds,
     // 成就
-    unlock: unlock, bumpAch: bumpAch, setAchProgress: setAchProgress,
+    unlock: unlock, demoUnlock: demoUnlock, bumpAch: bumpAch, setAchProgress: setAchProgress,
     achState: achState, progress: progress,
     // 藏书起居注
     addJournal: addJournal, readArchive: readArchive, addBook: addBook,

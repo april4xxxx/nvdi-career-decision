@@ -10,6 +10,17 @@
 
   var panel;
   var A = (data.ASSET_BASE || "assets/") + "人物/";
+
+  /* 同僚 / 亲近之人多为 AI 从对话识别，暂无立绘：借市井数字立绘补位（按 id 稳定散列，避免每次换脸）。 */
+  var FOLK_PORTRAITS = (data.COMMONERS || [])
+    .filter(function (c) { return c.enabled !== false; })
+    .map(function (c) { return c.portraitAsset; });
+  function fallbackFolkPortrait(seed) {
+    if (!FOLK_PORTRAITS.length) return null;
+    var h = 0, s = String(seed || "");
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return FOLK_PORTRAITS[h % FOLK_PORTRAITS.length];
+  }
   var LOCK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>';
 
   /* 关系推测 7 档（PRD §5.2 NPCStance）→ 中文标签 + 语义色变量 */
@@ -38,61 +49,46 @@
     { key: "folk",     label: "市井之人", note: "于市井之间偶遇之人" }
   ];
 
-  /* 演示数据：每条 NPCProfile 内嵌一条代表性 interaction（关联待办）。
-     当前凌烟阁只展示演示状态；后续接真实数据时替换为 store.get().npcs。 */
-  var DEMO_NPCS = [
-    /* ===== 名臣异士（偶遇即赐一门增益技能；立绘部分暂借现有素材，待补专属图） ===== */
-    { cat: "legend", displayName: "上官婉儿", title: "掌诏才女", aliases: ["巾帼宰相"],
-      portrait: { assetId: "翰林.png" }, relationship: { stance: "friendly" },
-      skill: { name: "金笔生花", icon: "coin", tone: "gold",
-        desc: "呈报任务时，金币赏赐翻倍。" } },
-    { cat: "legend", displayName: "银叶菊仙", title: "疗愈花仙", aliases: ["菊隐仙子"],
-      portrait: { assetId: "宫女.png" }, relationship: { stance: "ally" },
-      skill: { name: "银叶轻覆", icon: "energy", tone: "jade",
-        desc: "办结任务所耗精力减半，四舍五入。" } },
-    { cat: "legend", displayName: "兔子精", title: "玉兔机敏", aliases: ["月宫捣药兔"],
-      portrait: { assetId: "顺臣.png" }, relationship: { stance: "friendly" },
-      skill: { name: "福缘广结", icon: "luck", tone: "verm",
-        desc: "此后偶遇名臣异士的概率显著提升。" } },
-    { cat: "legend", displayName: "卦师", title: "钦天监正", aliases: ["观星人"],
-      portrait: { assetId: "卦师.png" }, relationship: { stance: "neutral" },
-      skill: { name: "观星改命", icon: "time", tone: "gold",
-        desc: "每日天象签可额外免费重抽一次。" } },
+  /* 名臣异士的展示元数据（立绘 / 关系 / 别号 / 技能图标）——名录本体源自 data.LEGENDS，
+     招募态由 store.folkTalk().recruitedLegends 决定，见 legendRoster()。 */
+  var LEGEND_META = {
+    legend_shangguan_waner:      { aliases: ["巾帼宰相"], stance: "friendly", skillIcon: "coin",  skillTone: "gold" },
+    legend_silver_chrysanthemum: { aliases: ["菊隐仙子"], stance: "ally",     skillIcon: "energy", skillTone: "jade" },
+    legend_rabbit_spirit:        { aliases: ["月宫捣药兔"], stance: "friendly", skillIcon: "luck",  skillTone: "verm" },
+    legend_diviner:              { aliases: ["观星人"],   stance: "neutral",  skillIcon: "time",  skillTone: "gold" }
+  };
 
-    /* ===== 辅国大臣（固定 NPC，未遇见 → locked） ===== */
+  /* 辅国大臣（随剧情登场的固定辅臣，立绘皆已录入；PRD §19.3：仅保留唯一 legend 卦师，
+     此处不再有 minister 版卦师重复项，但保留观星师·钦天监正） */
+  var DEMO_NPCS = [
+    { cat: "minister", displayName: "史官", title: "起居舍人", aliases: ["太史令"],
+      portrait: { assetId: "史官.png" }, relationship: { stance: "friendly" },
+      interaction: { title: "录陛下今日临朝之决断", relation: "recipient" } },
     { cat: "minister", displayName: "直臣", title: "谏议大夫", aliases: ["魏征"],
       portrait: { assetId: "直臣.png" }, relationship: { stance: "ally" },
       interaction: { title: "直谏本周最该推进的一桩要务", relation: "owner" } },
-    { cat: "minister", displayName: "卦师", title: "钦天监正",
-      portrait: { assetId: "卦师.png" }, relationship: { stance: "neutral" },
-      interaction: { title: "占卜今日宜行之事", relation: "mentioned" } },
-    { cat: "minister", displayName: "翰林", title: "翰林学士", locked: true,
-      portrait: { assetId: "翰林.png" }, cond: "于藏书阁与之论道后解锁" },
-    { cat: "minister", displayName: "顺臣", title: "随侍中官", locked: true,
-      portrait: { assetId: "顺臣.png" }, cond: "朝堂之上初次面圣后解锁" },
-
-    /* ===== 朝中同僚（工作相关人员） ===== */
-    { cat: "work", displayName: "Alice", title: "产品经理", aliases: ["产品 Alice"],
-      identityStatus: "auto_created", portrait: { assetId: "卦师.png" }, relationship: { stance: "rival" },
-      interaction: { title: "给 Alice 发送需求边界确认", relation: "recipient" } },
-    { cat: "work", displayName: "李组长", title: "直属上级", aliases: ["组长", "老李"],
-      portrait: { assetId: "直臣.png" }, relationship: { stance: "neutral" },
-      interaction: { title: "周一晨会同步项目风险与排期", relation: "approver" } },
-    { cat: "work", displayName: "王姐", title: "同组同事",
-      portrait: { assetId: "顺臣.png" }, relationship: { stance: "ally" },
-      interaction: { title: "与王姐对齐接口联调时间", relation: "stakeholder" } },
-    { cat: "work", displayName: "陈总", title: "合作方负责人", aliases: ["甲方陈总"],
-      portrait: { assetId: "史官.png" }, relationship: { stance: "cold" },
-      interaction: { title: "回复陈总关于交付延期的邮件", relation: "blocker" } },
-
-    /* ===== 市井之人（市井偶遇） ===== */
-    { cat: "folk", displayName: "茶摊老张", title: "街角茶摊主",
+    { cat: "minister", displayName: "顺臣", title: "随侍中官",
       portrait: { assetId: "顺臣.png" }, relationship: { stance: "friendly" },
-      interaction: { title: "路过时向老张打听近日行情", relation: "mentioned" } },
-    { cat: "folk", displayName: "“隔壁组 PM”", title: "", identityStatus: "ambiguous",
-      portrait: { assetId: "史官.png" }, relationship: { stance: "unknown" },
-      interaction: { title: "确认这是否为之前提到的 Alice", relation: "mentioned" } }
+      interaction: { title: "为陛下打理六部日常庶务", relation: "owner" } },
+    { cat: "minister", displayName: "观星师", title: "钦天监正", aliases: ["观星人"],
+      portrait: { assetId: "观星师.png" }, relationship: { stance: "neutral" },
+      interaction: { title: "夜观天象，卜今日宜行之事", relation: "mentioned" } },
+    { cat: "minister", displayName: "翰林", title: "翰林学士",
+      portrait: { assetId: "翰林.png" }, relationship: { stance: "friendly" },
+      interaction: { title: "于藏书阁伴陛下论道典籍", relation: "stakeholder" } },
+    { cat: "minister", displayName: "宫女", title: "侍奉尚宫", aliases: ["侍女"],
+      portrait: { assetId: "宫女.png" }, relationship: { stance: "friendly" },
+      interaction: { title: "起居殿中为陛下理清烦心事", relation: "recipient" } },
+
+    /* ===== 朝中同僚 / 亲近之人：默认空态。
+       真实人物由 AI 从对话中识别后经 store.npcs 录入，见 liveNpcs()。 ===== */
   ];
+
+  /* 空态分区：尚无真实人物时给出「陛下所提及之人，会被记录在案」的占位。 */
+  var EMPTY_STATE = {
+    work: { icon: "💬", line: "陛下于议事间所提及的同僚，会被一一记录在案。" },
+    kin:  { icon: "🏮", line: "陛下于议事间所提及的亲近之人，会被一一记录在案。" }
+  };
 
   function open() { render(); panel.classList.add("active"); }
   function close() { panel.classList.remove("active"); }
@@ -147,20 +143,57 @@
     });
   }
 
+  /* 名臣异士名录：全员登记，未招募者呈 locked 之态，已招募者显真身 + 增益技能。
+     招募态源自 store.folkTalk().recruitedLegends（PRD §19.3 唯一 legend 卦师）。 */
+  function legendRoster() {
+    var ft = store.folkTalk ? store.folkTalk() : {};
+    var recruited = (ft && ft.recruitedLegends) || {};
+    return (data.LEGENDS || []).filter(function (l) { return l.enabled !== false; }).map(function (l) {
+      var meta = LEGEND_META[l.id] || {};
+      var asset = (l.portraitAsset || "").replace(/^人物\//, "");
+      if (!recruited[l.id]) {
+        return { cat: "legend", locked: true, portrait: { assetId: asset }, title: l.title,
+          cond: "前往民间，于市井偶遇名臣并招募后解锁" };
+      }
+      return {
+        cat: "legend", displayName: l.displayName, title: l.title, aliases: meta.aliases || [],
+        portrait: { assetId: asset }, relationship: { stance: meta.stance || "friendly" },
+        skill: { name: l.buff.name, icon: meta.skillIcon || "luck", tone: meta.skillTone || "gold",
+          desc: l.buff.description }
+      };
+    });
+  }
+
+  /* 市井名录：全员登记，未偶遇者呈 locked 之态，已偶遇者显真身。
+     名录源自 data.COMMONERS，偶遇态由 store.folkTalk().unlockedCommoners 决定。 */
+  function folkRoster() {
+    var ft = store.folkTalk ? store.folkTalk() : {};
+    var unlocked = (ft && ft.unlockedCommoners) || {};
+    return (data.COMMONERS || []).filter(function (c) { return c.enabled !== false; }).map(function (c) {
+      // 市井立绘位于 人物/ 目录（市井N.png），portraitPath 前缀已含「人物/」
+      var portrait = { assetId: c.portraitAsset };
+      if (unlocked[c.id]) {
+        return { cat: "folk", displayName: c.displayName, title: "市井来客",
+          portrait: portrait, relationship: { stance: "neutral" } };
+      }
+      return { cat: "folk", locked: true, portrait: portrait, cond: "前往民间，于市井偶遇后解锁" };
+    });
+  }
+
   function rosterNpcs() {
     var live = liveNpcs();
-    var liveNames = live.map(function (npc) { return String(npc.displayName || "").toLowerCase().replace(/\s+/g, ""); });
-    var demos = DEMO_NPCS.filter(function (npc) {
-      if (npc.cat !== "work") return true;
-      return liveNames.indexOf(String(npc.displayName || "").toLowerCase().replace(/\s+/g, "")) < 0;
-    });
-    return demos.concat(live);
+    return legendRoster().concat(DEMO_NPCS).concat(folkRoster()).concat(live);
   }
 
   function cardHtml(n) {
     var img = n.portrait && n.portrait.imageUrl
       ? n.portrait.imageUrl
       : (n.portrait && n.portrait.assetId ? A + n.portrait.assetId : "");
+    // 同僚 / 亲近之人无立绘时，借市井立绘补位（其余分区仍走「立绘待补」占位）
+    if (!img && (n.cat === "work" || n.cat === "kin")) {
+      var fb = fallbackFolkPortrait(n.id || n.displayName);
+      if (fb) img = A + fb;
+    }
     var art = img
       ? '<img src="' + ui.esc(img) + '" alt="" onerror="this.style.visibility=\'hidden\'" />'
       : '<div class="pc-art-empty"><span>立绘待补</span></div>';
@@ -206,8 +239,17 @@
 
     var body = CATEGORIES.map(function (c) {
       var list = npcs.filter(function (n) { return n.cat === c.key; });
-      if (!list.length) return "";
       var met = list.filter(function (n) { return !n.locked; }).length;
+      // 同僚 / 亲近之人：尚无真实人物时给出「所提及之人，会被记录在案」的空态。
+      if (!list.length && EMPTY_STATE[c.key]) {
+        var es = EMPTY_STATE[c.key];
+        return '<div class="ly-sec"><span class="st">' + c.label + '</span>' +
+            '<span class="sn">' + c.note + '</span>' +
+            '<span class="sc">尚无</span></div>' +
+          '<div class="ly-empty"><span class="lye-ic" aria-hidden="true">' + es.icon + '</span>' +
+            '<span class="lye-line">' + es.line + '</span></div>';
+      }
+      if (!list.length) return "";
       return '<div class="ly-sec"><span class="st">' + c.label + '</span>' +
           '<span class="sn">' + c.note + '</span>' +
           '<span class="sc">已遇 ' + met + ' / ' + list.length + '</span></div>' +
@@ -217,7 +259,7 @@
     panel.innerHTML =
       '<div class="panel-head">' +
         '<img class="picon" src="' + ui.esc((data.ASSET_BASE || "assets/") + "svg图标/六部.svg") + '" alt="" onerror="this.style.display=\'none\'" />' +
-        '<div><h2>凌烟阁</h2><div class="psub">演示数据 · 群臣关系与待办关联 · 已录 ' + total + ' 人</div></div>' +
+        '<div><h2>凌烟阁</h2><div class="psub">群臣关系与待办关联 · 已录 ' + total + ' 人</div></div>' +
         '<div class="spacer"></div>' +
         '<button class="panel-close" id="lyClose">×</button>' +
       '</div>' +
@@ -229,9 +271,11 @@
 
   function init() {
     panel = ui.$("#lingyanPanel");
-    store.on("npc", function () {
-      if (panel && panel.classList.contains("active")) render();
-    });
+    function refreshIfOpen() { if (panel && panel.classList.contains("active")) render(); }
+    store.on("npc", refreshIfOpen);
+    // 市井偶遇解锁市井之人 / 招募名臣 → 若图鉴打开则刷新名录
+    store.on("commoner-unlocked", refreshIfOpen);
+    store.on("legend-recruited", refreshIfOpen);
   }
 
   App.lingyan = { init: init, open: open, close: close };

@@ -44,6 +44,16 @@
 .lib-tab.active { background: rgba(247,242,230,.94); border-color: var(--gold); font-weight: 700; color: var(--gold-deep); }
 .lib-body { flex: 1; overflow-y: auto; padding: 22px; }
 
+/* 面板陪侍立绘：贴右下角，压在场景暗纹之上、内容之侧 */
+.panel-figure {
+  position: absolute; right: 2.5vw; bottom: 0; z-index: 2;
+  height: min(58vh, 460px); width: auto; object-fit: contain;
+  pointer-events: none; filter: drop-shadow(0 12px 28px rgba(0,0,0,.4));
+  animation: figureRise .6s ease both;
+}
+@keyframes figureRise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 720px) { .panel-figure { height: min(40vh, 300px); right: 0; opacity: .9; } }
+
 /* 主线任务时间线 */
 .timeline { position: relative; padding-left: 30px; max-width: 720px; margin: 0 auto; }
 .timeline::before { content: ""; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 2px; background: var(--gold); }
@@ -78,10 +88,26 @@
 .book-card .info { padding: 10px 12px; }
 .book-card .info .bt { font-size: 15px; font-weight: 700; }
 .book-card .info .ba { font-size: 12px; color: var(--ink-mute); }
-.book-card .info .bn { font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+.book-card .info .bn {
+  font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden; text-overflow: ellipsis;
+}
+/* 市井闲谈书卡面：不铺正文，仅出处标签一行 */
+.book-card .info .bn-src { -webkit-line-clamp: 1; color: var(--ink-mute); font-size: 11px; }
 .bk-status { margin-top: 7px; font-size: 10px; letter-spacing: .04em; color: var(--gold-deep); }
 .bk-status.ready { color: var(--jade); }
+.bk-status.folk { color: #a5761f; }
 .bk-status::before { content: "●"; margin-right: 4px; }
+/* 市井闲谈书详情出处 */
+.bk-source { margin-top: 12px; font-size: 12px; line-height: 1.6; }
+.bk-source a { color: var(--gold-deep); text-decoration: underline; word-break: break-word; }
+/* 收书后「前往藏书阁」定位高亮 */
+.book-card.book-new-highlight { animation: bookNewGlow 2.4s ease; }
+@keyframes bookNewGlow {
+  0%, 100% { box-shadow: var(--shadow-sm); }
+  20%, 60% { box-shadow: 0 0 0 3px var(--gold), 0 6px 20px rgba(185,138,59,.5); }
+}
 .book-card.upload { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; border: 2px dashed var(--gold); color: var(--gold-deep); min-height: 200px; background: var(--paper-2); }
 .book-card.upload .plus { font-size: 40px; line-height: 1; }
 .book-card.upload span { font-size: 13px; letter-spacing: .1em; }

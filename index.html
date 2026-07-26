@@ -8,16 +8,19 @@
   <meta property="og:title" content="女皇入朝｜AI 职场心流决策地图" />
   <meta property="og:description" content="与 AI 御前大臣商议真实职场困境，把决策转化为可执行、可复盘的行动地图。" />
   <meta property="og:type" content="website" />
+  <!-- 汇报演示：?demo=<key> 时进入演示态（种子存档、不落盘、自动播放） -->
+  <script>window.APP_DEMO = new URLSearchParams(location.search).get('demo') || null;</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/base.css?v=demo-click-unlock-20260726" />
   <link rel="stylesheet" href="css/onboarding.css?v=guide-choice-gate-20260725" />
-  <link rel="stylesheet" href="css/app.css?v=scene-examples-mystic-20260725" />
+  <link rel="stylesheet" href="css/app.css?v=folk-layout-20260726e" />
   <link rel="stylesheet" href="css/prophecy.css?v=seven-day-oracle-20260725" />
-  <link rel="stylesheet" href="css/library.css?v=overlay-nav-gold-20260725" />
+  <link rel="stylesheet" href="css/library.css?v=folk-layout-20260726b" />
   <link rel="stylesheet" href="css/treasury.css" />
-  <link rel="stylesheet" href="css/lingyan.css?v=npc-recognition-20260725" />
-  <link rel="stylesheet" href="css/guide.css?v=first-login-guide-coffee-20260725" />
+  <link rel="stylesheet" href="css/lingyan.css?v=cream-portrait-bg-20260726" />
+  <link rel="stylesheet" href="css/guide.css?v=guide-autostep-coin-20260726" />
+  <link rel="stylesheet" href="css/coinfly.css?v=coinfly-b-20260726" />
 </head>
 <body>
 
@@ -76,8 +79,11 @@
       <div class="stage" id="stage">
         <div class="scene-bg" id="sceneBg"></div>
         <div class="scene-head" id="sceneHead"></div>
-        <div class="task-field" id="taskField"></div>
+        <div class="task-field" id="taskField"><div class="task-field-inner" id="taskFieldInner"></div></div>
         <img class="npc-portrait" id="npcPortrait" alt="" />
+
+        <!-- 民间 · 市井偶遇舞台（取代大臣立绘与对话框；仅民间场景显示） -->
+        <div class="folk-stage" id="folkStage" style="display:none"></div>
 
         <!-- 对话区（模块 03：GAL 折叠态 ↔ 完整对话态） -->
         <div class="convo" id="convo">
@@ -105,7 +111,7 @@
 
           <!-- 常驻输入区（整段对话保持可用） -->
           <div class="convo-input" id="convoInput">
-            <input type="text" id="convoText" placeholder="陛下，今日有什么烦心事吗，老臣愿为您分忧…（直接输入，臣子为您将目标落实为切实的任务）" autocomplete="off" />
+            <textarea id="convoText" rows="2" placeholder="陛下，今日有什么烦心事吗，老臣愿为您分忧…&#10;（直接输入，臣子为您将目标落实为切实的任务）" autocomplete="off"></textarea>
             <button class="ci-send" id="convoSend">与众卿探讨</button>
           </div>
         </div>
@@ -143,26 +149,31 @@
   <div id="achToastLayer"></div>
   <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
   <div class="demo-badge" id="demoBadge"><span class="dot"></span><span id="demoBadgeText">演示模式进行中</span></div>
+  <div class="demo-advance" id="demoAdvance"><span class="dtext">点击继续</span><span class="dcaret">▸</span></div>
 
   <!-- ============ 脚本：economy → data → store → 模块 → demo → main ============ -->
   <script src="js/economy.js"></script>
-  <script src="js/data.js?v=scene-examples-mystic-20260725"></script>
-  <script src="js/store.js?v=scene-examples-mystic-20260725"></script>
+  <script src="js/data.js?v=folk-prd-20260726"></script>
+  <script src="js/store.js?v=demo-click-unlock-20260726"></script>
   <script src="js/api.js"></script>
-  <script src="js/onboarding.js?v=guide-choice-gate-20260725"></script>
+  <script src="js/onboarding.js?v=demo-click-unlock-20260726"></script>
   <script src="js/panel.js?v=sidebar-without-progress-20260725"></script>
   <script src="js/topbar.js?v=gold-btn-20260725"></script>
-  <script src="js/scene.js?v=scene-examples-mystic-20260725"></script>
+  <script src="js/coinfly.js?v=coinfly-b-20260726"></script>
+  <script src="js/scene.js?v=folk-prd-20260726"></script>
+  <script src="js/folk-encounter.js?v=folk-layout-20260726d"></script>
   <script src="js/conversation-rules.js"></script>
-  <script src="js/conversation.js?v=npc-recognition-20260725"></script>
+  <script src="js/conversation.js?v=astronomer-npc-20260726"></script>
   <script src="js/drawer.js?v=gold-btn-20260725"></script>
   <script src="js/prophecy.js?v=seven-day-oracle-20260725"></script>
-  <script src="js/modes.js?v=mode-sync-20260725"></script>
-  <script src="js/library.js?v=overlay-nav-gold-20260725"></script>
-  <script src="js/treasury.js?v=copy-revamp-20260725"></script>
-  <script src="js/lingyan.js?v=npc-recognition-20260725"></script>
-  <script src="js/demo.js?v=demo-order-20260725"></script>
-  <script src="js/guide.js?v=first-login-guide-coffee-20260725"></script>
-  <script src="js/main.js?v=mode-sync-20260725"></script>
+  <script src="js/silverleaf.js?v=flow-teacup-light-20260726"></script>
+  <script src="js/flowaudio.js?v=flow-bgm-25min-20260726"></script>
+  <script src="js/modes.js?v=flow-scene-bgm-20260726"></script>
+  <script src="js/library.js?v=folk-layout-20260726b"></script>
+  <script src="js/treasury.js?v=demo-click-unlock-20260726"></script>
+  <script src="js/lingyan.js?v=demo-click-unlock-20260726"></script>
+  <script src="js/demo.js?v=treasury-manual-exit-20260726"></script>
+  <script src="js/guide.js?v=guide-autostep-coin-20260726"></script>
+  <script src="js/main.js?v=demo-url-20260726"></script>
 </body>
 </html>

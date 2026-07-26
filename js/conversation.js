@@ -566,7 +566,11 @@
 
   /* ---------- 切换对话大臣 ---------- */
   function switchMinister() {
-    var order = data.MINISTER_ORDER;
+    // 场景专属大臣（如钦天监的观星师）不在 MINISTER_ORDER 里，
+    // 若当前正是这类大臣，把它并入轮换列表，避免一切换就丢失、再也回不来。
+    var order = data.MINISTER_ORDER.indexOf(ministerKey) < 0
+      ? [ministerKey].concat(data.MINISTER_ORDER)
+      : data.MINISTER_ORDER;
     var idx = order.indexOf(ministerKey);
     ministerKey = order[(idx + 1) % order.length];
     renderTop();
@@ -579,10 +583,16 @@
 
   /* ---------- 进入某场景时的开场（对话区） ---------- */
   function defaultMinisterFor(sceneId) {
-    // 场景专属大臣仍按其归属（钦天监→卦师、朝堂/民间→直臣）
-    if (sceneId === "observatory") return "卦师";
+    // 场景专属大臣按其剧情归属固定：钦天监→观星师（钦天监正，独立于卦师）、朝堂/民间→直臣
+    if (sceneId === "observatory") return "观星师";
     if (sceneId === "folk" || sceneId === "court") return "直臣";
-    // 其余场景采用陛下在御前推演里选定的偏好大臣，未选则回退顺臣
+    // 御花园 / 六部：每次新会话随机偶遇一位大臣——即便偏好直臣，也会遇上顺臣、卦师，
+    // 让三位臣子都有机会照面（不受御前推演偏好限制）。
+    if (sceneId === "garden" || sceneId === "ministry") {
+      var order = data.MINISTER_ORDER;
+      return order[Math.floor(Math.random() * order.length)];
+    }
+    // 其余场景（如起居殿）采用陛下在御前推演里选定的偏好大臣，未选则回退顺臣
     var pref = store.get().profile && store.get().profile.preferredMinister;
     if (pref && data.MINISTERS[pref]) return pref;
     return "顺臣";
@@ -718,7 +728,8 @@
 
     els.send.addEventListener("click", onSend);
     els.text.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); onSend(); }
+      // 回车发送；Shift/Ctrl/⌘ + 回车换行，配合两行文本域。
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) { e.preventDefault(); onSend(); }
     });
     els.text.addEventListener("input", function () { refreshSendLabel(); saveSession(); });
     els.ctMinister.addEventListener("click", switchMinister);

@@ -164,7 +164,7 @@ test("普通对话恢复自适应高度，只有追问区扩展并保留底部�
   assert.match(css, /\.convo\.expanded:not\(\.decision-pending\) \.gal-box\s*\{[^}]*flex:\s*0 0 auto[^}]*overflow-y:\s*auto/s);
 });
 
-test("public product surfaces use the unified brand name", async () => {
+test("public product surfaces retain the unified brand while onboarding uses the campaign copy", async () => {
   const [html, onboarding, topbar, readme, chat] = await Promise.all([
     readFile(new URL("../index.html", import.meta.url), "utf8"),
     readFile(new URL("../js/onboarding.js", import.meta.url), "utf8"),
@@ -175,7 +175,8 @@ test("public product surfaces use the unified brand name", async () => {
   const fullName = "女皇入朝｜AI 职场心流决策地图";
 
   assert.match(html, new RegExp(fullName));
-  assert.match(onboarding, new RegExp(fullName));
+  assert.match(onboarding, /真正的少女心事/);
+  assert.match(onboarding, /是渴望建功立业/);
   assert.match(readme, new RegExp(fullName));
   assert.match(chat, new RegExp(fullName));
   assert.match(topbar, /女皇入朝/);

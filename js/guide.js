@@ -65,6 +65,15 @@
   var pendingObserver = null;
   var pendingTimer = null;
   var lastGeneratedTaskIds = [];
+  // 当前步的推进函数：讲解步（点空白/点高亮/空格回车都可推进）才有值。
+  var currentOnNext = null;
+  // 当前步的“替你做一遍”函数：动作步（输入/选择/盖印）才有值；
+  // 点空白 / 空格 / 回车即帮用户完成这一步的真实操作并自然推进。
+  var currentAutoDo = null;
+  // 盖印办结后监听 taskDone 的解绑句柄，收尾时清掉。
+  var rewardOff = null;
+  // 盖印确认弹层的开关观察器：用户中途取消时退回任务步。
+  var settleWatch = null;
 
   function ensureGuideScenario() {
     var scenarios = App.data && App.data.SCENARIOS;
@@ -205,6 +214,7 @@
 
     skipButton.addEventListener("click", skip);
     document.addEventListener("click", guardPageClick, true);
+    document.addEventListener("keydown", guardKeydown, true);
     window.addEventListener("resize", positionCurrent);
     window.addEventListener("scroll", positionCurrent, true);
 
@@ -517,21 +527,50 @@
   function setCard(config) {
     var body = config.body || "";
     if (config.example) body += '<span class="guide-card-example">' + esc(config.example) + "</span>";
+    // 印章步骤条：可回看的步（有 onBack）渲染为按钮，点它回上一步；否则纯展示。
+    var seal = config.onBack
+      ? '<button class="guide-step-seal guide-step-seal--back" type="button" title="返回上一步" aria-label="返回上一步"><span class="gss-arrow" aria-hidden="true">◂</span>' + esc(config.stepLabel || "") + "</button>"
+      : '<span class="guide-step-seal">' + esc(config.stepLabel || "") + "</span>";
     card.innerHTML =
       '<div class="guide-card-kicker">' + esc(config.kicker || "御前引路") + "</div>" +
       "<h3>" + esc(config.title) + "</h3>" +
       '<div class="guide-card-body">' + body + "</div>" +
       '<div class="guide-card-actions">' +
-        '<span class="guide-step-seal">' + esc(config.stepLabel || "") + "</span>" +
+        seal +
         (config.button ? '<button class="guide-next" type="button">' + esc(config.button) + "</button>" : "") +
       "</div>";
     card.setAttribute("data-placement", config.placement || "auto");
     var next = card.querySelector(".guide-next");
-    if (next && config.onNext) next.addEventListener("click", config.onNext);
+    if (next) next.addEventListener("click", advance);
+    var back = card.querySelector(".guide-step-seal--back");
+    if (back) back.addEventListener("click", function () {
+      if (typeof config.onBack === "function") config.onBack();
+    });
+  }
+
+  // 讲解步推进到下一步（currentOnNext 有值）。取出即清空，防重复触发。
+  function advance() {
+    var fn = currentOnNext;
+    if (typeof fn !== "function") return;
+    currentOnNext = null;
+    fn();
+  }
+
+  // 动作步点空白 / 空格 / 回车：替用户完成这一步的真实操作，随后自然推进。
+  // 取出即清空，避免重复触发；真正的界面响应仍走各自的点击链路。
+  function autoStep() {
+    var fn = currentAutoDo;
+    if (typeof fn !== "function") return;
+    currentAutoDo = null;
+    fn();
   }
 
   function show(config) {
     clearPendingWatch();
+    // 记录本步推进方式：讲解步配 onNext（点空白/高亮/键盘直接推进）；
+    // 动作步配 autoDo（点空白/键盘时替用户完成真实操作再自然推进）。
+    currentOnNext = typeof config.onNext === "function" ? config.onNext : null;
+    currentAutoDo = typeof config.autoDo === "function" ? config.autoDo : null;
     active = true;
     currentKey = config.key;
     document.body.classList.add("guide-walkthrough");
@@ -680,7 +719,7 @@
   function showMinister() {
     show({
       key: "minister",
-      targets: ["#npcPortrait", "#galBox", "#convoInput"],
+      targets: ["#npcPortrait", "#galBox"],
       anchorTargets: ["#npcPortrait"],
       allowed: [],
       placement: "minister",
@@ -702,7 +741,18 @@
       title: customTitle || "从一件真实小事开始",
       body: customBody || "在这里说出正在困扰你的<strong>真实职场问题</strong>。不用组织得很完整，像发消息一样就好。",
       example: customTitle ? "" : "示例已填入。你可以直接发送。",
-      button: ""
+      button: "",
+      // 首次输入步才可“替你做一遍”：点空白/空格/回车即发送已填好的示例。
+      // 补充重拟（customTitle）需真实补充，不自动发送。
+      autoDo: customTitle ? null : function () {
+        var send = document.querySelector("#convoSend");
+        var box = document.querySelector("#convoText");
+        if (box && !box.value.trim()) {
+          box.value = GUIDE_SAMPLE;
+          box.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        if (send) send.click();
+      }
     });
     var input = document.querySelector("#convoText");
     if (input) {
@@ -723,7 +773,12 @@
       stepLabel: "3 / " + TOTAL_STEPS,
       title: "大臣会先问清关键处",
       body: "它不会急着给答案。请选择最接近真实情况的一项，帮助它找到真正影响判断的变量。",
-      button: ""
+      button: "",
+      // 点空白/空格/回车：替你选中第一项，继续走通。
+      autoDo: function () {
+        var opt = document.querySelector("#replyZone .opt-btn");
+        if (opt) opt.click();
+      }
     });
   }
 
@@ -753,7 +808,8 @@
       title: "先看这件事值不值得",
       body: "大臣会把<strong>投入、可能收益和机会成本</strong>放在一起，帮你看清真正的取舍。",
       button: "继续看方案",
-      onNext: showPaths
+      onNext: showPaths,
+      onBack: showDecisionBridge
     });
   }
 
@@ -769,7 +825,8 @@
       title: "方案不只有一个",
       body: "“推荐”是大臣当前的判断，“备选”是另一条可行路径。你可以点击任一方案切换。",
       button: "我看懂了",
-      onNext: showStamp
+      onNext: showStamp,
+      onBack: showMirror
     });
   }
 
@@ -784,7 +841,12 @@
       stepLabel: "6 / " + TOTAL_STEPS,
       title: "最后一笔，由你来落",
       body: "<strong>同意</strong>：按当前方案执行<br><strong>再议</strong>：补充信息，请大臣重拟<br><strong>大胆</strong>：这个判断不对，换个方向<br><br>大臣给建议，女皇作决定。",
-      button: ""
+      button: "",
+      // 点空白/空格/回车：替你盖下「同意」印玺，把决定投放为行动。
+      autoDo: function () {
+        var stamp = document.querySelector('#convoSend[data-mode="stamp"]');
+        if (stamp) stamp.click();
+      }
     });
   }
 
@@ -804,7 +866,69 @@
       placement: "right",
       stepLabel: "7 / " + TOTAL_STEPS,
       title: "决定已经变成第一步",
-      body: "奏折已拆成现实行动，并自动来到对应场景。做完以后，点击任务卡即可呈报完成。",
+      body: "奏折已拆成现实行动，并自动来到对应场景。<strong>点击这张任务卡</strong>，盖印办结，看看国库如何进账。",
+      button: "",
+      // 点空白/空格/回车：替你点开这张任务卡，进入盖印办结。
+      autoDo: function () {
+        var taskCard = document.querySelector(target);
+        if (taskCard) taskCard.click();
+      }
+    });
+  }
+
+  // 盖印办结阶段：让确认弹层与金币动画浮到引导夜幕之上，用户能看见并亲手盖印。
+  function beginTaskSettle() {
+    document.body.classList.add("guide-settling");
+    card.hidden = true;
+    skipButton.hidden = true;
+    if (focusLayer) focusLayer.innerHTML = "";
+    currentOnNext = null;
+    currentAutoDo = null;
+    currentKey = "settle";
+    var settled = false;
+    if (rewardOff) rewardOff();
+    // 一次性监听办结结算：金币落框后再抬出庆祝短札。
+    rewardOff = store.on("taskDone", function (payload) {
+      settled = true;
+      if (settleWatch) { settleWatch.disconnect(); settleWatch = null; }
+      if (rewardOff) { rewardOff(); rewardOff = null; }
+      var gold = payload && payload.settlement && payload.settlement.goldActual;
+      if (gold == null) gold = payload && payload.task && payload.task.gold;
+      gold = Math.max(0, Number(gold) || 0);
+      setTimeout(function () { showReward(gold); }, 900);
+    });
+    // 用户可能点「稍后再报」或点遮罩关掉确认弹层：此时未办结，退回任务步重来。
+    var overlay = document.querySelector("#overlay");
+    if (overlay) {
+      settleWatch = new MutationObserver(function () {
+        if (settled) return;
+        if (!overlay.classList.contains("active")) {
+          if (settleWatch) { settleWatch.disconnect(); settleWatch = null; }
+          if (rewardOff) { rewardOff(); rewardOff = null; }
+          document.body.classList.remove("guide-settling");
+          skipButton.hidden = false;
+          showTask();
+        }
+      });
+      settleWatch.observe(overlay, { attributes: true, attributeFilter: ["class"] });
+    }
+  }
+
+  // 收尾庆祝：聚光顶栏金币，点明国库真实进账，再完成引导。
+  function showReward(gold) {
+    document.body.classList.remove("guide-settling");
+    document.body.classList.add("guide-rewarding");
+    if (App.ui && App.ui.closeModal) App.ui.closeModal();
+    show({
+      key: "reward",
+      targets: ["#goldRes"],
+      allowed: [],
+      placement: "left",
+      stepLabel: "7 / " + TOTAL_STEPS,
+      title: gold > 0 ? "国库进账 +" + gold + " 金" : "已盖印办结",
+      body: gold > 0
+        ? "每一次盖印办结，都会有<strong>真实的金币</strong>飞入国库。做得越多，国库越充盈。"
+        : "你已盖下第一印。此后每次办结，都会为国库添上真实进项。",
       button: "完成引导",
       onNext: finish
     });
@@ -818,13 +942,20 @@
     if (!active || root.hidden) return;
     var target = event.target;
     if (target.closest("#guideCard") || target.closest(".guide-skip")) return;
+    // 盖印办结阶段：确认弹层浮在夜幕之上，任由用户点它的按钮，引导不拦。
+    if (currentKey === "settle" || target.closest("#overlay")) return;
 
     var allowed = allowedSelectors.some(function (selector) {
       return !!target.closest(selector);
     });
     if (!allowed) {
+      // 卡外点击（空白 / 遮罩 / 高亮内容）一律拦下底层行为，避免误触主界面。
       event.preventDefault();
       event.stopImmediatePropagation();
+      // 讲解步：随手一点即推进（含点高亮的立绘/奏折本身，符合直觉）。
+      // 动作步：替用户完成这一步的真实操作，再自然推进。
+      if (currentOnNext) advance();
+      else if (currentAutoDo) autoStep();
       return;
     }
 
@@ -858,8 +989,30 @@
     }
 
     if (currentKey === "task" && target.closest(".task-card")) {
-      finish();
+      // 点开任务卡进入盖印办结：让弹层与金币动画浮到夜幕之上，用户亲手盖印。
+      beginTaskSettle();
     }
+  }
+
+  // 键盘推进：空格/回车 = 推进（讲解步直接下一步，动作步替你做一遍），Esc = 跳过引导。
+  // 在输入框/文本域里打字时不劫持空格与回车，交还给正常输入。
+  function guardKeydown(event) {
+    if (!active || root.hidden) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      skip();
+      return;
+    }
+    if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+    var tag = event.target && event.target.tagName;
+    var typing = tag === "INPUT" || tag === "TEXTAREA" || (event.target && event.target.isContentEditable);
+    if (typing) return;
+    if (!currentOnNext && !currentAutoDo) return; // 无可推进动作时不劫持
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (currentOnNext) advance();
+    else autoStep();
   }
 
   function start(force) {
@@ -878,8 +1031,13 @@
     setTimeout(showMinister, 80);
   }
 
-  function finish() {
+  // finish / skip 共用的收场：解除监听、清空状态、还原界面。
+  function teardown() {
     clearPendingWatch();
+    if (rewardOff) { rewardOff(); rewardOff = null; }
+    if (settleWatch) { settleWatch.disconnect(); settleWatch = null; }
+    currentOnNext = null;
+    currentAutoDo = null;
     active = false;
     currentKey = "";
     currentSelectors = [];
@@ -888,32 +1046,24 @@
     allowedSelectors = [];
     document.body.classList.remove("guide-walkthrough");
     document.body.classList.remove("guide-reading-decision");
+    document.body.classList.remove("guide-settling");
+    document.body.classList.remove("guide-rewarding");
     document.body.style.removeProperty("--guide-petition-offset");
     root.classList.remove("is-transitioning");
     root.hidden = true;
     waiting.hidden = true;
     if (App.demo) App.demo.active = false;
     removeGuideScenario();
+  }
+
+  function finish() {
+    teardown();
     writeMemory({ done: true, skipped: false, current: "", completedAt: new Date().toISOString() });
     showEndToast();
   }
 
   function skip() {
-    clearPendingWatch();
-    active = false;
-    currentKey = "";
-    currentSelectors = [];
-    currentAnchorSelectors = [];
-    currentAnchorTargets = [];
-    allowedSelectors = [];
-    document.body.classList.remove("guide-walkthrough");
-    document.body.classList.remove("guide-reading-decision");
-    document.body.style.removeProperty("--guide-petition-offset");
-    root.classList.remove("is-transitioning");
-    root.hidden = true;
-    waiting.hidden = true;
-    if (App.demo) App.demo.active = false;
-    removeGuideScenario();
+    teardown();
     writeMemory({ skipped: true, current: "" });
   }
 

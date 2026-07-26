@@ -24,7 +24,8 @@
       '<div class="lib-tabs" id="libTabs">' +
         tabBtn("milestone", "主线任务") + tabBtn("journal", "起居注") + tabBtn("books", "治国之策") +
       '</div>' +
-      '<div class="lib-body" id="libBody"></div>';
+      '<div class="lib-body" id="libBody"></div>' +
+      '<img class="panel-figure lib-figure" src="' + ui.esc(data.ASSET_BASE + "人物/史官.png") + '" alt="史官" onerror="this.style.display=\'none\'" />';
     ui.$("#libClose").onclick = function () { close(); App.nav.goScene("court"); };
     Array.prototype.forEach.call(panel.querySelectorAll(".lib-tab"), function (b) {
       b.addEventListener("click", function () { tab = b.getAttribute("data-t"); render(); });
@@ -80,13 +81,20 @@
   function booksHtml() {
     var st = store.get();
     var cards = st.books.map(function (b, i) {
-      return '<div class="book-card" data-book="' + ui.esc(b.id) + '" style="animation-delay:' + (i * 50) + 'ms">' +
+      var isFolk = b.origin === "folk-encounter";
+      var title = isFolk ? ("《" + b.title + "》") : b.title;
+      // 市井闲谈书：卡面不铺正文（正文在详情弹窗里看），只显示出处标签，避免卡片被长文撑高
+      var noteHtml = isFolk
+        ? (b.sourceLabel ? '<div class="bn bn-src">' + ui.esc(b.sourceLabel) + '</div>' : '')
+        : '<div class="bn">' + ui.esc(b.note || "") + '</div>';
+      return '<div class="book-card' + (isFolk ? " folk-book" : "") + '" data-book="' + ui.esc(b.id) + '" style="animation-delay:' + (i * 50) + 'ms">' +
         '<div class="cover">' + (b.cover
           ? '<img src="' + ui.esc(b.cover) + '" alt="" onerror="this.parentNode.textContent=\'📖\'" />'
           : '📖') + '</div>' +
-        '<div class="info"><div class="bt">' + ui.esc(b.title) + '</div>' +
+        '<div class="info"><div class="bt">' + ui.esc(title) + '</div>' +
         '<div class="ba">' + ui.esc(b.author || "佚名") + '</div>' +
-        '<div class="bn">' + ui.esc(b.note || "") + '</div>' +
+        noteHtml +
+        (isFolk ? '<div class="bk-status folk">市井闲谈</div>' : '') +
         (b.remote ? '<div class="bk-status ready">AI 决策知识已就绪</div>' : '') +
         '</div></div>';
     }).join("");
@@ -108,13 +116,29 @@
   }
 
   function showBook(b) {
+    var isFolk = b.origin === "folk-encounter";
+    var tagText = isFolk ? "治国之策 · 市井闲谈" : "治国之策";
+    // 标题带书名号；市井闲谈书存储不含《》，此处补上
+    var displayTitle = isFolk ? ("《" + b.title + "》") : b.title;
+    var srcHtml = "";
+    if (isFolk && (b.sourceLabel || b.sourceUrl)) {
+      var label = b.sourceLabel || "";
+      srcHtml =
+        '<div class="bk-source">' +
+          '<span class="tag">出处</span> ' +
+          (b.sourceUrl
+            ? '<a href="' + ui.esc(b.sourceUrl) + '" target="_blank" rel="noopener">' + ui.esc(label || b.sourceUrl) + '</a>'
+            : '<span class="muted">' + ui.esc(label) + '</span>') +
+        '</div>';
+    }
     ui.openModal(
       '<div style="padding:26px 30px">' +
       '<div style="display:flex;gap:16px;align-items:center;margin-bottom:14px">' +
       (b.cover ? '<img src="' + ui.esc(b.cover) + '" style="width:80px;height:110px;object-fit:contain;border-radius:8px;background:var(--paper-3)" onerror="this.style.display=\'none\'"/>' : '') +
-      '<div><div class="tag">治国之策</div><h3 style="font-size:22px;margin:6px 0">' + ui.esc(b.title) + '</h3>' +
+      '<div><div class="tag">' + ui.esc(tagText) + '</div><h3 style="font-size:22px;margin:6px 0">' + ui.esc(displayTitle) + '</h3>' +
       '<div class="muted">' + ui.esc(b.author || "佚名") + (b.fileName ? ' · ' + ui.esc(b.fileName) : '') + '</div></div></div>' +
       '<p style="line-height:1.9;color:var(--ink-soft)">' + ui.esc(b.note || b.content || "一部来历不明的典籍，不知从何处得来，内文尚待陛下细读。") + '</p>' +
+      srcHtml +
       (b.remote ? '<p class="knowledge-note">此卷已存入藏书阁。往后大臣与陛下议事时，会翻阅其中相关章句，据此进言。</p>' : '') +
       '<div style="text-align:right;margin-top:18px"><button class="btn btn-gold" id="bkClose">合卷</button></div></div>'
     );
@@ -181,10 +205,31 @@
     };
   }
 
+  // 打开藏书阁并定位到某本书（收书成功弹窗「前往藏书阁」用）：切到治国之策 tab、高亮该卡
+  var pendingHighlightId = null;
+  function openToBook(bookId) {
+    tab = "books";
+    pendingHighlightId = bookId || null;
+    open();
+    highlightPendingBook();
+  }
+  function highlightPendingBook() {
+    if (!pendingHighlightId) return;
+    var card = panel.querySelector('.book-card[data-book="' + (window.CSS && CSS.escape ? CSS.escape(pendingHighlightId) : pendingHighlightId) + '"]');
+    if (card) {
+      card.classList.add("book-new-highlight");
+      card.scrollIntoView({ block: "center", behavior: "smooth" });
+      setTimeout(function () { card.classList.remove("book-new-highlight"); }, 2600);
+    }
+    pendingHighlightId = null;
+  }
+
   function init() {
     panel = ui.$("#libraryPanel");
     store.on("book", function () { if (panel.classList.contains("active") && tab === "books") renderBody(); });
+    // 市井闲谈成书 → 若正看治国之策则刷新（书仍在治国之策 tab，无独立 tab，锁定决策 #1）
+    store.on("folk-book-collected", function () { if (panel.classList.contains("active") && tab === "books") renderBody(); });
   }
 
-  App.library = { init: init, open: open, close: close, openUpload: openUpload };
+  App.library = { init: init, open: open, close: close, openUpload: openUpload, openToBook: openToBook };
 })();
