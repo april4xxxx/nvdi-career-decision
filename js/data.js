@@ -233,7 +233,7 @@
   var CATEGORY_ORDER = ["main", "daily", "explore", "delay", "mystic"];
 
   /* ---------- 场景空态任务范例 ----------
-     只用于说明每个场景可承接的任务类型，不写入 mapTasks，也不参与查重或结算。 */
+     只用于说明部分场景可承接的任务类型，不写入 mapTasks，也不参与查重或结算。 */
   var SCENE_TASK_TEMPLATES = {
     court: {
       title: "完成入职培训的结业答辩",
@@ -242,7 +242,6 @@
       cta: "盖印",
       featured: true
     },
-    ministry: { title: "例行协作与日常事务", hint: "说说你正在推进的日常待办" },
     garden: {
       title: "约行业前辈喝一次咖啡",
       gold: 10, energy: 10, durationMinutes: 30,

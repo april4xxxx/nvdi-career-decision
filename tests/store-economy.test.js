@@ -116,7 +116,8 @@ test("onboarding does not auto-create fabricated career tasks", () => {
 
   assert.equal(data.SEED_MAP_TASKS.length, 0);
   assert.equal(store.get().mapTasks.length, 0);
-  assert.equal(Object.keys(data.SCENE_TASK_TEMPLATES).length, 5);
+  assert.equal(Object.keys(data.SCENE_TASK_TEMPLATES).length, 4);
+  assert.equal(data.SCENE_TASK_TEMPLATES.ministry, undefined);
   assert.equal(data.SCENE_TASK_TEMPLATES.court.title, "完成入职培训的结业答辩");
   assert.equal(data.SCENE_TASK_TEMPLATES.court.featured, true);
   assert.deepEqual(
