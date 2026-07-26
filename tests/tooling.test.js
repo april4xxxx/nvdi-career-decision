@@ -57,6 +57,30 @@ test("钦天监空态展示三张符合定稿卡样式的天象候选", async ()
   assert.match(css, /\.task-template-card\.mystic-preview/);
 });
 
+test("普通地图切换只由 scene 事件触发一次场景渲染", async () => {
+  const source = await readFile(new URL("../js/scene.js", import.meta.url), "utf8");
+  const goScene = source.match(/function goScene\(id, options\) \{([\s\S]*?)\n  \}\n\n  function init/);
+
+  assert.ok(goScene, "应能定位 goScene");
+  assert.match(source, /store\.on\("scene", render\)/);
+  assert.doesNotMatch(
+    goScene[1],
+    /store\.moveScene\(id, options\);[\s\S]*?\n\s*render\(\);/,
+    "moveScene 已同步发出 scene 事件，goScene 不应再次手动 render"
+  );
+});
+
+test("场景背景在应用空闲时按唯一地址预加载", async () => {
+  const source = await readFile(new URL("../js/scene.js", import.meta.url), "utf8");
+
+  assert.match(source, /function preloadSceneBackgrounds\(\)/);
+  assert.match(source, /data\.SCENES/);
+  assert.match(source, /new Image\(\)/);
+  assert.match(source, /backgroundPreloads\[src\]/);
+  assert.match(source, /requestIdleCallback/);
+  assert.match(source, /preloadSceneBackgrounds\(\)/);
+});
+
 test("前端不使用标题关键词篡改 AI 任务分类", async () => {
   const [data, store] = await Promise.all([
     readFile(new URL("../js/data.js", import.meta.url), "utf8"),

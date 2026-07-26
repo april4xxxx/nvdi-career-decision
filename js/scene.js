@@ -9,6 +9,59 @@
   var data = App.data, store = App.store, ui = App.ui;
 
   var bgEl, headEl, fieldEl, npcEl;
+  var backgroundPreloads = {};
+
+  // 场景底图体积较大：首屏稳定后按唯一地址逐张加载并解码，
+  // 避免首次点进某张地图时才开始下载；凌烟阁与朝堂共用的底图只预载一次。
+  function preloadSceneBackground(src, done) {
+    if (!src || backgroundPreloads[src] || typeof Image !== "function") {
+      if (done) done();
+      return;
+    }
+    var image = new Image();
+    backgroundPreloads[src] = image;
+    image.decoding = "async";
+
+    function finish() {
+      image.onload = null;
+      image.onerror = null;
+      if (typeof image.decode === "function") {
+        image.decode().catch(function () {}).then(function () { if (done) done(); });
+      } else if (done) done();
+    }
+
+    image.onload = finish;
+    image.onerror = finish;
+    image.src = src;
+  }
+
+  function preloadSceneBackgrounds() {
+    var current = data.sceneById(store.get().scene);
+    var seen = {};
+    var queue = [];
+    (data.SCENES || []).forEach(function (scene) {
+      var src = scene && scene.bg;
+      if (!src || seen[src]) return;
+      seen[src] = true;
+      queue.push(src);
+    });
+    // 当前场景已经由首屏请求，优先预载用户下一步更可能进入的其他地图。
+    if (current && current.bg) {
+      queue = queue.filter(function (src) { return src !== current.bg; }).concat(current.bg);
+    }
+
+    function loadNext() {
+      var src = queue.shift();
+      if (!src) return;
+      preloadSceneBackground(src, loadNext);
+    }
+
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(loadNext, { timeout: 1200 });
+    } else {
+      setTimeout(loadNext, 600);
+    }
+  }
 
   function render() {
     var st = store.get();
@@ -263,8 +316,7 @@
     if (App.library) App.library.close();
     if (App.treasury) App.treasury.close();
     if (App.lingyan) App.lingyan.close();
-    render();
-    // conversation 通过 store 的 scene 事件保存旧场景会话并恢复新场景，不在此重置。
+    // scene 与 conversation 均由 store 的 scene 事件同步更新，不再重复手动渲染。
   }
 
   function init() {
@@ -273,6 +325,7 @@
     fieldEl = ui.$("#taskFieldInner");
     npcEl = ui.$("#npcPortrait");
     render();
+    preloadSceneBackgrounds();
     // 任务投放/完成 → 刷新当前场景任务卡
     store.on("task", function () {
       var st = store.get();
