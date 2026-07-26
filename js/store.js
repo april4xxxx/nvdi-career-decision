@@ -1342,7 +1342,21 @@
     return { gold: gold, energy: energy };
   }
 
+  var SILVERLEAF_LEGEND_ID = "legend_silver_chrysanthemum";
+
+  function hasEncounteredLegend(legendId) {
+    var ft = folkTalk();
+    if (ft.recruitedLegends && ft.recruitedLegends[legendId]) return true;
+    if (ft.activeEncounter && ft.activeEncounter.actorType === "legend" &&
+        (ft.activeEncounter.legendId === legendId || ft.activeEncounter.actorId === legendId)) return true;
+    return (ft.history || []).some(function (encounter) {
+      return encounter && encounter.actorType === "legend" &&
+        (encounter.legendId === legendId || encounter.actorId === legendId);
+    });
+  }
+
   // 权重抽取（PRD §6，注入式 RNG）
+  // 新玩家剧情保底：第一次仍可自然遇见银叶菊仙；若未遇见，第二次（或旧存档的下一次）强制出现。
   function drawEncounter(rng) {
     rng = rng || Math.random;
     var ft = folkTalk();
@@ -1356,8 +1370,17 @@
       .filter(function (b) { return b.type === "encounter_weight_add"; })
       .map(function (b) { return b.id; });
 
-    var actorType, actorId, contentId = null, legendId = null;
-    if (legendsAvail.length && rng() < effectiveLegendChance) {
+    var nextVisitSequence = (Number(ft.visitSequence) || 0) + 1;
+    var silverleafAvailable = legendsAvail.some(function (legend) { return legend.id === SILVERLEAF_LEGEND_ID; });
+    var guaranteeSilverleaf = silverleafAvailable && nextVisitSequence >= 2 && !hasEncounteredLegend(SILVERLEAF_LEGEND_ID);
+    var actorType, actorId, contentId = null, legendId = null, guaranteeReason = null;
+    if (guaranteeSilverleaf) {
+      actorType = "legend";
+      legendId = SILVERLEAF_LEGEND_ID;
+      actorId = legendId;
+      contentId = pickLegendPraise(legendId, rng);
+      guaranteeReason = "silverleaf-by-second-folk-visit";
+    } else if (legendsAvail.length && rng() < effectiveLegendChance) {
       actorType = "legend";
       legendId = pickLegend(rng);
       actorId = legendId;
@@ -1370,7 +1393,7 @@
     return {
       actorType: actorType, actorId: actorId, legendId: legendId, contentId: contentId,
       baseLegendChance: baseLegendChance, effectiveLegendChance: effectiveLegendChance,
-      appliedBuffIds: appliedBuffIds
+      appliedBuffIds: appliedBuffIds, guaranteeReason: guaranteeReason
     };
   }
 
@@ -1490,6 +1513,7 @@
       baseLegendChance: selection.baseLegendChance,
       effectiveLegendChance: selection.effectiveLegendChance,
       appliedBuffIds: selection.appliedBuffIds,
+      guaranteeReason: selection.guaranteeReason || null,
       bookCollected: false,
       recruited: false,
       isFirstMeetCommoner: selection.actorType === "commoner" && !ft.unlockedCommoners[selection.actorId],

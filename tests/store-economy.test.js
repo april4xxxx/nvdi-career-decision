@@ -459,6 +459,31 @@ test("任务投递和程序预览不算到访，只有用户进入场景才推�
   assert.equal(store.get().achievements["explore-all-scenes"].cur, 1);
 });
 
+test("银叶菊仙最迟在第二次进入民间时出现", () => {
+  const { store } = createStore();
+  const avoidLegends = () => 0.99;
+
+  const first = store.beginFolkVisit("folk-guarantee-1", "court", avoidLegends);
+  assert.equal(first.actorType, "commoner");
+
+  const second = store.beginFolkVisit("folk-guarantee-2", "court", avoidLegends);
+  assert.equal(second.actorType, "legend");
+  assert.equal(second.legendId, "legend_silver_chrysanthemum");
+  assert.equal(second.guaranteeReason, "silverleaf-by-second-folk-visit");
+});
+
+test("第一次已偶遇银叶菊仙时，第二次恢复普通随机", () => {
+  const { store } = createStore();
+  const firstRolls = [0, 0.3, 0];
+  const first = store.beginFolkVisit("folk-silver-first", "court", () => firstRolls.shift() ?? 0);
+
+  assert.equal(first.legendId, "legend_silver_chrysanthemum");
+
+  const second = store.beginFolkVisit("folk-after-silver", "court", () => 0.99);
+  assert.equal(second.actorType, "commoner");
+  assert.equal(second.guaranteeReason, null);
+});
+
 test("演示期间的操作不解锁成就，也不留下可在刷新后补解锁的进度", () => {
   const { store, app } = createStore();
   app.demo = { active: true };
