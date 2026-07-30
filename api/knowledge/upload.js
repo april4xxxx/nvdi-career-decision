@@ -48,6 +48,10 @@ export default {
     try {
       const rate = checkRateLimit("upload:" + clientIp(request), 8);
       if (!rate.allowed) throw new HttpError(429, "典籍上传过于频繁，请稍后再试", "RATE_LIMITED");
+      const contentType = request.headers.get("content-type") || "";
+      if (!contentType.toLowerCase().includes("multipart/form-data")) {
+        throw new HttpError(400, "请选择要上传的典籍", "FILE_REQUIRED");
+      }
 
       const form = await request.formData();
       const file = form.get("file");

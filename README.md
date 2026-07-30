@@ -46,6 +46,6 @@ AI 提供分析、追问和建议，却不会替你做决定。你可以通过�
 
 [进入女皇的职场王朝](https://nvdi-career-decision.vercel.app)
 
-[开发、部署与系统说明](docs/技术说明.md)
+[开发、部署与系统说明](docs/技术说明.md) · [Vercel 部署](docs/deploy-vercel.md) · [阿里云部署](docs/deploy-aliyun.md) · [双部署同步](docs/deploy-dual.md)
 
 </div>

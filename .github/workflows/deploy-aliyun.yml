@@ -1,0 +1,37 @@
+name: Deploy Aliyun
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-aliyun-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Aliyun
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.ALIYUN_SSH_KEY }}" > ~/.ssh/aliyun_deploy_key
+          chmod 600 ~/.ssh/aliyun_deploy_key
+          ssh-keyscan -H "${{ secrets.ALIYUN_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Pull latest code and restart app
+        run: |
+          ssh -i ~/.ssh/aliyun_deploy_key "${{ secrets.ALIYUN_USER }}@${{ secrets.ALIYUN_HOST }}" "ALIYUN_APP_DIR='${{ secrets.ALIYUN_APP_DIR }}' bash -s" <<'EOF'
+            set -e
+            APP_DIR="${ALIYUN_APP_DIR:-/var/www/nvdi-career-decision}"
+            cd "$APP_DIR"
+            git fetch origin main
+            git checkout main
+            git pull --ff-only origin main
+            npm ci --omit=dev
+            pm2 startOrReload ecosystem.config.cjs --env production
+            pm2 save
+          EOF
